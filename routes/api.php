@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\PriorityController;
+use App\Http\Controllers\Api\TodoController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -13,3 +16,12 @@ Route::get('/user', function (Request $request) {
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::apiResource('todos', TodoController::class);
+    Route::post('todos/reorder', [TodoController::class, 'reorder']);
+
+    // New: Categories routes
+    Route::apiResource('categories', CategoryController::class);
+    Route::apiResource('priorities', PriorityController::class);
+});

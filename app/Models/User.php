@@ -67,4 +67,9 @@ class User extends Authenticatable
             $q->where('name', $permission);
         })->exists();
     }
+
+    public function todos()
+    {
+        return $this->hasMany(Todo::class);
+    }
 }
