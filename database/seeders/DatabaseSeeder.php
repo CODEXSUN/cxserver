@@ -16,12 +16,17 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         User::firstOrCreate(
-            ['email' => 'test@example.com'],
+            ['email' => 'sundar@sundar.com'],
             [
-                'name' => 'Test User',
-                'password' => 'password',
+                'name' => 'sundar',
+                'password' => bcrypt('Kalarani1@@'),
                 'email_verified_at' => now(),
             ]
         );
+
+        $this->call([
+            RBACSeeder::class,
+        ]);
+
     }
 }
