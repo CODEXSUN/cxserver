@@ -1,4 +1,3 @@
-// app/Http/Controllers/Api/ContactController.php
 <?php
 
 namespace App\Http\Controllers\Api;
@@ -71,5 +70,25 @@ class ContactController extends Controller
     public function show(Contact $contact)
     {
         return response()->json(['contact' => $contact->load('detail', 'enquiries')]);
+    }
+
+    // app/Http/Controllers/Api/ContactController.php (add method)
+    public function lookup(Request $request)
+    {
+        return response()->json(['contact' => "sundar"], 200);
+
+        $request->validate([
+            'phone' => 'required|string|regex:/^\+?[0-9]{10,15}$/',
+        ]);
+
+        $contact = Contact::with('detail')
+            ->where('phone', $request->query('phone'))
+            ->first();
+
+        if (! $contact) {
+            return response()->json(['contact' => null], 200);
+        }
+
+        return response()->json(['contact' => $contact], 200);
     }
 }

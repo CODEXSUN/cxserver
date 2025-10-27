@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ContactController;
+use App\Http\Controllers\Api\EnquiryController;
 use App\Http\Controllers\Api\PriorityController;
 use App\Http\Controllers\Api\TodoController;
 use App\Http\Controllers\Api\UserController;
@@ -37,9 +38,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::post('/contacts', [ContactController::class, 'store']);
 Route::get('/contacts/{contact}', [ContactController::class, 'show']);
+Route::get('/contacts/lookup', [ContactController::class, 'lookup']);
+
 
 
 // Enquiry Routes
+Route::get('/enquiries', [EnquiryController::class, 'index']);
+
 Route::post('/enquiries', [EnquiryController::class, 'store']);
 Route::get('/enquiries/{enquiry}', [EnquiryController::class, 'show']);
 Route::get('/contacts/{contact}/enquiries', [EnquiryController::class, 'byContact']);
