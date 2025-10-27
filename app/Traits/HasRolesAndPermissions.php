@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Traits;
 
 use App\Models\Permission;
@@ -8,7 +7,6 @@ use App\Models\Role;
 
 trait HasRolesAndPermissions
 {
-    // Roles
     public function roles()
     {
         return $this->belongsToMany(Role::class, 'role_user');
@@ -27,11 +25,10 @@ trait HasRolesAndPermissions
         return $this->roles()->whereIn('name', $roles)->exists();
     }
 
-    // Permissions (via roles)
+    // FIXED: Use eager-loaded permissions
     public function getAllPermissions(): \Illuminate\Support\Collection
     {
-        return Permission::whereHas('roles', fn($q) => $q->whereIn('role_id', $this->roles->pluck('id')))
-            ->get();
+        return $this->roles->pluck('permissions')->flatten();
     }
 
     public function hasPermissionTo($permission): bool

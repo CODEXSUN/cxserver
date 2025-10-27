@@ -97,8 +97,7 @@ class UserRABCSeeder extends Seeder
             ],
 
             'user' => [
-                'viewAny contacts', 'view contacts', 'create contacts', 'update contacts',
-                'viewAny products', 'view products',
+//                'view contacts',
             ],
 
             'client' => ['view contacts', 'view products'],
