@@ -82,9 +82,9 @@ class UserApiTest extends TestCase
         $response = $this->actingAs($this->admin)->getJson('/api/users/' . $this->manager->id);
 
         $response->assertStatus(200)
-            ->assertJsonPath('id', $this->manager->id)
-            ->assertJsonPath('email', $this->manager->email)
-            ->assertJsonPath('roles.*.name', fn ($names) => in_array('manager', $names));
+            ->assertJsonPath('data.id', $this->manager->id)
+            ->assertJsonPath('data.email', $this->manager->email)
+            ->assertJsonPath('data.roles.*.name', fn ($names) => in_array('manager', $names));
     }
 
     public function test_5_user_can_view_own_profile()
@@ -92,7 +92,7 @@ class UserApiTest extends TestCase
         $response = $this->actingAs($this->regularUser)->getJson('/api/users/' . $this->regularUser->id);
 
         $response->assertStatus(200)
-            ->assertJsonPath('email', $this->regularUser->email);
+            ->assertJsonPath('data.email', $this->regularUser->email);
     }
 
     public function test_6_user_cannot_view_other_user_without_permission()
@@ -110,8 +110,8 @@ class UserApiTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonPath('name', 'Updated Name')
-            ->assertJsonPath('active', false);
+            ->assertJsonPath('data.name', 'Updated Name')
+            ->assertJsonPath('data.active', false);
 
         $this->assertDatabaseHas('users', [
             'id' => $this->manager->id,
@@ -127,7 +127,7 @@ class UserApiTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonPath('name', 'My New Name');
+            ->assertJsonPath('data.name', 'My New Name');
     }
 
     public function test_9_user_cannot_update_other_user()

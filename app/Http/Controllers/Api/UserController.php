@@ -93,7 +93,9 @@ class UserController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        return new UserResource($user); // ← Return resource
+        return response()->json([
+            'data' => new UserResource($user)
+        ]);
     }
 
     public function update(Request $request, $id)
@@ -118,7 +120,9 @@ class UserController extends Controller
 
         $user->update($data);
 
-        return new UserResource($user->load('roles')); // ← Load roles
+        return response()->json([
+            'data' => new UserResource($user->load('roles'))
+        ]);
     }
 
     public function destroy($id)
