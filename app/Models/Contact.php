@@ -29,10 +29,10 @@ class Contact extends Model
         'status' => 'string',
     ];
 
-    public function detail(): HasOne
-    {
-        return $this->hasOne(ContactDetail::class);
-    }
+//    public function detail(): HasOne
+//    {
+//        return $this->hasOne(ContactDetail::class);
+//    }
 
     public function user(): HasOne
     {

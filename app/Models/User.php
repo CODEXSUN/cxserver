@@ -2,23 +2,19 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Traits\HasRolesAndPermissions;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, TwoFactorAuthenticatable,HasApiTokens;
+    use HasFactory, Notifiable, TwoFactorAuthenticatable,HasApiTokens,HasRolesAndPermissions;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
@@ -26,11 +22,7 @@ class User extends Authenticatable
         'active'
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
+
     protected $hidden = [
         'password',
         'two_factor_secret',
@@ -38,11 +30,6 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -57,16 +44,12 @@ class User extends Authenticatable
         return $this->belongsToMany(Role::class);
     }
 
-    public function hasRole($role): bool
+    protected function active(): Attribute
     {
-        return $this->roles()->where('name', $role)->exists();
-    }
-
-    public function hasPermission($permission): bool
-    {
-        return $this->roles()->whereHas('permissions', function($q) use ($permission) {
-            $q->where('name', $permission);
-        })->exists();
+        return Attribute::make(
+            get: fn ($value) => (bool) $value,
+            set: fn ($value) => (bool) $value
+        );
     }
 
     public function todos()

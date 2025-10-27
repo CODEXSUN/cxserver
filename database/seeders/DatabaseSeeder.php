@@ -15,22 +15,10 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
 
-        User::firstOrCreate(
-            ['email' => 'sundar@sundar.com'],
-            [
-                'name' => 'sundar',
-                'password' => bcrypt('password'),
-                'email_verified_at' => now(),
-            ]
-        );
-
-        User::factory(30)->create();
+//        User::factory(30)->create();
 
         $this->call([
-            RBACSeeder::class,
-            TodoEnhancementsSeeder::class,
-            ContactSeeder::class,
-            EnquirySeeder::class,
+            UserRABCSeeder::class,
         ]);
 
     }

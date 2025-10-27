@@ -27,6 +27,9 @@ class CreateContactTest extends TestCase
             'active' => true,
         ]);
 
+        // ---- give the required permission ----
+        $this->admin->givePermissionTo('manage contacts');
+
         $response = $this->postJson('/api/login', [
             'email' => 'admin@example.com',
             'password' => 'password',
@@ -36,7 +39,8 @@ class CreateContactTest extends TestCase
         $this->actingAs($this->admin);
     }
 
-    public function test_can_create_contact_via_api()
+    /** @test */
+    public function can_create_contact_via_api()
     {
         $payload = [
             'name' => 'John Doe',
@@ -79,7 +83,7 @@ class CreateContactTest extends TestCase
 
         $contact = Contact::first();
         $this->assertNotNull($contact->contact_code);
-        $this->assertTrue(str_starts_with($contact->contact_code, 'CON-'));
+        $this->assertTrue(str_starts_with($contact->contact_code, 'CON-' . now()->year . '-'));
 
         $this->assertDatabaseHas('activities', [
             'user_id' => $this->admin->id,
@@ -89,10 +93,11 @@ class CreateContactTest extends TestCase
         ]);
     }
 
-    public function test_can_soft_delete_contact_via_api()
+    /** @test */
+    public function can_soft_delete_contact_via_api()
     {
         $contact = Contact::factory()->create([
-            'contact_code' => 'CON-2025-0001',
+            'contact_code' => 'CON-' . now()->year . '-0001',
             'name' => 'Delete Me',
             'phone' => '+9999999999',
         ]);
@@ -117,10 +122,11 @@ class CreateContactTest extends TestCase
         ]);
     }
 
-    public function test_can_restore_soft_deleted_contact()
+    /** @test */
+    public function can_restore_soft_deleted_contact()
     {
         $contact = Contact::factory()->create();
-        $contact->delete(); // Soft delete manually
+        $contact->delete(); // soft-delete
 
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
@@ -142,7 +148,8 @@ class CreateContactTest extends TestCase
         ]);
     }
 
-    public function test_contact_creation_fails_without_required_fields()
+    /** @test */
+    public function contact_creation_fails_without_required_fields()
     {
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
@@ -155,7 +162,8 @@ class CreateContactTest extends TestCase
             ->assertJsonValidationErrors(['name', 'phone']);
     }
 
-    public function test_unauthorized_user_cannot_create_contact()
+    /** @test */
+    public function unauthorized_user_cannot_create_contact()
     {
         $response = $this->postJson('/api/contacts', [
             'name' => 'Test',
@@ -165,7 +173,8 @@ class CreateContactTest extends TestCase
         $response->assertStatus(401);
     }
 
-    public function test_non_admin_cannot_create_contact()
+    /** @test */
+    public function non_admin_cannot_create_contact()
     {
         $sales = User::factory()->create(['role' => 'sales']);
         $token = $sales->createToken('test')->plainTextToken;
@@ -180,7 +189,8 @@ class CreateContactTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_cannot_create_contact_with_duplicate_phone()
+    /** @test */
+    public function cannot_create_contact_with_duplicate_phone()
     {
         Contact::factory()->create(['phone' => '+1234567890']);
 

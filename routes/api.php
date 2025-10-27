@@ -5,7 +5,9 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\EnquiryController;
 use App\Http\Controllers\Api\JobController;
+use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\PriorityController;
+use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\TodoController;
 use App\Http\Controllers\Api\UserController;
@@ -15,9 +17,6 @@ use Illuminate\Support\Facades\Route;
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
-
-
-//Route::middleware(['auth:sanctum', 'permission:view_posts'])->get('/posts', [PostController::class, 'index']);
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
@@ -38,28 +37,37 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('users/{id}/remove-role', [UserController::class, 'removeRole']);
 });
 
-Route::post('/contacts', [ContactController::class, 'store']);
-Route::get('/contacts/{contact}', [ContactController::class, 'show']);
-Route::get('/contacts/lookup', [ContactController::class, 'lookup']);
-
-
-
-// Enquiry Routes
-Route::get('/enquiries', [EnquiryController::class, 'index']);
-
-Route::post('/enquiries', [EnquiryController::class, 'store']);
-Route::get('/enquiries/{enquiry}', [EnquiryController::class, 'show']);
-Route::get('/contacts/{contact}/enquiries', [EnquiryController::class, 'byContact']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::apiResource('roles', RoleController::class);
+    Route::post('roles/{id}/assign-permission', [RoleController::class, 'assignPermission']);
+    Route::post('roles/{id}/remove-permission', [RoleController::class, 'removePermission']);
+});
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::apiResource('contacts', ContactController2::class);
-    Route::apiResource('enquiries', EnquiryController2::class);
-    Route::post('enquiries/{enquiry}/resolve', [EnquiryController2::class, 'resolve']);
-    Route::post('enquiries/{enquiry}/convert', [EnquiryController2::class, 'convertToJob']);
+    Route::apiResource('permissions', PermissionController::class);
+    Route::post('permissions/{id}/assign-role', [PermissionController::class, 'assignRole']);
+    Route::post('permissions/{id}/remove-role', [PermissionController::class, 'removeRole']);
+});
 
-    Route::apiResource('jobs', JobController::class);
-    Route::apiResource('tasks', TaskController::class);
-    Route::post('tasks/{task}/assign', [TaskController::class, 'assign']);
-    Route::post('tasks/{task}/submit', [TaskController::class, 'submit']);
-    Route::post('tasks/{task}/handoff', [TaskController::class, 'handoff']);
+
+
+// contacts
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('contacts', [ContactController::class, 'index'])
+        ->middleware('permission:viewAny contacts');
+
+    Route::post('contacts', [ContactController::class, 'store'])
+        ->middleware('permission:create contacts');
+
+    Route::get('contacts/{contact}', [ContactController::class, 'show'])
+        ->middleware('permission:view contacts');
+
+    Route::put('contacts/{contact}', [ContactController::class, 'update'])
+        ->middleware('permission:update contacts');
+
+    Route::delete('contacts/{contact}', [ContactController::class, 'destroy'])
+        ->middleware('permission:delete contacts');
+
+    Route::post('contacts/{contact}/restore', [ContactController::class, 'restore'])
+        ->middleware('permission:restore contacts');
 });
