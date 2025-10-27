@@ -9,9 +9,6 @@ use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
 
@@ -19,6 +16,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             UserRABCSeeder::class,
+            EnquiryRABCSeeder::class,
         ]);
 
     }

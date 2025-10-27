@@ -65,3 +65,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('contacts/{contact}/restore', [ContactController::class, 'restore'])
         ->middleware('permission:restore contacts');
 });
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::apiResource('enquiries', EnquiryController::class);
+    Route::post('enquiries/{enquiry}/restore', [EnquiryController::class, 'restore']);
+    Route::post('enquiries/{enquiry}/resolve', [EnquiryController::class, 'resolve']);
+    Route::post('enquiries/{enquiry}/convert-to-project', [EnquiryController::class, 'convertToProject']);
+});

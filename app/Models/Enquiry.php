@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Enquiry extends Model
@@ -16,6 +18,7 @@ class Enquiry extends Model
         'query',
         'status',
         'resolved_at',
+        'tags'
     ];
 
     protected $casts = [
@@ -29,12 +32,12 @@ class Enquiry extends Model
         return $this->belongsTo(Contact::class);
     }
 
-    public function job(): HasOne
+    public function project(): HasOne
     {
-        return $this->hasOne(Job::class);
+        return $this->hasOne(Project::class);
     }
 
-    public function slaTickets()
+    public function slaTickets(): MorphMany
     {
         return $this->morphMany(SlaTicket::class, 'ticketable');
     }
@@ -49,6 +52,25 @@ class Enquiry extends Model
         $this->update([
             'status' => 'resolved',
             'resolved_at' => now(),
+        ]);
+    }
+
+    public function scopeFilter($query, $filters)
+    {
+        // Example: status filter
+        if ($status = $filters['status'] ?? null) {
+            $query->where('status', $status);
+        }
+        // Add more filters as needed
+    }
+
+    public function createSlaTicket()
+    {
+        // Dummy SLA creation – replace with real logic
+        $this->slaTickets()->create([
+            'status' => 'active',
+            'due_at' => now()->addHours(24),
+            'time_limit_minutes' => 1440, // 24 hours
         ]);
     }
 }

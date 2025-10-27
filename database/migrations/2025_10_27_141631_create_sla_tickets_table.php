@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
             $table->foreignId('contact_id')->nullable()->constrained()->onDelete('set null');
             $table->enum('type', ['response', 'resolution'])->default('response');
-            $table->integer('time_limit_minutes');
+            $table->integer('time_limit_minutes')->default(1440);
             $table->timestamp('due_at')->nullable();
             $table->enum('status', ['active', 'met', 'breached', 'cancelled'])->default('active');
             $table->timestamp('acknowledged_at')->nullable();
