@@ -51,7 +51,7 @@ class UserRbacTest extends TestCase
 
     public function test_3_standard_user_can_manage_contacts_but_not_users()
     {
-        $user = User::where('email', 'user@user.com')->first();
+        $user = User::where('email', 'standard@codexsun.com')->with('roles.permissions')->first();
 
         $this->assertTrue($user->hasPermissionTo('viewAny contacts'));
         $this->assertTrue($user->hasPermissionTo('create contacts'));

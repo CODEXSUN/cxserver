@@ -20,13 +20,14 @@ class UserRABCSeeder extends Seeder
         // 1. ROLES
         // ──────────────────────────────────────────────────────────────
         $roleData = [
-            'admin'   => 'Full system access',
+            'admin' => 'Full system access',
             'manager' => 'Can manage users and view reports',
-            'user'    => 'Standard authenticated user',
-            'client'  => 'External client access',
-            'dealer'  => 'Dealer/partner portal access',
-            'guest'   => 'Limited read-only access',
-            'devops'  => 'Devops access',
+            'user' => 'Standard authenticated user',
+            'client' => 'External client access',
+            'dealer' => 'Dealer/partner portal access',
+            'guest' => 'Limited read-only access',
+            'devops' => 'Devops access',
+            'restricted' => 'No contact access',
         ];
 
         $roles = [];
@@ -43,34 +44,34 @@ class UserRABCSeeder extends Seeder
         // ──────────────────────────────────────────────────────────────
         $permissionData = [
             // Contacts
-            'viewAny contacts'   => 'View list of contacts',
-            'view contacts'      => 'View a single contact',
-            'create contacts'    => 'Create new contact',
-            'update contacts'    => 'Update existing contact',
-            'delete contacts'    => 'Soft delete contact',
-            'restore contacts'   => 'Restore deleted contact',
+            'viewAny contacts' => 'View list of contacts',
+            'view contacts' => 'View a single contact',
+            'create contacts' => 'Create new contact',
+            'update contacts' => 'Update existing contact',
+            'delete contacts' => 'Soft delete contact',
+            'restore contacts' => 'Restore deleted contact',
 
             // Users
-            'viewAny users'      => 'View list of users',
-            'view users'         => 'View a single user',
-            'create users'       => 'Create new user',
-            'update users'       => 'Update existing user',
-            'delete users'       => 'Delete user',
-            'manage roles'       => 'Assign roles to users',
+            'viewAny users' => 'View list of users',
+            'view users' => 'View a single user',
+            'create users' => 'Create new user',
+            'update users' => 'Update existing user',
+            'delete users' => 'Delete user',
+            'manage roles' => 'Assign roles to users',
 
             // Products
-            'viewAny products'   => 'View product list',
-            'view products'      => 'View product details',
-            'create products'    => 'Add new product',
-            'update products'    => 'Edit product',
-            'delete products'    => 'Remove product',
+            'viewAny products' => 'View product list',
+            'view products' => 'View product details',
+            'create products' => 'Add new product',
+            'update products' => 'Edit product',
+            'delete products' => 'Remove product',
 
             // Reports
-            'view reports'       => 'Access analytics & reports',
-            'export data'        => 'Export data to CSV/PDF',
+            'view reports' => 'Access analytics & reports',
+            'export data' => 'Export data to CSV/PDF',
 
             // System
-            'manage settings'    => 'Change system configuration',
+            'manage settings' => 'Change system configuration',
         ];
 
         $permissions = [];
@@ -86,8 +87,8 @@ class UserRABCSeeder extends Seeder
         // 3. PERMISSION → ROLE (permission_role pivot)
         // ──────────────────────────────────────────────────────────────
         $rolePermissions = [
-            'admin'   => array_keys($permissionData), // ALL
-            'devops'  => array_keys($permissionData), // ALL
+            'admin' => array_keys($permissionData), // ALL
+            'devops' => array_keys($permissionData), // ALL
 
             'manager' => [
                 'viewAny contacts', 'view contacts', 'create contacts', 'update contacts',
@@ -97,12 +98,15 @@ class UserRABCSeeder extends Seeder
             ],
 
             'user' => [
-//                'view contacts',
+                'viewAny contacts', 'view contacts',
+                'create contacts', 'update contacts',
             ],
+
+            'restricted' => [],
 
             'client' => ['view contacts', 'view products'],
             'dealer' => ['viewAny products', 'view products', 'view contacts'],
-            'guest'  => ['view products'],
+            'guest' => ['view products'],
         ];
 
         foreach ($rolePermissions as $roleName => $permNames) {
@@ -121,23 +125,25 @@ class UserRABCSeeder extends Seeder
         // 4. USERS + ROLE → USER (role_user pivot)
         // ──────────────────────────────────────────────────────────────
         $userData = [
-            ['Sundar',      'sundar@sundar.com',     'Kalarani1',   ['admin']],
-            ['Admin',       'admin@admin.com',       'Password1',   ['admin']],
-            ['Demo',        'demo@demo.com',         'Password1',   ['admin']],
-            ['Manager',     'manager@manager.com',   'Password1',   ['manager']],
-            ['User',        'user@user.com',         'Password1',   ['user']],
-            ['Client',      'client@client.com',     'Password1',   ['client']],
-            ['Dealer',      'dealer@dealer.com',     'Password1',   ['dealer']],
-            ['DevOps',      'devops@codexsun.com',   'DevOps123!',  ['devops']],
+            ['Sundar', 'sundar@sundar.com', 'Kalarani1', ['admin']],
+            ['Admin', 'admin@admin.com', 'Password1', ['admin']],
+            ['Demo', 'demo@demo.com', 'Password1', ['admin']],
+            ['Manager', 'manager@manager.com', 'Password1', ['manager']],
+            ['User', 'user@user.com', 'Password1', ['user']],
+            ['Client', 'client@client.com', 'Password1', ['client']],
+            ['Dealer', 'dealer@dealer.com', 'Password1', ['dealer']],
+            ['DevOps', 'devops@codexsun.com', 'DevOps123!', ['devops']],
+            ['Restricted User', 'restricted@codexsun.com', 'Password1', ['restricted']],
+            ['Standard User', 'standard@codexsun.com', 'Password1', ['user']],
         ];
 
         foreach ($userData as [$name, $email, $pass, $roleNames]) {
             $user = User::updateOrCreate(
                 ['email' => $email],
                 [
-                    'name'     => $name,
+                    'name' => $name,
                     'password' => Hash::make($pass),
-                    'active'   => true,
+                    'active' => true,
                 ]
             );
 

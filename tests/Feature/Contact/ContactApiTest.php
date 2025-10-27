@@ -30,9 +30,7 @@ class ContactApiTest extends TestCase
             ->with('roles.permissions')
             ->first();
 
-        $this->regularUser = User::where('email', 'user@user.com')
-            ->with('roles.permissions')
-            ->first();
+        $this->regularUser = User::where('email', 'restricted@codexsun.com')->with('roles.permissions')->first();
     }
 
     public function test_1_admin_can_list_contacts_paginated()
