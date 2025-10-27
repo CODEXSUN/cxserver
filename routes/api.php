@@ -4,7 +4,9 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\EnquiryController;
+use App\Http\Controllers\Api\JobController;
 use App\Http\Controllers\Api\PriorityController;
+use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\TodoController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Http\Request;
@@ -48,3 +50,16 @@ Route::get('/enquiries', [EnquiryController::class, 'index']);
 Route::post('/enquiries', [EnquiryController::class, 'store']);
 Route::get('/enquiries/{enquiry}', [EnquiryController::class, 'show']);
 Route::get('/contacts/{contact}/enquiries', [EnquiryController::class, 'byContact']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::apiResource('contacts', ContactController2::class);
+    Route::apiResource('enquiries', EnquiryController2::class);
+    Route::post('enquiries/{enquiry}/resolve', [EnquiryController2::class, 'resolve']);
+    Route::post('enquiries/{enquiry}/convert', [EnquiryController2::class, 'convertToJob']);
+
+    Route::apiResource('jobs', JobController::class);
+    Route::apiResource('tasks', TaskController::class);
+    Route::post('tasks/{task}/assign', [TaskController::class, 'assign']);
+    Route::post('tasks/{task}/submit', [TaskController::class, 'submit']);
+    Route::post('tasks/{task}/handoff', [TaskController::class, 'handoff']);
+});

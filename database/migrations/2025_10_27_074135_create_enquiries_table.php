@@ -17,7 +17,9 @@ return new class extends Migration
             $table->text('query');
             $table->enum('status', ['open', 'in_progress', 'resolved', 'closed'])->default('open');
             $table->timestamp('resolved_at')->nullable();
+            $table->json('tags')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index('status');
             $table->index('created_at');

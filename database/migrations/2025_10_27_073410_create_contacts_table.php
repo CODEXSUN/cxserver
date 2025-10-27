@@ -21,6 +21,7 @@ return new class extends Migration
             $table->boolean('has_account')->default(false);
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

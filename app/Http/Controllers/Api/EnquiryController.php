@@ -2,145 +2,84 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use App\Models\Contact;
+use App\Http\Resources\EnquiryResource;
+use App\Http\Resources\EnquiryCollection;
 use App\Models\Enquiry;
+use App\Http\Requests\StoreEnquiryRequest;
+use App\Http\Requests\UpdateEnquiryRequest;
+use App\Models\Job;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
-use Exception;
-use Illuminate\Database\QueryException;
 
-class EnquiryController extends Controller
+class EnquiryController2 extends BaseApiController
 {
-
     public function index(Request $request)
     {
-        $query = Enquiry::with('contact')->latest();
+        $this->authorize('viewAny', Enquiry::class);
 
-        if ($search = $request->get('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('query', 'like', "%{$search}%")
-                    ->orWhereHas('contact', fn($c) => $c->where('name', 'like', "%{$search}%")->orWhere('phone', 'like', "%{$search}%"));
-            });
-        }
-
-        if ($status = $request->get('status')) {
-            $query->where('status', $status);
-        }
-
-        $perPage = $request->get('per_page', 20);
-        $page = $request->get('page', 1);
-
-        $enquiries = $query->paginate($perPage, ['*'], 'page', $page);
-
-        return response()->json([
-            'data' => $enquiries->items(),
-            'meta' => [
-                'current_page' => $enquiries->currentPage(),
-                'last_page' => $enquiries->lastPage(),
-                'per_page' => $enquiries->perPage(),
-                'total' => $enquiries->total(),
-            ],
-        ]);
+        $enquiries = Enquiry::with(['contact'])->filter($request)->sort($request)->paginate(20);
+        return $this->paginatedResponse(new EnquiryCollection($enquiries));
     }
 
-    public function store(Request $request)
+    public function store(StoreEnquiryRequest $request)
     {
-        try {
-            $request->validate([
-                'name' => 'required|string|max:255',
-                'phone' => 'required|string|regex:/^\+?\d{10}$/',
-                'company_name' => 'nullable|string|max:255',
-                'query' => 'required|string',
-                'email' => 'nullable|email',
-                'contact_type' => 'sometimes|required|in:customer,supplier,both',
-                'grant_portal_access' => 'sometimes|boolean',
-            ]);
+        $this->authorize('create', Enquiry::class);
 
-            return DB::transaction(function () use ($request) {
-                // Find contact
-                $contact = Contact::where('phone', $request->input('phone'))->first();
+        $enquiry = Enquiry::create($request->validated());
+        $enquiry->createSlaTicket(); // Auto SLA
+        activity()->on($enquiry)->log('created');
 
-                // Fallback: email + name
-                if (!$contact && $request->filled('email')) {
-                    $contact = Contact::where('email', $request->input('email'))
-                        ->where('name', $request->input('name'))
-                        ->first();
-                }
+        return $this->success(new EnquiryResource($enquiry), 'Enquiry created', 201);
+    }
 
-                // Create new contact
-                if (!$contact) {
-                    $type = $request->input('contact_type', 'customer');
-                    $prefix = strtoupper(substr($type, 0, 4));
+    public function show(Enquiry $enquiry)
+    {
+        $this->authorize('view', $enquiry);
+        return $this->success(new EnquiryResource($enquiry->load(['contact', 'job', 'slaTickets'])));
+    }
 
-                    $last = Contact::where('contact_type', $type)
-                        ->where('contact_code', 'like', $prefix . '-%')
-                        ->max(DB::raw('CAST(SUBSTRING(contact_code, LOCATE(\'-\', contact_code)+1) AS UNSIGNED)')) ?? 0;
+    public function update(UpdateEnquiryRequest $request, Enquiry $enquiry)
+    {
+        $this->authorize('update', $enquiry);
 
-                    $contact_code = sprintf('%s-%04d', $prefix, $last + 1);
+        $enquiry->update($request->validated());
+        activity()->on($enquiry)->log('updated');
 
-                    $contact = Contact::create([
-                        'contact_code' => $contact_code,
-                        'name' => $request->input('name'),
-                        'phone' => $request->input('phone'),
-                        'email' => $request->input('email'),
-                        'contact_type' => $type,
-                        'has_account' => false,
-                    ]);
-                } else {
-                    $contact->update([
-                        'email' => $request->input('email') ?? $contact->email,
-                        'contact_type' => $request->input('contact_type', $contact->contact_type),
-                    ]);
-                }
+        return $this->success(new EnquiryResource($enquiry), 'Enquiry updated');
+    }
 
-                // Create enquiry
-                $enquiry = Enquiry::create([
-                    'contact_id' => $contact->id,
-                    'query' => $request->input('query'),
-                ]);
+    public function resolve(Enquiry $enquiry)
+    {
+        $this->authorize('resolve enquiry', $enquiry);
 
-                // Portal access
-                $portal = null;
-                if ($request->boolean('grant_portal_access')) {
-                    if (!$contact->email) {
-                        throw ValidationException::withMessages(['email' => 'Email required for portal access.']);
-                    }
-                    $portal = ['message' => 'Portal access will be created later.'];
-                }
+        $enquiry->update(['status' => 'resolved', 'resolved_at' => now()]);
+        $enquiry->slaTickets()->update(['status' => 'met', 'resolved_at' => now()]);
+        activity()->on($enquiry)->log('resolved');
 
-                return response()->json([
-                    'enquiry' => $enquiry->load('contact'),
-                    'contact' => $contact,
-                    'portal' => $portal,
-                ], 201);
-            });
-        } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (QueryException $e) {
-            return response()->json([
-                'message' => 'Database error',
-                'error' => $e->getMessage(),
-                'code' => $e->getCode(),
-            ], 500);
-        } catch (Exception $e) {
-            \Log::error('Enquiry creation failed', [
-                'exception' => get_class($e),
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'input' => $request->except('password'),
-            ]);
+        return $this->success(new EnquiryResource($enquiry), 'Enquiry resolved');
+    }
 
-            return response()->json([
-                'message' => 'Something went wrong',
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ], 500);
-        }
+    public function convertToJob(Enquiry $enquiry, Request $request)
+    {
+        $this->authorize('convert enquiry to job', $enquiry);
+
+        $job = Job::create([
+            'enquiry_id' => $enquiry->id,
+            'job_code' => Job::generateCode(),
+            'title' => $request->title ?? "Job from Enquiry #{$enquiry->id}",
+            'estimated_value' => $request->estimated_value ?? 0,
+            'status' => 'pending',
+            'tags' => $enquiry->tags,
+        ]);
+
+        activity()->on($job)->log('created from enquiry');
+
+        return $this->success(new \App\Http\Resources\JobResource($job), 'Job created from enquiry', 201);
+    }
+
+    public function destroy(Enquiry $enquiry)
+    {
+        $this->authorize('delete', $enquiry);
+        $enquiry->delete();
+        return $this->success(null, 'Enquiry deleted');
     }
 }
