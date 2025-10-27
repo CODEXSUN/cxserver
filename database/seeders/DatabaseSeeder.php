@@ -29,6 +29,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RBACSeeder::class,
             TodoEnhancementsSeeder::class,
+            ContactSeeder::class,
+            EnquirySeeder::class,
         ]);
 
     }

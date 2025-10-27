@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\PriorityController;
 use App\Http\Controllers\Api\TodoController;
 use App\Http\Controllers\Api\UserController;
@@ -33,3 +34,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('users/{id}/assign-role', [UserController::class, 'assignRole']);
     Route::post('users/{id}/remove-role', [UserController::class, 'removeRole']);
 });
+
+Route::post('/contacts', [ContactController::class, 'store']);
+Route::get('/contacts/{contact}', [ContactController::class, 'show']);
+
+
+// Enquiry Routes
+Route::post('/enquiries', [EnquiryController::class, 'store']);
+Route::get('/enquiries/{enquiry}', [EnquiryController::class, 'show']);
+Route::get('/contacts/{contact}/enquiries', [EnquiryController::class, 'byContact']);
