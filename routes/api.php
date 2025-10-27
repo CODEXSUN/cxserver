@@ -51,23 +51,17 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 
-// contacts
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('contacts', [ContactController::class, 'index'])
         ->middleware('permission:viewAny contacts');
-
     Route::post('contacts', [ContactController::class, 'store'])
         ->middleware('permission:create contacts');
-
     Route::get('contacts/{contact}', [ContactController::class, 'show'])
         ->middleware('permission:view contacts');
-
     Route::put('contacts/{contact}', [ContactController::class, 'update'])
         ->middleware('permission:update contacts');
-
     Route::delete('contacts/{contact}', [ContactController::class, 'destroy'])
         ->middleware('permission:delete contacts');
-
     Route::post('contacts/{contact}/restore', [ContactController::class, 'restore'])
         ->middleware('permission:restore contacts');
 });

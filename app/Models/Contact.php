@@ -29,10 +29,21 @@ class Contact extends Model
         'status' => 'string',
     ];
 
-//    public function detail(): HasOne
-//    {
-//        return $this->hasOne(ContactDetail::class);
-//    }
+    public function scopeFilter($query, $filters)
+    {
+        if ($status = $filters['status'] ?? null) {
+            $query->where('status', $status);
+        }
+
+        if ($search = $filters['search'] ?? null) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        return $query;
+    }
 
     public function user(): HasOne
     {

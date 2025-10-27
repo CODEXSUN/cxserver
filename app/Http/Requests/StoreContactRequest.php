@@ -8,17 +8,19 @@ class StoreContactRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('create', \App\Models\Contact::class);
+        return true; // Authorization handled in controller
     }
 
     public function rules(): array
     {
         return [
+            'contact_code' => 'required|string|unique:contacts,contact_code',
             'name' => 'required|string|max:255',
             'phone' => 'required|string|unique:contacts,phone',
             'email' => 'nullable|email|unique:contacts,email',
             'contact_type' => 'required|in:customer,supplier,both',
-            'has_account' => 'boolean',
+            'has_account' => 'sometimes|boolean',
+            'status' => 'required|in:active,inactive',
         ];
     }
 }
