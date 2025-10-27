@@ -50,7 +50,7 @@ class EnquiryController extends Controller
         try {
             $request->validate([
                 'name' => 'required|string|max:255',
-                'phone' => 'required|string|regex:/^\+?\d{10,15}$/',
+                'phone' => 'required|string|regex:/^\+?\d{10}$/',
                 'company_name' => 'nullable|string|max:255',
                 'query' => 'required|string',
                 'email' => 'nullable|email',
