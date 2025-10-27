@@ -50,10 +50,14 @@ class UserApiTest extends TestCase
         $response = $this->actingAs($this->admin)->postJson('/api/users', $data);
 
         $response->assertStatus(201)
+            ->assertJsonStructure([
+                'user' => ['id', 'name', 'email', 'active', 'roles'],
+                'token'
+            ])
             ->assertJsonPath('user.name', 'New User')
             ->assertJsonPath('user.email', 'newuser@test.com')
             ->assertJsonPath('user.active', false)
-            ->assertJsonStructure(['user' => ['id', 'name', 'email', 'active', 'roles'], 'token']);
+            ->assertJsonCount(0, 'user.roles'); // No roles assigned
 
         $this->assertDatabaseHas('users', ['email' => 'newuser@test.com']);
     }

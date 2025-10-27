@@ -58,6 +58,11 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        // Only admins can create users
+        if (!auth()->user()->hasPermissionTo('create users')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|unique:users',
@@ -75,7 +80,7 @@ class UserController extends Controller
         $token = $user->createToken('erp-token')->plainTextToken;
 
         return response()->json([
-            'user' => new UserResource($user),
+            'user' => new UserResource($user->load('roles')), // ← Load roles
             'token' => $token,
         ], 201);
     }
@@ -88,7 +93,7 @@ class UserController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        return new UserResource($user);
+        return new UserResource($user); // ← Return resource
     }
 
     public function update(Request $request, $id)
@@ -113,7 +118,7 @@ class UserController extends Controller
 
         $user->update($data);
 
-        return new UserResource($user);
+        return new UserResource($user->load('roles')); // ← Load roles
     }
 
     public function destroy($id)
