@@ -11,25 +11,15 @@ class TodoController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Auth::user()->todos()->with(['category', 'priority']);  // Eager load relationships
+        $query = Auth::user()->todos()->with(['category', 'priority']);
 
-        // Filtering examples
-        if ($request->has('category_id')) {
-            $query->where('category_id', $request->category_id);
-        }
-        if ($request->has('priority_id')) {
-            $query->where('priority_id', $request->priority_id);
-        }
         if ($request->has('active')) {
-            $query->where('active', $request->active);
+            $query->where('active', $request->boolean('active'));
         }
 
-        // Sorting with position support
-        $sortBy = $request->query('sort_by', 'position');
-        $sortDir = $request->query('sort_dir', 'asc');  // asc for position ordering
-        $query->orderBy($sortBy, $sortDir);
+        $query->orderBy('position', 'asc');
 
-        $perPage = $request->query('per_page', 10);
+        $perPage = $request->input('per_page', 10);
         $todos = $query->paginate($perPage);
 
         return response()->json($todos);
@@ -37,42 +27,43 @@ class TodoController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'completed' => 'boolean',
-            'category_id' => 'nullable|exists:categories,id',
-            'priority_id' => 'nullable|exists:priorities,id',
-            'active' => 'boolean',
-            'position' => 'integer|min:0',
+        $validated = $request->validate([
+            'title'        => 'required|string',
+            'completed'    => 'boolean',
+            'category_id'  => 'nullable|exists:categories,id',
+            'due_date'     => 'nullable|date',
+            'priority_id'  => 'nullable|exists:priorities,id',
+            'position'     => 'integer|min:0',
+            'active'       => 'boolean',
         ]);
 
-        $todo = Auth::user()->todos()->create($request->all());
-        return response()->json($todo->load(['category', 'priority']), 201);
+        $todo = Auth::user()->todos()->create($validated);
+
+        return response()->json(['data' => $todo->load(['category', 'priority'])], 201);
     }
 
     public function show($id)
     {
         $todo = Auth::user()->todos()->with(['category', 'priority'])->findOrFail($id);
-        return response()->json($todo);
+        return response()->json(['data' => $todo]);
     }
 
     public function update(Request $request, $id)
     {
         $todo = Auth::user()->todos()->findOrFail($id);
 
-        $request->validate([
-            'title' => 'sometimes|required|string|max:255',
-            'description' => 'nullable|string',
-            'completed' => 'boolean',
+        $validated = $request->validate([
+            'title'       => 'sometimes|required|string',
+            'completed'   => 'boolean',
             'category_id' => 'nullable|exists:categories,id',
+            'due_date'    => 'nullable|date',
             'priority_id' => 'nullable|exists:priorities,id',
-            'active' => 'boolean',
-            'position' => 'integer|min:0',
+            'active'      => 'boolean',
         ]);
 
-        $todo->update($request->all());
-        return response()->json($todo->load(['category', 'priority']));
+        $todo->update($validated);
+
+        return response()->json(['data' => $todo->load(['category', 'priority'])]);
     }
 
     public function destroy($id)
@@ -82,26 +73,23 @@ class TodoController extends Controller
         return response()->json(null, 204);
     }
 
-    // New method for reordering todos (e.g., via drag-and-drop in frontend)
     public function reorder(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'ordered_ids' => 'required|array',
             'ordered_ids.*' => 'integer|exists:todos,id',
         ]);
 
-        $userTodos = Auth::user()->todos()->pluck('id')->toArray();
-        $orderedIds = $request->ordered_ids;
+        $userTodoIds = Auth::user()->todos()->pluck('id')->toArray();
 
-        // Ensure only user's todos are reordered
-        if (array_diff($orderedIds, $userTodos)) {
+        if (array_diff($validated['ordered_ids'], $userTodoIds)) {
             return response()->json(['error' => 'Invalid todo IDs'], 400);
         }
 
-        foreach ($orderedIds as $position => $id) {
-            Todo::where('id', $id)->update(['position' => $position]);
+        foreach ($validated['ordered_ids'] as $index => $id) {
+            Todo::where('id', $id)->update(['position' => $index]);
         }
 
-        return response()->json(['message' => 'Todos reordered']);
+        return response()->json(['message' => 'Todos reordered successfully']);
     }
 }

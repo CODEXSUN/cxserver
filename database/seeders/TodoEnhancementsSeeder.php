@@ -15,12 +15,13 @@ class TodoEnhancementsSeeder extends Seeder
         // Seed Categories (from TodoEnhancementsSeeder)
         Category::firstOrCreate(['name' => 'Work'], ['description' => 'Work-related tasks']);
         Category::firstOrCreate(['name' => 'Personal'], ['description' => 'Personal errands']);
-        Category::firstOrCreate(['name' => 'Urgent'], ['description' => 'High urgency items']);
+        Category::firstOrCreate(['name' => 'Other'], ['description' => 'Other items']);
+        Category::firstOrCreate(['name' => 'Health'], ['description' => 'Healthy items']);
 
         // Seed Priorities (from TodoEnhancementsSeeder)
-        Priority::firstOrCreate(['name' => 'High'], ['level' => 1, 'description' => 'Immediate attention']);
+        Priority::firstOrCreate(['name' => 'Low'], ['level' => 1, 'description' => 'Can wait']);
         Priority::firstOrCreate(['name' => 'Medium'], ['level' => 2, 'description' => 'Normal priority']);
-        Priority::firstOrCreate(['name' => 'Low'], ['level' => 3, 'description' => 'Can wait']);
+        Priority::firstOrCreate(['name' => 'High'], ['level' => 3, 'description' => 'Immediate attention']);
 
         // Assume user ID 1 exists; create a test user if not (from TodoSeeder)
         $user = User::find(1);
@@ -36,13 +37,13 @@ class TodoEnhancementsSeeder extends Seeder
         for ($i = 1; $i <= 10; $i++) {
             Todo::create([
                 'user_id' => $user->id,
-                'title' => "Todo Task #{$i}",
-                'description' => "Description for task #{$i} in ERP system.",
-                'completed' => (bool) rand(0, 1),  // Random true/false
-                'category_id' => rand(1, 3),  // Reference seeded categories 1-3
-                'priority_id' => rand(1, 3),  // Reference seeded priorities 1-3
+                'title' => "Todo Task #{$i}" . fake()->name(),
+                'completed' => (bool) rand(0, 1),
+                'category_id' => rand(1, 3),
+                'due_date' => now()->addDays(rand(0, 365)),
+                'priority_id' => rand(1, 3),
+                'position' => $i * 10,
                 'active' => true,
-                'position' => $i * 10,  // Incremental positions (10, 20, 30...)
             ]);
         }
 

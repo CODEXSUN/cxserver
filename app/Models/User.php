@@ -73,10 +73,4 @@ class User extends Authenticatable
     {
         return $this->hasMany(Todo::class);
     }
-
-    // Optional: Override for hashing password on create/update
-    public function setPasswordAttribute($value): void
-    {
-        $this->attributes['password'] = bcrypt($value);
-    }
 }

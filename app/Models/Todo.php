@@ -9,12 +9,12 @@ class Todo extends Model
 {
     protected $fillable = [
         'title',
-        'description',
         'completed',
         'category_id',
+        'due_date',
         'priority_id',
-        'active',
-        'position'
+        'position',
+        'active'
     ];
 
     public function user(): BelongsTo

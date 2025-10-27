@@ -11,23 +11,21 @@ class AuthController extends Controller
 {
     public function login(Request $request)
     {
-        $request->validate([
+        $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
+        if (! Auth::guard('web')->attempt($credentials)) {  // Use 'web' guard here
+            return response()->json(['message' => 'These credentials do not match our records.'], 401);
         }
 
-        $user = Auth::user();
-        $token = $user->createToken('erp-token')->plainTextToken;  // 'erp-token' is a token name
+        $user = Auth::guard('web')->user();  // Retrieve user via 'web' guard
+        $token = $user->createToken('erp-token')->plainTextToken;  // Sanctum token generation
 
         return response()->json([
+            'user' => $user,
             'token' => $token,
-            'user' => $user,  // Optional: Return user details for ERP profile
         ]);
     }
 
