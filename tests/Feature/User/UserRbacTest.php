@@ -20,7 +20,7 @@ class UserRbacTest extends TestCase
         $this->seed(\Database\Seeders\UserRABCSeeder::class);
     }
 
-    public function test_admin_user_has_all_permissions()
+    public function test_1_admin_user_has_all_permissions()
     {
         $admin = User::where('email', 'admin@admin.com')->first();
         $this->assertNotNull($admin);
@@ -37,7 +37,7 @@ class UserRbacTest extends TestCase
         $this->assertTrue($admin->hasRole('admin'));
     }
 
-    public function test_manager_can_view_users_and_reports_but_cannot_delete_users()
+    public function test_2_manager_can_view_users_and_reports_but_cannot_delete_users()
     {
         $manager = User::where('email', 'manager@manager.com')->first();
 
@@ -49,7 +49,7 @@ class UserRbacTest extends TestCase
         $this->assertFalse($manager->hasPermissionTo('manage settings'));
     }
 
-    public function test_standard_user_can_manage_contacts_but_not_users()
+    public function test_3_standard_user_can_manage_contacts_but_not_users()
     {
         $user = User::where('email', 'user@user.com')->first();
 
@@ -61,7 +61,7 @@ class UserRbacTest extends TestCase
         $this->assertFalse($user->hasPermissionTo('manage roles'));
     }
 
-    public function test_client_can_only_view_own_contact_and_products()
+    public function test_4_client_can_only_view_own_contact_and_products()
     {
         $client = User::where('email', 'client@client.com')->first();
 
@@ -72,7 +72,7 @@ class UserRbacTest extends TestCase
         $this->assertFalse($client->hasPermissionTo('create contacts'));
     }
 
-    public function test_dealer_can_view_products_and_contacts_list()
+    public function test_5_dealer_can_view_products_and_contacts_list()
     {
         $dealer = User::where('email', 'dealer@dealer.com')->first();
 
@@ -84,7 +84,7 @@ class UserRbacTest extends TestCase
         $this->assertFalse($dealer->hasPermissionTo('delete contacts'));
     }
 
-    public function test_guest_can_only_view_products()
+    public function test_6_guest_can_only_view_products()
     {
         $guestRole = Role::where('name', 'guest')->first();
         $guest = User::factory()->create(['email' => 'guest@test.com', 'active' => true]);
@@ -95,7 +95,7 @@ class UserRbacTest extends TestCase
         $this->assertFalse($guest->hasPermissionTo('viewAny products'));
     }
 
-    public function test_devops_has_full_access_like_admin()
+    public function test_7_devops_has_full_access_like_admin()
     {
         $devops = User::where('email', 'devops@codexsun.com')->first();
 
@@ -104,7 +104,7 @@ class UserRbacTest extends TestCase
         $this->assertTrue($devops->hasPermissionTo('delete users'));
     }
 
-    public function test_inactive_user_is_marked_correctly()
+    public function test_8_inactive_user_is_marked_correctly()
     {
         $user = User::where('email', 'admin@admin.com')->first();
         $this->assertNotNull($user);
@@ -116,7 +116,7 @@ class UserRbacTest extends TestCase
         $this->assertFalse($freshUser->active);            // ← Now passes
     }
 
-    public function test_role_and_permission_pivot_tables_are_populated_correctly()
+    public function test_9_role_and_permission_pivot_tables_are_populated_correctly()
     {
         $admin = Role::where('name', 'admin')->first();
         $totalPermissions = Permission::count();
@@ -128,7 +128,7 @@ class UserRbacTest extends TestCase
         $this->assertFalse($manager->permissions()->where('name', 'delete users')->exists());
     }
 
-    public function test_user_role_assignment_via_pivot_is_correct()
+    public function test_10_user_role_assignment_via_pivot_is_correct()
     {
         $sundar = User::where('email', 'sundar@sundar.com')->first();
         $this->assertTrue($sundar->hasRole('admin'));

@@ -40,15 +40,15 @@ class PermissionApiTest extends TestCase
     public function test_2_admin_can_create_permission()
     {
         $data = [
-            'name' => 'delete contacts',
-            'description' => 'Permanently delete contacts'
+            'name' => 'custom create invoices', // ← NEW, not in seeder
+            'description' => 'Create custom invoices'
         ];
 
         $response = $this->actingAs($this->admin)->postJson('/api/permissions', $data);
 
         $response->assertStatus(201)
-            ->assertJsonPath('data.name', 'delete contacts')
-            ->assertJsonPath('data.description', 'Permanently delete contacts');
+            ->assertJsonPath('data.name', 'custom create invoices')
+            ->assertJsonPath('data.description', 'Create custom invoices');
 
         $this->assertDatabaseHas('permissions', $data);
     }
@@ -77,19 +77,22 @@ class PermissionApiTest extends TestCase
 
     public function test_5_admin_can_update_permission()
     {
-        $perm = Permission::create(['name' => 'temp perm', 'description' => 'old']);
+        $perm = Permission::create([
+            'name' => 'temp unique permission',
+            'description' => 'old description'
+        ]);
 
         $response = $this->actingAs($this->admin)->putJson("/api/permissions/{$perm->id}", [
-            'name' => 'restore contacts',
-            'description' => 'Restore soft-deleted contacts'
+            'name' => 'updated unique permission', // ← NEW
+            'description' => 'Updated description'
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonPath('data.name', 'restore contacts');
+            ->assertJsonPath('data.name', 'updated unique permission');
 
         $this->assertDatabaseHas('permissions', [
             'id' => $perm->id,
-            'name' => 'restore contacts'
+            'name' => 'updated unique permission'
         ]);
     }
 
