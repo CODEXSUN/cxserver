@@ -13,9 +13,11 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
-            'role' => $this->role ?? 'user',
-            'avatar' => $this->avatar_url ?? null,
-            'created_at' => $this->created_at->toDateTimeString(),
+            'active' => (bool) $this->active,
+            'roles' => $this->whenLoaded('roles', fn() => $this->roles->map(fn($role) => [
+                'id' => $role->id,
+                'name' => $role->name,
+            ])->values()),
         ];
     }
 }
