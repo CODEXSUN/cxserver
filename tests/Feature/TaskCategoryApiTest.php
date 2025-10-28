@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Tests\Feature;
 
 use App\Models\TaskCategory;
@@ -18,16 +17,22 @@ class TaskCategoryApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
         $this->seed(\Database\Seeders\UserRABCSeeder::class);
         $this->seed(\Database\Seeders\EnquiryRABCSeeder::class);
-        $this->seed(\Database\Seeders\ProjectCategoryRABCSeeder::class);
         $this->seed(\Database\Seeders\TaskCategoryRABCSeeder::class);
 
         $this->admin = User::where('email', 'admin@admin.com')->with('roles.permissions')->first();
         $this->manager = User::where('email', 'manager@manager.com')->with('roles.permissions')->first();
     }
+    protected function tearDown(): void
+    {
+        // Force clear after each test
+        TaskCategory::query()->forceDelete();
+        parent::tearDown();
+    }
 
-    public function test_admin_can_list_categories()
+    public function test_1_admin_can_list_categories()
     {
         TaskCategory::factory()->count(20)->create();
 
@@ -38,7 +43,7 @@ class TaskCategoryApiTest extends TestCase
             ->assertJsonStructure(['data' => [['id', 'name', 'tasks_count']], 'meta']);
     }
 
-    public function test_admin_can_create_category()
+    public function test_2_admin_can_create_category()
     {
         $payload = [
             'name' => 'Web Development',
@@ -54,7 +59,7 @@ class TaskCategoryApiTest extends TestCase
         $this->assertDatabaseHas('task_categories', ['slug' => 'web-development']);
     }
 
-    public function test_admin_can_update_category()
+    public function test_3_admin_can_update_category()
     {
         $category = TaskCategory::factory()->create();
 
@@ -67,7 +72,7 @@ class TaskCategoryApiTest extends TestCase
         $this->assertDatabaseHas('task_categories', ['id' => $category->id, 'is_active' => false]);
     }
 
-    public function test_admin_can_delete_category()
+    public function test_4_admin_can_delete_category()
     {
         $category = TaskCategory::factory()->create();
 
@@ -77,13 +82,17 @@ class TaskCategoryApiTest extends TestCase
         $this->assertSoftDeleted('task_categories', ['id' => $category->id]);
     }
 
-    public function test_filter_by_active()
+    public function test_5_filter_by_active()
     {
         TaskCategory::factory()->create(['is_active' => true]);
         TaskCategory::factory()->count(2)->create(['is_active' => false]);
 
         $response = $this->actingAs($this->admin)->getJson('/api/task-categories?filter[is_active]=1');
 
-        $response->assertStatus(200)->assertJsonCount(1, 'data');
+        \Log::info('FILTER TEST RESPONSE', ['response' => $response->json()]);
+
+        $response->assertStatus(200)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.is_active', true);
     }
 }

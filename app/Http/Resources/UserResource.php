@@ -18,6 +18,7 @@ class UserResource extends JsonResource
                 'id' => $role->id,
                 'name' => $role->name,
             ])->values(),
+            'permissions' => $this->getAllPermissions()->pluck('name')->unique(),
         ];
     }
 }

@@ -19,12 +19,19 @@ class ProjectCategoryApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
         $this->seed(\Database\Seeders\UserRABCSeeder::class);
         $this->seed(\Database\Seeders\EnquiryRABCSeeder::class);
         $this->seed(\Database\Seeders\ProjectCategoryRABCSeeder::class);
 
         $this->admin = User::where('email', 'admin@admin.com')->with('roles.permissions')->first();
         $this->manager = User::where('email', 'manager@manager.com')->with('roles.permissions')->first();
+    }
+    protected function tearDown(): void
+    {
+        // Force clear after each test
+        ProjectCategory::query()->forceDelete();
+        parent::tearDown();
     }
 
     public function test_1_admin_can_list_categories()
@@ -82,9 +89,12 @@ class ProjectCategoryApiTest extends TestCase
         ProjectCategory::factory()->create(['is_active' => true]);
         ProjectCategory::factory()->count(2)->create(['is_active' => false]);
 
-//        $response = $this->actingAs($this->admin)->getJson('/api/project-categories?filter[is_active]=true');
         $response = $this->actingAs($this->admin)->getJson('/api/project-categories?filter[is_active]=1');
 
-        $response->assertStatus(200)->assertJsonCount(1, 'data');
+        \Log::info('FILTER TEST RESPONSE', ['response' => $response->json()]);
+
+        $response->assertStatus(200)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.is_active', true);
     }
 }

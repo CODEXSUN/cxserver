@@ -18,6 +18,11 @@ class ProjectCategoryController extends Controller
     {
         $this->authorize('viewAny', ProjectCategory::class);
 
+        $filters = [
+            'is_active' => $request->input('filter.is_active'), // ← CORRECT
+            'search' => $request->input('search'),
+        ];
+
         $categories = ProjectCategory::withCount('projects')
             ->filter($request->only(['is_active', 'search']))
             ->paginate($request->get('per_page', 15));

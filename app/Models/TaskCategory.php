@@ -21,11 +21,13 @@ class TaskCategory extends Model
 
     public function scopeFilter($query, $filters)
     {
-        if ($isActive = $filters['is_active'] ?? null) {
-            $query->where('is_active', filter_var($isActive, FILTER_VALIDATE_BOOLEAN));
+        if (isset($filters['is_active']) && $filters['is_active'] !== '' && $filters['is_active'] !== null) {
+            $boolValue = filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN);
+            $query->where('is_active', $boolValue);
         }
 
-        if ($search = $filters['search'] ?? null) {
+        if (isset($filters['search']) && $filters['search'] !== '') {
+            $search = $filters['search'];
             $query->where('name', 'like', "%{$search}%")
                 ->orWhere('slug', 'like', "%{$search}%");
         }

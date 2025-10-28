@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\TaskCategoryController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\TodoController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -32,6 +33,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('priorities', PriorityController::class);
 });
 
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return new UserResource($request->user()->load('roles.permissions'));
+});
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('users', UserController::class);

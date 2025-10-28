@@ -35,20 +35,12 @@ class ProjectCategory extends Model
 
     public function scopeFilter($query, $filters)
     {
-        // Only apply filter if key exists AND value is not empty/null
-        if (array_key_exists('is_active', $filters)) {
-            $value = $filters['is_active'];
-
-            // Skip if empty string or null
-            if ($value === '' || $value === null) {
-                return $query;
-            }
-
-            $boolValue = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+        if (isset($filters['is_active']) && $filters['is_active'] !== '' && $filters['is_active'] !== null) {
+            $boolValue = filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN);
             $query->where('is_active', $boolValue);
         }
 
-        if (!empty($filters['search'])) {
+        if (isset($filters['search']) && $filters['search'] !== '') {
             $search = $filters['search'];
             $query->where('name', 'like', "%{$search}%")
                 ->orWhere('slug', 'like', "%{$search}%");

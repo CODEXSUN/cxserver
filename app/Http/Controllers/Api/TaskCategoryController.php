@@ -18,6 +18,11 @@ class TaskCategoryController extends Controller
     {
         $this->authorize('viewAny', TaskCategory::class);
 
+        $filters = [
+            'is_active' => $request->input('filter.is_active'), // ← CORRECT
+            'search' => $request->input('search'),
+        ];
+
         $categories = TaskCategory::withCount('tasks')
             ->filter($request->only(['is_active', 'search']))
             ->paginate($request->get('per_page', 15));

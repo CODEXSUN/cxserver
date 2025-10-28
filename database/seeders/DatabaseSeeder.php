@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             UserRABCSeeder::class,
             EnquiryRABCSeeder::class,
             ProjectCategoryRABCSeeder::class,
+            TodoEnhancementsSeeder::class,
         ]);
 
     }
