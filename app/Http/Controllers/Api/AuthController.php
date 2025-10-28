@@ -21,7 +21,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'These credentials do not match our records.'], 401);
         }
 
-        $user = Auth::guard('web')->user();  // Retrieve user via 'web' guard
+        $user = Auth::guard('web')->user();
         $token = $user->createToken('erp-token')->plainTextToken;  // Sanctum token generation
 
         // Load roles with permissions (custom RBAC)
