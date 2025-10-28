@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateProjectCategoryRequest extends FormRequest
 {
@@ -14,7 +15,12 @@ class UpdateProjectCategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'sometimes|required|string|unique:project_categories,name,' . $this->route('project_category'),
+            'name' => [
+                'sometimes',
+                'required',
+                'string',
+                Rule::unique('project_categories')->ignore($this->project_category),
+            ],
             'color' => 'nullable|string',
             'is_active' => 'boolean',
         ];

@@ -42,8 +42,13 @@ class ProjectCategoryController extends Controller
     public function update(UpdateProjectCategoryRequest $request, ProjectCategory $projectCategory)
     {
         $this->authorize('update', $projectCategory);
+
         $projectCategory->update($request->validated());
-        return $this->success(new ProjectCategoryResource($projectCategory), 'Project Category updated');
+
+        // Reload to get fresh data
+        $projectCategory->refresh();
+
+        return $this->success(new ProjectCategoryResource($projectCategory), 'Category updated');
     }
 
     public function destroy(ProjectCategory $projectCategory)

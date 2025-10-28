@@ -27,7 +27,7 @@ class ProjectCategoryApiTest extends TestCase
         $this->manager = User::where('email', 'manager@manager.com')->with('roles.permissions')->first();
     }
 
-    public function test_admin_can_list_categories()
+    public function test_1_admin_can_list_categories()
     {
         ProjectCategory::factory()->count(20)->create();
 
@@ -38,7 +38,7 @@ class ProjectCategoryApiTest extends TestCase
             ->assertJsonStructure(['data' => [['id', 'name', 'projects_count']], 'meta']);
     }
 
-    public function test_admin_can_create_category()
+    public function test_2_admin_can_create_category()
     {
         $payload = [
             'name' => 'Web Development',
@@ -54,7 +54,7 @@ class ProjectCategoryApiTest extends TestCase
         $this->assertDatabaseHas('project_categories', ['slug' => 'web-development']);
     }
 
-    public function test_admin_can_update_category()
+    public function test_3_admin_can_update_category()
     {
         $category = ProjectCategory::factory()->create();
 
@@ -67,7 +67,7 @@ class ProjectCategoryApiTest extends TestCase
         $this->assertDatabaseHas('project_categories', ['id' => $category->id, 'is_active' => false]);
     }
 
-    public function test_admin_can_delete_category()
+    public function test_4_admin_can_delete_category()
     {
         $category = ProjectCategory::factory()->create();
 
@@ -77,11 +77,12 @@ class ProjectCategoryApiTest extends TestCase
         $this->assertSoftDeleted('project_categories', ['id' => $category->id]);
     }
 
-    public function test_filter_by_active()
+    public function test_5_filter_by_active()
     {
         ProjectCategory::factory()->create(['is_active' => true]);
         ProjectCategory::factory()->count(2)->create(['is_active' => false]);
 
+//        $response = $this->actingAs($this->admin)->getJson('/api/project-categories?filter[is_active]=true');
         $response = $this->actingAs($this->admin)->getJson('/api/project-categories?filter[is_active]=1');
 
         $response->assertStatus(200)->assertJsonCount(1, 'data');

@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\PriorityController;
 use App\Http\Controllers\Api\ProjectCategoryController;
 use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\TaskCategoryController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\TodoController;
 use App\Http\Controllers\Api\UserController;
@@ -76,6 +77,9 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::apiResource('project-categories', ProjectCategoryController::class);
-    Route::apiResource('task-categories', TaskCategoryController::class);
+    Route::apiResource('project-categories', ProjectCategoryController::class)
+        ->parameters(['project-categories' => 'project_category']);
+
+    Route::apiResource('task-categories', TaskCategoryController::class)
+        ->parameters(['task-categories' => 'task_category']);
 });
