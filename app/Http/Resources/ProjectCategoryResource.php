@@ -2,12 +2,11 @@
 
 namespace App\Http\Resources;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class TaskCategoryResource extends JsonResource
+class ProjectCategoryResource extends JsonResource
 {
-    public function toArray(Request $request): array
+    public function toArray($request)
     {
         return [
             'id' => $this->id,
@@ -15,7 +14,7 @@ class TaskCategoryResource extends JsonResource
             'slug' => $this->slug,
             'color' => $this->color,
             'is_active' => $this->is_active,
-            'tasks_count' => $this->whenCounted('tasks'),
+            'projects_count' => $this->whenCounted('projects'),
         ];
     }
 }

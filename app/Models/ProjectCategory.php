@@ -16,6 +16,20 @@ class ProjectCategory extends Model
 
     public function Projects(): HasMany
     {
-        return $this->hasMany(Project::class, 'category_id');
+        return $this->hasMany(Project::class, 'project_category_id');
+    }
+
+    public function scopeFilter($query, $filters)
+    {
+        if ($isActive = $filters['is_active'] ?? null) {
+            $query->where('is_active', filter_var($isActive, FILTER_VALIDATE_BOOLEAN));
+        }
+
+        if ($search = $filters['search'] ?? null) {
+            $query->where('name', 'like', "%{$search}%")
+                ->orWhere('slug', 'like', "%{$search}%");
+        }
+
+        return $query;
     }
 }

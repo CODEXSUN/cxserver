@@ -21,7 +21,7 @@ class ProjectResource extends JsonResource
             'billed_at' => $this->billed_at?->format('Y-m-d H:i'),
             'tags' => $this->tags,
             'enquiry_id' => $this->enquiry_id,
-            'category' => new ProjectCategoryResource($this->whenLoaded('category')),
+            'category_id' => $this->category_id,
         ];
     }
 }

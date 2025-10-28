@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('projects', function (Blueprint $table) {
             $table->id();
             $table->foreignId('enquiry_id')->constrained()->onDelete('cascade');
-            $table->foreignId('category_id')->nullable()->constrained('project_categories')->onDelete('set null');
+            $table->foreignId('project_category_id')->nullable()->constrained('project_categories')->onDelete('set null');
             $table->string('project_code')->unique()->index();
             $table->longText('title');
             $table->decimal('estimated_value', 12, 2)->default(0);
@@ -28,7 +28,7 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
 
-            $table->index(['status', 'is_billable', 'category_id', 'created_at']);
+            $table->index(['status', 'is_billable', 'project_category_id', 'created_at']);
         });
     }
 

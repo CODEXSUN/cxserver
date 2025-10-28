@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\EnquiryController;
 use App\Http\Controllers\Api\JobController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\PriorityController;
+use App\Http\Controllers\Api\ProjectCategoryController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\TodoController;
@@ -72,4 +73,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('enquiries/{enquiry}/restore', [EnquiryController::class, 'restore']);
     Route::post('enquiries/{enquiry}/resolve', [EnquiryController::class, 'resolve']);
     Route::post('enquiries/{enquiry}/convert-to-project', [EnquiryController::class, 'convertToProject']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::apiResource('project-categories', ProjectCategoryController::class);
+    Route::apiResource('task-categories', TaskCategoryController::class);
 });

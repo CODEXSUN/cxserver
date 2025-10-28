@@ -16,7 +16,7 @@ class Project extends Model
     protected $fillable = [
         'enquiry_id', 'project_code', 'title', 'estimated_value',
         'billed_amount', 'is_billable', 'status', 'started_at',
-        'completed_at', 'billed_at', 'tags', 'category_id'
+        'completed_at', 'billed_at', 'tags', 'project_category_id'
     ];
 
     protected $casts = [

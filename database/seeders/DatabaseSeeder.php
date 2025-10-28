@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UserRABCSeeder::class,
             EnquiryRABCSeeder::class,
+            ProjectCategoryRABCSeeder::class,
         ]);
 
     }

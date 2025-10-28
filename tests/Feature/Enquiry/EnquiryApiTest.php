@@ -1,7 +1,7 @@
 <?php
 // tests/Feature/EnquiryApiTest.php
 
-namespace Tests\Feature;
+namespace Tests\Feature\Enquiry;
 
 use App\Models\Contact;
 use App\Models\Enquiry;

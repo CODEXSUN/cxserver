@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('project_id')->constrained()->onDelete('cascade');
             $table->foreignId('parent_task_id')->nullable()->constrained('tasks')->onDelete('set null');
-            $table->foreignId('category_id')->nullable()->constrained('task_categories')->onDelete('set null'); // ← NEW
+            $table->foreignId('task_category_id')->nullable()->constrained('task_categories')->onDelete('set null'); // ← NEW
             $table->string('task_code')->unique()->index();
             $table->longText('title');
             $table->decimal('task_value', 10, 2)->default(0);
@@ -29,7 +29,10 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
 
-            $table->index(['status', 'priority', 'due_date', 'parent_task_id', 'category_id']);
+            $table->index(
+                ['status', 'priority', 'due_date', 'parent_task_id', 'task_category_id'],
+                'tasks_status_priority_idx'
+            );
 
         });
     }
