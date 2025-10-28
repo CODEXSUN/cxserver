@@ -55,6 +55,10 @@ class EnquiryController extends Controller
         $enquiry = Enquiry::create($request->validated());
         $enquiry->createSlaTicket();
 
+        // Load relationships for response
+        $enquiry->load('contact');
+        $enquiry->loadCount('slaTickets');
+
         return $this->success(new EnquiryResource($enquiry), 'Enquiry created', 201);
     }
 

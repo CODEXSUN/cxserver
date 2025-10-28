@@ -69,8 +69,8 @@ class Enquiry extends Model
         // Dummy SLA creation – replace with real logic
         $this->slaTickets()->create([
             'status' => 'active',
-            'due_at' => now()->addHours(24),
             'time_limit_minutes' => 1440, // 24 hours
+            'due_at' => now()->addHours(24),
         ]);
     }
 }
