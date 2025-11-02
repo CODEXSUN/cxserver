@@ -1,2 +1,0 @@
-# cxserver
-Software Makes Simple
