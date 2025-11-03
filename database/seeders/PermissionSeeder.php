@@ -12,7 +12,7 @@ class PermissionSeeder extends Seeder
     private array $permissions = [];
 
     private array $globalCrudModules = [
-        'blog', 'user', 'category', 'tag', 'comment', 'media',
+        'blog', 'user', 'category', 'tag', 'comment', 'media', 'contact', 'contact-type'
         // add new modules here
     ];
 

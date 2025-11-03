@@ -19,6 +19,8 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             UserSeeder::class,
             BlogSeeder::class,
+            ContactTypeSeeder::class,
+            ContactSeeder::class,
         ]);
     }
 }
