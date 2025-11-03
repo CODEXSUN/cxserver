@@ -5,14 +5,21 @@ import { useState } from 'react';
 import { useRoute } from 'ziggy-js';
 import type { PageProps as InertiaPageProps } from '@inertiajs/core';
 
+// shadcn/ui
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
+
 interface Blog {
     id: number;
     title: string;
     body: string;
-    published: boolean;
-    slug: string;
     published_at: string | null;
-    created_at: string;
     author?: { name: string };
 }
 
@@ -43,144 +50,134 @@ export default function Edit() {
     // --------------------------------------------------------------
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        patch(route('blogs.update', blog.id), {
-            onSuccess: () => reset(),
-        });
+        patch(route('blogs.update', blog.id), { onSuccess: () => reset() });
     };
 
-    // --------------------------------------------------------------
-    // Render
-    // --------------------------------------------------------------
     return (
         <Layout>
             <Head title="Edit Blog" />
 
             <div className="py-12">
-                <div className="mx-auto max-w-4xl sm:px-6 lg:px-8">
-                    <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg dark:bg-gray-800">
-                        <div className="border-b border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-                            {/* Header */}
-                            <div className="mb-6 flex items-center justify-between">
-                                <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-                                    Edit Blog
-                                </h1>
-                                <Link
-                                    href={route('blogs.index')}
-                                    className="text-sm text-indigo-600 hover:text-indigo-800"
-                                >
-                                    ← Back to Blogs
-                                </Link>
-                            </div>
+                <div className="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
+                    {/* Header */}
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-3xl font-bold tracking-tight">Edit Blog</h1>
+                            <p className="text-muted-foreground mt-1">
+                                Update your post below
+                            </p>
+                        </div>
+                        <Button variant="ghost" asChild>
+                            <Link href={route('blogs.index')}>
+                                <ArrowLeft className="mr-2 h-4 w-4" />
+                                Back
+                            </Link>
+                        </Button>
+                    </div>
 
-                            {/* Form */}
+                    <Separator />
+
+                    {/* Form Card */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Blog Details</CardTitle>
+                            <CardDescription>
+                                Edit title, content, and publishing status.
+                            </CardDescription>
+                        </CardHeader>
+
+                        <CardContent>
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 {/* Title */}
-                                <div>
-                                    <label
-                                        htmlFor="title"
-                                        className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                    >
-                                        Title
-                                    </label>
-                                    <input
+                                <div className="space-y-2">
+                                    <Label htmlFor="title">Title</Label>
+                                    <Input
                                         id="title"
-                                        type="text"
                                         value={data.title}
                                         onChange={(e) => setData('title', e.target.value)}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                                         placeholder="Enter a catchy title..."
                                         required
                                     />
                                     {errors.title && (
-                                        <p className="mt-1 text-sm text-red-600">{errors.title}</p>
+                                        <p className="text-sm text-destructive">{errors.title}</p>
                                     )}
                                 </div>
 
-                                {/* Body */}
-                                <div>
-                                    <div className="mb-2 flex items-center justify-between">
-                                        <label
-                                            htmlFor="body"
-                                            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                        >
-                                            Content
-                                        </label>
-                                        <button
+                                {/* Body + Preview */}
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <Label htmlFor="body">Content</Label>
+                                        <Button
                                             type="button"
+                                            variant="ghost"
+                                            size="sm"
                                             onClick={() => setShowPreview(!showPreview)}
-                                            className="text-xs text-indigo-600 hover:text-indigo-800"
                                         >
-                                            {showPreview ? 'Edit' : 'Preview'}
-                                        </button>
+                                            {showPreview ? (
+                                                <>
+                                                    <EyeOff className="mr-1 h-3.5 w-3.5" />
+                                                    Edit
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Eye className="mr-1 h-3.5 w-3.5" />
+                                                    Preview
+                                                </>
+                                            )}
+                                        </Button>
                                     </div>
 
                                     {showPreview ? (
-                                        <div className="prose prose-sm dark:prose-invert max-w-none rounded-md bg-gray-50 p-4 dark:bg-gray-900">
+                                        <div className="prose prose-sm dark:prose-invert max-w-none rounded-md border p-4 bg-muted/50">
                                             {data.body ? (
                                                 <div
-                                                    dangerouslySetInnerHTML={{
-                                                        __html: marked(data.body),
-                                                    }}
+                                                    dangerouslySetInnerHTML={{ __html: marked(data.body) }}
                                                 />
                                             ) : (
-                                                <p className="text-gray-400 italic">
+                                                <p className="italic text-muted-foreground">
                                                     Nothing to preview yet.
                                                 </p>
                                             )}
                                         </div>
                                     ) : (
-                                        <textarea
+                                        <Textarea
                                             id="body"
-                                            rows={12}
+                                            rows={14}
                                             value={data.body}
                                             onChange={(e) => setData('body', e.target.value)}
-                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                                             placeholder="Write your blog post in Markdown..."
+                                            className="resize-none"
                                             required
                                         />
                                     )}
                                     {errors.body && (
-                                        <p className="mt-1 text-sm text-red-600">{errors.body}</p>
+                                        <p className="text-sm text-destructive">{errors.body}</p>
                                     )}
                                 </div>
 
                                 {/* Published */}
-                                <div className="flex items-center">
-                                    <input
+                                <div className="flex items-center space-x-2">
+                                    <Switch
                                         id="published"
-                                        type="checkbox"
                                         checked={data.published}
-                                        onChange={(e) => setData('published', e.target.checked)}
-                                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        onCheckedChange={(checked) => setData('published', checked)}
                                     />
-                                    <label
-                                        htmlFor="published"
-                                        className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
-                                    >
-                                        Published
-                                    </label>
+                                    <Label htmlFor="published">Published</Label>
                                 </div>
 
                                 {/* Actions */}
-                                <div className="flex items-center gap-3">
-                                    <button
-                                        type="submit"
-                                        disabled={processing}
-                                        className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
+                                <div className="flex items-center gap-3 pt-4">
+                                    <Button type="submit" disabled={processing}>
                                         {processing ? 'Saving...' : 'Update Blog'}
-                                    </button>
+                                    </Button>
 
-                                    <Link
-                                        href={route('blogs.index')}
-                                        className="inline-flex items-center rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                                    >
-                                        Cancel
-                                    </Link>
+                                    <Button variant="outline" asChild>
+                                        <Link href={route('blogs.index')}>Cancel</Link>
+                                    </Button>
                                 </div>
                             </form>
-                        </div>
-                    </div>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </Layout>
@@ -188,7 +185,7 @@ export default function Edit() {
 }
 
 /* ------------------------------------------------------------------
-   Tiny client‑side Markdown preview (same as Create.tsx)
+   Same tiny markdown renderer
    ------------------------------------------------------------------ */
 function marked(md: string): string {
     return md

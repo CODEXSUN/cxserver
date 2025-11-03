@@ -2,8 +2,14 @@
 import Layout from '@/layouts/app-layout';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { useRoute } from 'ziggy-js';
 import type { PageProps as InertiaPageProps } from '@inertiajs/core';
+
+// shadcn/ui
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { ArrowLeft, RotateCcw, Trash2 } from 'lucide-react';
+import { useRoute } from 'ziggy-js';
 
 interface Blog {
     id: number;
@@ -28,8 +34,8 @@ interface TrashPageProps extends InertiaPageProps {
 }
 
 export default function Trash() {
-    const route = useRoute();
     const { blogs } = usePage<TrashPageProps>().props;
+    const route = useRoute();
     const [processing, setProcessing] = useState<number | null>(null);
 
     const handleRestore = (id: number) => {
@@ -55,110 +61,113 @@ export default function Trash() {
             <Head title="Trash" />
 
             <div className="py-12">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                        <div className="p-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+                    {/* Header */}
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-3xl font-bold tracking-tight">Trashed Blogs</h1>
+                            <p className="text-muted-foreground mt-1">
+                                {blogs.total} blog{blogs.total !== 1 ? 's' : ''} in trash
+                            </p>
+                        </div>
+                        <Button variant="outline" asChild>
+                            <Link href={route('blogs.index')}>
+                                <ArrowLeft className="mr-2 h-4 w-4" />
+                                Back to Blogs
+                            </Link>
+                        </Button>
+                    </div>
 
-                            {/* Header */}
-                            <div className="flex items-center justify-between mb-6">
-                                <div>
-                                    <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-                                        Trashed Blogs
-                                    </h1>
-                                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                                        {blogs.total} blog{blogs.total !== 1 ? 's' : ''} in trash
-                                    </p>
-                                </div>
-                                <Link
-                                    href={route('blogs.index')}
-                                    className="inline-flex items-center px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-md hover:bg-gray-700 transition"
-                                >
-                                    ← Back to Blogs
-                                </Link>
+                    <Separator />
+
+                    {/* Empty State */}
+                    {blogs.data.length === 0 ? (
+                        <Card>
+                            <CardContent className="flex flex-col items-center justify-center py-12">
+                                <div className="bg-muted border-2 border-dashed rounded-xl w-16 h-16 mb-4" />
+                                <p className="text-muted-foreground">No blogs in trash.</p>
+                            </CardContent>
+                        </Card>
+                    ) : (
+                        <>
+                            {/* Trash Cards */}
+                            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                                {blogs.data.map((blog) => (
+                                    <Card key={blog.id} className="border-destructive/20">
+                                        <CardHeader>
+                                            <CardTitle className="text-lg line-clamp-2 text-destructive">
+                                                {blog.title}
+                                            </CardTitle>
+                                            <CardDescription>
+                                                by {blog.author?.name ?? 'Unknown'} • Deleted on{' '}
+                                                {new Date(blog.deleted_at).toLocaleDateString()}
+                                            </CardDescription>
+                                        </CardHeader>
+
+                                        <CardContent>
+                                            <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                                                {blog.body.replace(/<[^>]*>/g, '').substring(0, 100)}...
+                                            </p>
+
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    size="sm"
+                                                    variant="secondary"
+                                                    onClick={() => handleRestore(blog.id)}
+                                                    disabled={processing === blog.id}
+                                                >
+                                                    <RotateCcw className="mr-1 h-3.5 w-3.5" />
+                                                    {processing === blog.id ? 'Restoring...' : 'Restore'}
+                                                </Button>
+
+                                                <Button
+                                                    size="sm"
+                                                    variant="destructive"
+                                                    onClick={() => handleForceDelete(blog.id)}
+                                                    disabled={processing === blog.id}
+                                                >
+                                                    <Trash2 className="mr-1 h-3.5 w-3.5" />
+                                                    {processing === blog.id ? 'Deleting...' : 'Delete Forever'}
+                                                </Button>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ))}
                             </div>
 
-                            {/* Empty State */}
-                            {blogs.data.length === 0 ? (
-                                <div className="text-center py-12">
-                                    <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16 mx-auto mb-4" />
-                                    <p className="text-gray-500 dark:text-gray-400">
-                                        No blogs in trash.
-                                    </p>
-                                </div>
-                            ) : (
-                                <>
-                                    {/* Blog List */}
-                                    <ul className="space-y-4">
-                                        {blogs.data.map((blog) => (
-                                            <li
-                                                key={blog.id}
-                                                className="flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
+                            {/* Pagination */}
+                            {blogs.links && blogs.links.length > 3 && (
+                                <nav className="flex items-center justify-center gap-1 mt-8">
+                                    {blogs.links.map((link, idx) => {
+                                        if (!link.url) {
+                                            return (
+                                                <span
+                                                    key={idx}
+                                                    className="px-3 py-1.5 text-sm text-muted-foreground"
+                                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                                />
+                                            );
+                                        }
+
+                                        return (
+                                            <Button
+                                                key={idx}
+                                                variant={link.active ? 'default' : 'outline'}
+                                                size="sm"
+                                                asChild
                                             >
-                                                <div className="flex-1">
-                                                    <h3 className="text-lg font-medium text-red-900 dark:text-red-300">
-                                                        {blog.title}
-                                                    </h3>
-                                                    <p className="text-sm text-red-700 dark:text-red-400">
-                                                        by {blog.author?.name ?? 'Unknown'} •{' '}
-                                                        Deleted on {new Date(blog.deleted_at).toLocaleDateString()}
-                                                    </p>
-                                                </div>
-
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={() => handleRestore(blog.id)}
-                                                        disabled={processing === blog.id}
-                                                        className="inline-flex items-center px-3 py-1 text-sm font-medium text-green-700 bg-green-100 rounded-md hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                                                    >
-                                                        {processing === blog.id ? 'Restoring...' : 'Restore'}
-                                                    </button>
-
-                                                    <button
-                                                        onClick={() => handleForceDelete(blog.id)}
-                                                        disabled={processing === blog.id}
-                                                        className="inline-flex items-center px-3 py-1 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                                                    >
-                                                        {processing === blog.id ? 'Deleting...' : 'Delete Forever'}
-                                                    </button>
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ul>
-
-                                    {/* Pagination */}
-                                    {blogs.links && blogs.links.length > 3 && (
-                                        <div className="mt-6 flex flex-wrap gap-1 justify-center">
-                                            {blogs.links.map((link, idx) => {
-                                                if (!link.url) {
-                                                    return (
-                                                        <span
-                                                            key={idx}
-                                                            className="px-3 py-2 text-sm text-gray-500"
-                                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                                        />
-                                                    );
-                                                }
-
-                                                return (
-                                                    <Link
-                                                        key={idx}
-                                                        href={link.url}
-                                                        preserveScroll
-                                                        className={`px-3 py-2 text-sm rounded-md transition-colors ${
-                                                            link.active
-                                                                ? 'bg-red-600 text-white'
-                                                                : 'text-gray-700 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-600'
-                                                        }`}
-                                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                                    />
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </>
+                                                <Link
+                                                    href={link.url}
+                                                    preserveScroll
+                                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                                />
+                                            </Button>
+                                        );
+                                    })}
+                                </nav>
                             )}
-                        </div>
-                    </div>
+                        </>
+                    )}
                 </div>
             </div>
         </Layout>

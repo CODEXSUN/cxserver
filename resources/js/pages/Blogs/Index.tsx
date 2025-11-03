@@ -1,21 +1,29 @@
 // resources/js/Pages/Blogs/Index.tsx
 import Layout from '@/layouts/app-layout';
 import { Head, Link, usePage, router } from '@inertiajs/react';
-import type { PageProps as InertiaPageProps } from '@inertiajs/core';
 import { useRoute } from 'ziggy-js';
+import type { PageProps as InertiaPageProps } from '@inertiajs/core';
 
-// Define your custom props
+// shadcn/ui components
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Trash2, Plus, Edit, Trash } from 'lucide-react';
+
+interface Blog {
+    id: number;
+    title: string;
+    slug: string;
+    body: string;
+    published_at: string | null;
+    created_at: string;
+    author?: { name: string };
+}
+
 interface BlogsPageProps extends InertiaPageProps {
     blogs: {
-        data: Array<{
-            id: number;
-            title: string;
-            slug: string;
-            body: string;
-            published_at: string | null;
-            created_at: string;
-            author?: { name: string };
-        }>;
+        data: Blog[];
         links: Array<{ url: string | null; label: string; active: boolean }>;
         current_page: number;
         last_page: number;
@@ -33,130 +41,149 @@ export default function Index() {
     const { blogs, can, trashedCount } = usePage<BlogsPageProps>().props;
     const route = useRoute();
 
+    const handleDelete = (id: number) => {
+        if (!confirm('Move this blog to trash?')) return;
+        router.delete(route('blogs.destroy', id), { preserveScroll: true });
+    };
+
     return (
         <Layout>
-            <Head title="Blog" />
+            <Head title="Blogs" />
 
             <div className="py-12">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                        <div className="p-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+                    {/* Header */}
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-3xl font-bold tracking-tight">Blogs</h1>
+                            <p className="text-muted-foreground mt-1">
+                                Manage your blog posts
+                            </p>
+                        </div>
 
-                            {/* Header */}
-                            <div className="flex items-center justify-between mb-6">
-                                <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-                                    Blogs
-                                </h1>
+                        <div className="flex gap-3">
+                            {can.create && (
+                                <Button asChild>
+                                    <Link href={route('blogs.create')}>
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        New Blog
+                                    </Link>
+                                </Button>
+                            )}
+                            {trashedCount > 0 && (
+                                <Button variant="outline" asChild>
+                                    <Link href={route('blogs.trash')}>
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Trash ({trashedCount})
+                                    </Link>
+                                </Button>
+                            )}
+                        </div>
+                    </div>
 
-                                <div className="flex gap-3">
-                                    {can.create && (
-                                        <Link
-                                            href={route('blogs.create')}
-                                            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
-                                        >
-                                            New Blog
-                                        </Link>
-                                    )}
-                                    {trashedCount > 0 && (
-                                        <Link
-                                            href={route('blogs.trash')}
-                                            className="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition"
-                                        >
-                                            Trash ({trashedCount})
-                                        </Link>
-                                    )}
-                                </div>
-                            </div>
+                    <Separator />
 
-                            {/* Blog List */}
-                            {blogs.data.length === 0 ? (
-                                <p className="text-gray-500 dark:text-gray-400">
-                                    No blogs found.
-                                </p>
-                            ) : (
-                                <ul className="space-y-4">
-                                    {blogs.data.map((blog) => (
-                                        <li
-                                            key={blog.id}
-                                            className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                                        >
-                                            <div className="flex-1">
-                                                <Link
-                                                    href={route('blogs.show', blog.slug)}
-                                                    className="text-lg font-medium text-blue-600 dark:text-blue-400 hover:underline"
-                                                >
-                                                    {blog.title}
-                                                </Link>
-                                                <p className="text-sm text-gray-600 dark:text-gray-300">
-                                                    by {blog.author?.name ?? 'Unknown'} •{' '}
-                                                    {new Date(blog.published_at ?? blog.created_at).toLocaleDateString()}
-                                                </p>
-                                            </div>
-
-                                            <div className="flex gap-2">
-                                                <Link
-                                                    href={route('blogs.edit', blog.id)}
-                                                    className="text-sm text-indigo-600 hover:text-indigo-800"
-                                                >
-                                                    Edit
-                                                </Link>
-
-                                                {can.delete && (
-                                                    <form
-                                                        onSubmit={(e) => {
-                                                            e.preventDefault();
-                                                            if (confirm('Move this blog to trash?')) {
-                                                                router.delete(route('blogs.destroy', blog.id));
-                                                            }
-                                                        }}
-                                                        className="inline"
+                    {/* Empty State */}
+                    {blogs.data.length === 0 ? (
+                        <Card>
+                            <CardContent className="flex flex-col items-center justify-center py-12">
+                                <div className="bg-muted border-2 border-dashed rounded-xl w-16 h-16 mb-4" />
+                                <p className="text-muted-foreground">No blogs found.</p>
+                            </CardContent>
+                        </Card>
+                    ) : (
+                        <>
+                            {/* Blog Cards */}
+                            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                                {blogs.data.map((blog) => (
+                                    <Card key={blog.id} className="hover:shadow-lg transition-shadow">
+                                        <CardHeader>
+                                            <div className="flex items-start justify-between">
+                                                <CardTitle className="text-lg line-clamp-2">
+                                                    <Link
+                                                        href={route('blogs.show', blog.slug)}
+                                                        className="hover:text-primary transition-colors"
                                                     >
-                                                        <button
-                                                            type="submit"
-                                                            className="text-sm text-red-600 hover:text-red-800"
-                                                        >
-                                                            Delete
-                                                        </button>
-                                                    </form>
+                                                        {blog.title}
+                                                    </Link>
+                                                </CardTitle>
+                                                {blog.published_at ? (
+                                                    <Badge variant="default">Published</Badge>
+                                                ) : (
+                                                    <Badge variant="secondary">Draft</Badge>
                                                 )}
                                             </div>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
+                                            <CardDescription>
+                                                by {blog.author?.name ?? 'Unknown'} •{' '}
+                                                {new Date(
+                                                    blog.published_at ?? blog.created_at
+                                                ).toLocaleDateString()}
+                                            </CardDescription>
+                                        </CardHeader>
+
+                                        <CardContent>
+                                            <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
+                                                {blog.body.replace(/<[^>]*>/g, '').substring(0, 120)}...
+                                            </p>
+
+                                            <div className="flex gap-2">
+                                                <Button size="sm" variant="ghost" asChild>
+                                                    <Link href={route('blogs.edit', blog.id)}>
+                                                        <Edit className="mr-1 h-3.5 w-3.5" />
+                                                        Edit
+                                                    </Link>
+                                                </Button>
+
+                                                {can.delete && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        className="text-destructive hover:text-destructive"
+                                                        onClick={() => handleDelete(blog.id)}
+                                                    >
+                                                        <Trash className="mr-1 h-3.5 w-3.5" />
+                                                        Delete
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
 
                             {/* Pagination */}
                             {blogs.links && blogs.links.length > 3 && (
-                                <div className="mt-6 flex gap-1 flex-wrap">
+                                <nav className="flex items-center justify-center gap-1 mt-8">
                                     {blogs.links.map((link, idx) => {
                                         if (!link.url) {
                                             return (
                                                 <span
                                                     key={idx}
-                                                    className="px-3 py-1 text-sm text-gray-500"
+                                                    className="px-3 py-1.5 text-sm text-muted-foreground"
                                                     dangerouslySetInnerHTML={{ __html: link.label }}
                                                 />
                                             );
                                         }
 
                                         return (
-                                            <Link
+                                            <Button
                                                 key={idx}
-                                                href={link.url}
-                                                preserveScroll
-                                                className={`px-3 py-1 text-sm rounded-md transition ${
-                                                    link.active
-                                                        ? 'bg-blue-600 text-white'
-                                                        : 'text-gray-700 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-600'
-                                                }`}
-                                                dangerouslySetInnerHTML={{ __html: link.label }}
-                                            />
+                                                variant={link.active ? 'default' : 'outline'}
+                                                size="sm"
+                                                asChild
+                                            >
+                                                <Link
+                                                    href={link.url}
+                                                    preserveScroll
+                                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                                />
+                                            </Button>
                                         );
                                     })}
-                                </div>
+                                </nav>
                             )}
-                        </div>
-                    </div>
+                        </>
+                    )}
                 </div>
             </div>
         </Layout>

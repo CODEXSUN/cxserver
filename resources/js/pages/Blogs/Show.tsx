@@ -1,8 +1,15 @@
 // resources/js/Pages/Blogs/Show.tsx
 import Layout from '@/layouts/app-layout';
 import { Head, Link, usePage, router } from '@inertiajs/react';
-import { useRoute } from 'ziggy-js';
 import type { PageProps as InertiaPageProps } from '@inertiajs/core';
+import { useRoute } from 'ziggy-js';
+
+// shadcn/ui
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { ArrowLeft, Edit, Trash } from 'lucide-react';
 
 interface Blog {
     id: number;
@@ -24,14 +31,12 @@ interface ShowPageProps extends InertiaPageProps {
 }
 
 export default function Show() {
-    const route = useRoute();
     const { blog, can } = usePage<ShowPageProps>().props;
+    const route = useRoute();
 
     const handleDelete = () => {
         if (!confirm('Move this blog to trash?')) return;
-        router.delete(route('blogs.destroy', blog.id), {
-            preserveScroll: true,
-        });
+        router.delete(route('blogs.destroy', blog.id), { preserveScroll: true });
     };
 
     return (
@@ -39,72 +44,63 @@ export default function Show() {
             <Head title={blog.title} />
 
             <div className="py-12">
-                <div className="max-w-4xl mx-auto sm:px-6 lg:px-8">
-                    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                        <div className="p-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                <div className="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
+                    {/* Header */}
+                    <div className="flex items-center justify-between">
+                        <Button variant="ghost" size="sm" asChild>
+                            <Link href={route('blogs.index')}>
+                                <ArrowLeft className="mr-2 h-4 w-4" />
+                                All Blogs
+                            </Link>
+                        </Button>
 
-                            {/* Header */}
-                            <div className="flex items-center justify-between mb-6">
-                                <Link
-                                    href={route('blogs.index')}
-                                    className="text-sm text-indigo-600 hover:text-indigo-800"
-                                >
-                                    ← All Blogs
-                                </Link>
-
-                                <div className="flex gap-2">
-                                    {can.edit && (
-                                        <Link
-                                            href={route('blogs.edit', blog.id)}
-                                            className="inline-flex items-center px-3 py-1 text-sm font-medium text-indigo-700 bg-indigo-100 rounded-md hover:bg-indigo-200 transition"
-                                        >
-                                            Edit
-                                        </Link>
-                                    )}
-                                    {can.delete && (
-                                        <button
-                                            onClick={handleDelete}
-                                            className="inline-flex items-center px-3 py-1 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition"
-                                        >
-                                            Delete
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Title */}
-                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                                {blog.title}
-                            </h1>
-
-                            {/* Meta */}
-                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-8">
-                                <span>by {blog.author?.name ?? 'Unknown'}</span>
-                                <span className="mx-2">•</span>
-                                <time>
-                                    {blog.published_at
-                                        ? new Date(blog.published_at).toLocaleDateString()
-                                        : 'Draft'}
-                                </time>
-                            </div>
-
-                            {/* Body – Markdown rendered */}
-                            <article
-                                className="prose prose-lg dark:prose-invert max-w-none"
-                                dangerouslySetInnerHTML={{
-                                    __html: marked(blog.body),
-                                }}
-                            />
-
-                            {/* Optional: Show raw markdown (dev only) */}
-                            {/* <details className="mt-8">
-                <summary className="text-sm cursor-pointer text-gray-500">View raw Markdown</summary>
-                <pre className="mt-2 p-4 bg-gray-100 dark:bg-gray-900 rounded-md text-xs overflow-x-auto">
-                  {blog.body}
-                </pre>
-              </details> */}
+                        <div className="flex gap-2">
+                            {can.edit && (
+                                <Button size="sm" variant="secondary" asChild>
+                                    <Link href={route('blogs.edit', blog.id)}>
+                                        <Edit className="mr-1 h-3.5 w-3.5" />
+                                        Edit
+                                    </Link>
+                                </Button>
+                            )}
+                            {can.delete && (
+                                <Button size="sm" variant="destructive" onClick={handleDelete}>
+                                    <Trash className="mr-1 h-3.5 w-3.5" />
+                                    Delete
+                                </Button>
+                            )}
                         </div>
                     </div>
+
+                    <Separator />
+
+                    {/* Blog Card */}
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <h1 className="text-3xl font-bold tracking-tight">{blog.title}</h1>
+                                {blog.published_at ? (
+                                    <Badge>Published</Badge>
+                                ) : (
+                                    <Badge variant="secondary">Draft</Badge>
+                                )}
+                            </div>
+
+                            <p className="text-sm text-muted-foreground mt-2">
+                                by {blog.author?.name ?? 'Unknown'} •{' '}
+                                {blog.published_at
+                                    ? new Date(blog.published_at).toLocaleDateString()
+                                    : 'Not published'}
+                            </p>
+                        </CardHeader>
+
+                        <CardContent>
+                            <article
+                                className="prose prose-lg dark:prose-invert max-w-none"
+                                dangerouslySetInnerHTML={{ __html: marked(blog.body) }}
+                            />
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </Layout>
@@ -112,7 +108,7 @@ export default function Show() {
 }
 
 /* ------------------------------------------------------------------
-   Client‑side Markdown → HTML (supports common syntax)
+   Client‑side Markdown → HTML
    ------------------------------------------------------------------ */
 function marked(md: string): string {
     return md
@@ -122,7 +118,7 @@ function marked(md: string): string {
         .replace(/\*\*(.*)\*\*/gim, '<strong class="font-semibold">$1</strong>')
         .replace(/\*(.*)\*/gim, '<em class="italic">$1</em>')
         .replace(/!\[([^\]]+)\]\(([^)]+)\)/gim, '<img src="$2" alt="$1" class="max-w-full h-auto rounded-md my-4" />')
-        .replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2" class="text-blue-600 hover:underline">$1</a>')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2" class="text-primary hover:underline">$1</a>')
         .replace(/^- (.*$)/gim, '<li class="ml-6 list-disc">$1</li>')
         .replace(/^\d+\. (.*$)/gim, '<li class="ml-6 list-decimal">$1</li>')
         .replace(/\n/gim, '<br>');
