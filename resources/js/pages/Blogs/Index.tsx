@@ -82,7 +82,7 @@ export default function Index() {
                                         >
                                             <div className="flex-1">
                                                 <Link
-                                                    href={route('blogs.edit', blog.slug)}
+                                                    href={route('blogs.show', blog.slug)}
                                                     className="text-lg font-medium text-blue-600 dark:text-blue-400 hover:underline"
                                                 >
                                                     {blog.title}

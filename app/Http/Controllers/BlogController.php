@@ -29,6 +29,24 @@ class BlogController extends Controller
         ]);
     }
 
+    public function show($slug)
+    {
+        $blog = Blog::withTrashed()
+            ->with('author')
+            ->where('slug', $slug)
+            ->firstOrFail();
+
+        $this->authorize('view', $blog);
+
+        return Inertia::render('Blogs/Show', [
+            'blog' => $blog,
+            'can' => [
+                'edit' => auth()->user()->can('update', $blog),
+                'delete' => auth()->user()->can('delete', $blog),
+            ],
+        ]);
+    }
+
     public function create()
     {
         $this->authorize('create', Blog::class);
@@ -98,5 +116,13 @@ class BlogController extends Controller
         $this->authorize('viewAny', Blog::class);
         $blogs = Blog::onlyTrashed()->with('author')->paginate(10);
         return Inertia::render('Blogs/Trash', ['blogs' => $blogs]);
+    }
+
+    public function forceDelete($id)
+    {
+        $blog = Blog::withTrashed()->findOrFail($id);
+        $this->authorize('delete', $blog);
+        $blog->forceDelete();
+        return back()->with('success', 'Blog permanently deleted.');
     }
 }
