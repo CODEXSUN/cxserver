@@ -41,3 +41,24 @@ export interface User {
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
 }
+
+export interface Blog {
+    id: number;
+    title: string;
+    slug: string;
+    body: string;
+    published_at: string | null;
+    created_at: string;
+    updated_at: string;
+    user_id: number;
+    author?: { name: string };
+}
+
+export interface PaginatedData<T> {
+    data: T[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    links: Array<{ url: string | null; label: string; active: boolean }>;
+}
