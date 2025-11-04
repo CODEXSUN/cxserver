@@ -25,6 +25,7 @@ class ServiceInwardFactory extends Factory
             'observation'  => $this->faker->paragraph,
             'received_by'  => User::factory(),
             'received_date'=> $this->faker->dateTimeBetween('-1 month', 'now'),
+            'job_created' => false
         ];
     }
 }

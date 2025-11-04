@@ -25,6 +25,7 @@ interface ServiceInward {
     deleted_at: string | null;
     contact: { id: number; name: string; company: string | null };
     receiver: { id: number; name: string } | null;
+    job_created: boolean;
 }
 
 interface ServiceInwardsPageProps {
@@ -57,7 +58,7 @@ export default function Index() {
         <Layout>
             <Head title="Service Inwards" />
             <div className="py-12">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+                <div className="mx-auto sm:px-6 lg:px-8 space-y-6">
                     {/* Header */}
                     <div className="flex justify-between items-center">
                         <div>
@@ -136,7 +137,7 @@ export default function Index() {
                         emptyMessage="No service inwards found."
                     >
                         <TableHeader>
-                            <TableRow>
+                            <TableRow className="bg-muted font-semibold text-foreground">
                                 <TableHead>RMA</TableHead>
                                 <TableHead>Contact</TableHead>
                                 <TableHead>Type</TableHead>
@@ -144,6 +145,7 @@ export default function Index() {
                                 <TableHead>Serial No</TableHead>
                                 <TableHead>Received</TableHead>
                                 <TableHead>Received By</TableHead>
+                                <TableHead className="text-center">Job?</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -187,6 +189,13 @@ export default function Index() {
                                         {inward.received_date ? format(new Date(inward.received_date), 'dd MMM yyyy') : '—'}
                                     </TableCell>
                                     <TableCell>{inward.receiver?.name || <span className="text-muted-foreground">—</span>}</TableCell>
+
+                                    <TableCell className="text-center">
+                                        <Badge variant={inward.job_created ? "default" : "secondary"}>
+                                            {inward.job_created ? "Yes" : "No"}
+                                        </Badge>
+                                    </TableCell>
+
                                     <TableCell className="text-right">
                                         <TableActions
                                             id={inward.id}

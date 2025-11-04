@@ -23,10 +23,12 @@ class ServiceInward extends Model
         'observation',
         'received_by',
         'received_date',
+        'job_created'
     ];
 
     protected $casts = [
         'received_date' => 'datetime',
+        'job_created' => 'boolean',
     ];
 
     public function contact(): BelongsTo

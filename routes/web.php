@@ -60,9 +60,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('service_inwards', ServiceInwardController::class)
         ->names('service_inwards');
 
-    Route::get('service_inwards/trash', [ServiceInwardController::class, 'edit'])
-        ->name('service_inwards.trash');
-
     Route::post('service_inwards/{id}/restore', [ServiceInwardController::class, 'restore'])
         ->name('service_inwards.restore');
 
@@ -77,4 +74,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'inwards' => ['data' => [], 'current_page' => 1, 'last_page' => 1, 'total' => 0]
         ]);
     })->name('test.inertia');
+
 });

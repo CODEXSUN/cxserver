@@ -47,12 +47,12 @@ export default function DataTable<T>({
 
     return (
         <Card>
-            <CardHeader>
-                <CardTitle>{title}</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                    Showing {pagination.from} to {pagination.to} of {pagination.total} results
-                </p>
-            </CardHeader>
+            {/*<CardHeader>*/}
+            {/*    <CardTitle>{title}</CardTitle>*/}
+            {/*    <p className="text-sm text-muted-foreground">*/}
+            {/*        Showing {pagination.from} to {pagination.to} of {pagination.total} results*/}
+            {/*    </p>*/}
+            {/*</CardHeader>*/}
             <CardContent>
                 {data.length === 0 ? (
                     <div className="text-center py-12">
@@ -61,7 +61,7 @@ export default function DataTable<T>({
                     </div>
                 ) : (
                     <>
-                        <div className="rounded-md border">
+                        <div className="rounded-md border ">
                             <Table>{children}</Table>
                         </div>
 
@@ -69,6 +69,9 @@ export default function DataTable<T>({
                             <div className="text-sm text-muted-foreground">
                                 Page {pagination.current_page} of {pagination.last_page}
                             </div>
+                            <p className="text-sm text-muted-foreground">
+                                Showing {pagination.from} to {pagination.to} of {pagination.total} results
+                            </p>
                             <div className="flex items-center gap-2">
                                 <Button
                                     variant="outline"

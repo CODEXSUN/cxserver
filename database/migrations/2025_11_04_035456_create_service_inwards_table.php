@@ -21,6 +21,7 @@ return new class extends Migration
             $table->longText('observation')->nullable();
             $table->foreignId('received_by')->nullable();
             $table->dateTime('received_date')->nullable();
+            $table->boolean('job_created')->default(false);
             $table->timestamps();
             $table->softDeletes();
         });

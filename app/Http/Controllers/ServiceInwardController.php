@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Contact;
 use App\Models\ServiceInward;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -22,6 +23,7 @@ class ServiceInwardController extends Controller
         $search = $request->input('search');
 
         $query = ServiceInward::with(['contact', 'receiver'])
+            ->select('service_inwards.*')
             ->when($search, fn($q) => $q->where(function ($q) use ($search) {
                 $q->where('rma', 'like', "%{$search}%")
                     ->orWhere('serial_no', 'like', "%{$search}%")
@@ -35,8 +37,10 @@ class ServiceInwardController extends Controller
             'inwards' => $inwards,
             'filters' => ['search' => $search],
             'can' => [
-                'create' => auth()->user()->hasPermissionTo('service_inward.create'),
-                'delete' => auth()->user()->hasPermissionTo('service_inward.delete'),
+//                'create' => auth()->user()->hasPermissionTo('service_inward.create'),
+//                'delete' => auth()->user()->hasPermissionTo('service_inward.delete'),
+                'create' => Gate::allows('create', ServiceInward::class), // ← CHANGE
+                'delete' => Gate::allows('delete', ServiceInward::class), // ← CHANGE
             ],
             'trashedCount' => ServiceInward::onlyTrashed()->count(),
         ]);
@@ -181,6 +185,7 @@ class ServiceInwardController extends Controller
 
         $inwards = ServiceInward::onlyTrashed()
             ->with(['contact', 'receiver'])
+            ->select('service_inwards.*')
             ->paginate(10);
 
         return Inertia::render('ServiceInwards/Trash', ['inwards' => $inwards]);
