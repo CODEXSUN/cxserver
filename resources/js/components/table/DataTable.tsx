@@ -1,12 +1,14 @@
-// resources/js/components/DataTable.tsx
+// resources/js/components/table/DataTable.tsx
+
 'use client';
 
-import { Table } from '@/components/ui/table';
+import { Table} from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { router } from '@inertiajs/react';
 import { useRoute } from 'ziggy-js';
+import React from 'react';
 
 interface Pagination {
     current_page: number;
@@ -16,14 +18,16 @@ interface Pagination {
     total: number;
 }
 
+type QueryParamValue = string | number | boolean | undefined;
+
 interface DataTableProps<T> {
     title: string;
     data: T[];
     pagination: Pagination;
     routeName: string;
-    queryParams?: Record<string, any>;
+    queryParams?: Record<string, QueryParamValue>;
     emptyMessage?: string;
-    children: React.ReactNode; // Must contain <TableHeader> and <TableBody>
+    children: React.ReactNode;
 }
 
 export default function DataTable<T>({
@@ -58,9 +62,7 @@ export default function DataTable<T>({
                 ) : (
                     <>
                         <div className="rounded-md border">
-                            <Table>
-                                {children}
-                            </Table>
+                            <Table>{children}</Table>
                         </div>
 
                         <div className="flex items-center justify-between mt-6">

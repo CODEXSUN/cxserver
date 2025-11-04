@@ -24,7 +24,6 @@ interface TableActionsProps {
 }
 
 export default function TableActions({
-                                         id,
                                          editRoute,
                                          deleteRoute,
                                          restoreRoute,
