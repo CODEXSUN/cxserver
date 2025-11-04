@@ -16,6 +16,8 @@ import { Link } from '@inertiajs/react';
 import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
 import AppLogo from './app-logo';
 import {index as blogs} from '@/routes/blogs';
+import { index as contactTypes } from '@/routes/contact-types';
+import { index as contacts } from '@/routes/contacts';
 
 const mainNavItems: NavItem[] = [
     {
@@ -26,6 +28,16 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Blog',
         href: blogs(),
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Contact-type',
+        href: contactTypes(),
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Contact',
+        href: contacts(),
         icon: LayoutGrid,
     },
 ];

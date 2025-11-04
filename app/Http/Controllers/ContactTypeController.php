@@ -12,16 +12,27 @@ class ContactTypeController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index()
+    public function index(Request $request)
     {
         $this->authorize('viewAny', ContactType::class);
 
-        $contactTypes = ContactType::withCount('contacts')
-            ->latest()
-            ->paginate(10);
+        $perPage = $request->input('per_page', 10);
+        $page    = $request->input('page', 1);
+
+        $query = ContactType::withCount('contacts')
+            ->when($request->search, fn($q,$s)=> $q->where('name','like',"%{$s}%")
+                ->orWhere('description','like',"%{$s}%"))
+            ->when($request->sort_by, fn($q,$col)=> $q->orderBy(
+                $col,
+                $request->sort_direction === 'desc' ? 'desc' : 'asc'
+            ))
+            ->latest();
+
+        $contactTypes = $query->paginate($perPage)->withQueryString();
 
         return Inertia::render('ContactTypes/Index', [
             'contactTypes' => $contactTypes,
+            'filters' => $request->only(['search', 'page', 'per_page', 'sort_by', 'sort_direction']),
             'can' => [
                 'create' => auth()->user()->hasPermissionTo('contact-type.create'),
                 'delete' => auth()->user()->hasPermissionTo('contact-type.delete'),
