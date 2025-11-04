@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('service_materials', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('contact_id')->constrained('contacts')->cascadeOnDelete();
+            $table->foreignId('contact_id')->references('id')->on('contacts');
             $table->string('type'); // laptop, desktop, printer
             $table->string('brand')->nullable();
             $table->string('model')->nullable();
