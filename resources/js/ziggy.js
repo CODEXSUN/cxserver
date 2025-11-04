@@ -215,6 +215,49 @@ const Ziggy = {
             methods: ['DELETE'],
             parameters: ['id'],
         },
+        'service_inwards.index': {
+            uri: 'service_inwards',
+            methods: ['GET', 'HEAD'],
+        },
+        'service_inwards.create': {
+            uri: 'service_inwards\/create',
+            methods: ['GET', 'HEAD'],
+        },
+        'service_inwards.store': { uri: 'service_inwards', methods: ['POST'] },
+        'service_inwards.show': {
+            uri: 'service_inwards\/{service_inward}',
+            methods: ['GET', 'HEAD'],
+            parameters: ['service_inward'],
+        },
+        'service_inwards.edit': {
+            uri: 'service_inwards\/{service_inward}\/edit',
+            methods: ['GET', 'HEAD'],
+            parameters: ['service_inward'],
+        },
+        'service_inwards.update': {
+            uri: 'service_inwards\/{service_inward}',
+            methods: ['PUT', 'PATCH'],
+            parameters: ['service_inward'],
+        },
+        'service_inwards.destroy': {
+            uri: 'service_inwards\/{service_inward}',
+            methods: ['DELETE'],
+            parameters: ['service_inward'],
+        },
+        'service_inwards.trash': {
+            uri: 'service_inwards\/trash',
+            methods: ['GET', 'HEAD'],
+        },
+        'service_inwards.restore': {
+            uri: 'service_inwards\/{id}\/restore',
+            methods: ['POST'],
+            parameters: ['id'],
+        },
+        'service_inwards.forceDelete': {
+            uri: 'service_inwards\/{id}\/force',
+            methods: ['DELETE'],
+            parameters: ['id'],
+        },
         'storage.local': {
             uri: 'storage\/{path}',
             methods: ['GET', 'HEAD'],

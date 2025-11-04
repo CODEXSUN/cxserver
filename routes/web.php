@@ -3,6 +3,7 @@
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ContactTypeController;
+use App\Http\Controllers\ServiceInwardController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -52,4 +53,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('contacts/trash', [ContactController::class, 'trash'])->name('contacts.trash');
     Route::post('contacts/{id}/restore', [ContactController::class, 'restore'])->name('contacts.restore');
     Route::delete('contacts/{id}/force', [ContactController::class, 'forceDelete'])->name('contacts.forceDelete');
+});
+
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::resource('service_inwards', ServiceInwardController::class)
+        ->names('service_inwards');
+
+    Route::get('service_inwards/trash', [ServiceInwardController::class, 'edit'])
+        ->name('service_inwards.trash');
+
+    Route::post('service_inwards/{id}/restore', [ServiceInwardController::class, 'restore'])
+        ->name('service_inwards.restore');
+
+    Route::delete('service_inwards/{id}/force', [ServiceInwardController::class, 'forceDelete'])
+        ->name('service_inwards.forceDelete');
+
+    Route::get('service_inwards/trash', [ServiceInwardController::class, 'trash'])
+        ->name('service_inwards.trash');
+
+    Route::get('/test-inertia', function () {
+        return Inertia::render('ServiceInwards/Trash', [
+            'inwards' => ['data' => [], 'current_page' => 1, 'last_page' => 1, 'total' => 0]
+        ]);
+    })->name('test.inertia');
 });
