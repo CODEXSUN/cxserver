@@ -23,9 +23,5 @@ class ContactTypeSeeder extends Seeder
                 $type
             );
         }
-
-        if (app()->environment('local')) {
-            ContactType::factory(5)->create();
-        }
     }
 }
