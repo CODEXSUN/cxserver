@@ -13,15 +13,11 @@ return new class extends Migration
     {
         Schema::create('job_cards', function (Blueprint $table) {
             $table->id();
-            $table->string('job_no')->unique(); // JOB-202511001
-            $table->foreignId('service_material_id')->constrained('service_material')->cascadeOnDelete();
-            $table->foreignId('contact_id')->constrained('contacts')->cascadeOnDelete();
+            $table->string('job_no')->unique();
+            $table->foreignId('service_material_id')->references('id')->on('service_materials');
+            $table->foreignId('contact_id')->references('id')->on('contacts');
             $table->dateTime('received_at');
-            $table->enum('status', [
-                'received','diagnosed','spares_pending','waiting_customer_spare',
-                'allocated_engineer','in_progress','outside_repair','qc_passed',
-                'ready_to_deliver','delivered','cancelled'
-            ])->default('received');
+            $table->foreignId('service_status_id')->references('id')->on('service_statuses');
             $table->text('diagnosis')->nullable();
             $table->decimal('estimated_cost', 10, 2)->nullable();
             $table->decimal('advance_paid', 10, 2)->default(0);
@@ -29,9 +25,7 @@ return new class extends Migration
             $table->dateTime('delivered_at')->nullable();
             $table->timestamps();
 
-            $table->index('status');
             $table->index('job_no');
-            $table->timestamps();
         });
     }
 

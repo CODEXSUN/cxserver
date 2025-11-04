@@ -22,7 +22,6 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(['job_card_id', 'employee_id']);
-            $table->timestamps();
         });
     }
 

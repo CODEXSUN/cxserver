@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('spare_issues', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('job_spare_request_id')->constrained('job_spare_requests')->cascadeOnDelete();
+            $table->foreignId('job_spare_request_id')->references('id')->on('job_spare_requests');
             $table->integer('qty');
             $table->dateTime('issued_at')->useCurrent();
-            $table->foreignId('issued_by')->constrained('users')->nullOnDelete();
+            $table->foreignId('issued_by')->references('id')->on('employees');
             $table->timestamps();
         });
     }

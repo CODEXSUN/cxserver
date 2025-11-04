@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('out_service_centers', function (Blueprint $table) {
             $table->id();
-            $table->id();
             $table->foreignId('job_card_id')->constrained()->cascadeOnDelete();
             $table->string('lab_name');
             $table->dateTime('sent_at');
