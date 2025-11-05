@@ -13,6 +13,6 @@ class ServiceInwardSeeder extends Seeder
      */
     public function run(): void
     {
-        ServiceInward::factory(10)->create();
+//        ServiceInward::factory(10)->create();
     }
 }
