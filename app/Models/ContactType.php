@@ -21,15 +21,15 @@ class ContactType extends Model
         'is_active' => 'boolean',
     ];
 
+    public function scopeActive($query)
+    {
+        return $query->where('active', true);
+    }
+
     // Relationships
     public function contacts()
     {
         return $this->hasMany(Contact::class);
     }
 
-    // Scope for active types
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
-    }
 }

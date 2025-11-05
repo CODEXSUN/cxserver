@@ -35,7 +35,7 @@ class ContactController extends Controller
 
         $contacts = $query->paginate(10)->withQueryString();
 
-        $contactTypes = ContactType::active()->orderBy('name')->get();
+        $contactTypes = ContactType::orderBy('name')->get();
 
         return Inertia::render('Contacts/Index', [
             'contacts' => $contacts,

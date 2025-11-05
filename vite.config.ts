@@ -24,4 +24,13 @@ export default defineConfig({
     esbuild: {
         jsx: 'automatic',
     },
+    build: {
+        // Auto-run ziggy:generate on build
+        rollupOptions: {
+            onwarn(warning, handler) {
+                if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return;
+                handler(warning);
+            },
+        },
+    },
 });

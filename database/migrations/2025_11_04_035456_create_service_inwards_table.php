@@ -6,29 +6,29 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('service_materials', function (Blueprint $table) {
+        Schema::create('service_inwards', function (Blueprint $table) {
             $table->id();
+            $table->string('rma')->unique();
             $table->foreignId('contact_id')->references('id')->on('contacts');
-            $table->string('type'); // laptop, desktop, printer
+            $table->string('material_type'); // laptop, desktop, printer
             $table->string('brand')->nullable();
             $table->string('model')->nullable();
             $table->string('serial_no')->unique()->nullable();
             $table->text('passwords')->nullable();
             $table->string('photo_url')->nullable();
+            $table->longText('observation')->nullable();
+            $table->foreignId('received_by')->nullable();
+            $table->dateTime('received_date')->nullable();
+            $table->boolean('job_created')->default(false);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('service_materials');
+        Schema::dropIfExists('service_inwards');
     }
 };

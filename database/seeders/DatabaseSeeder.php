@@ -21,6 +21,9 @@ class DatabaseSeeder extends Seeder
             BlogSeeder::class,
             ContactTypeSeeder::class,
             ContactSeeder::class,
+            ServiceInwardSeeder::class,
+            ServiceStatusSeeder::class,
+            JobCardSeeder::class,
         ]);
     }
 }

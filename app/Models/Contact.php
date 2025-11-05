@@ -27,6 +27,10 @@ class Contact extends Model
         'active' => 'boolean',
     ];
 
+    public function scopeActive($query)
+    {
+        return $query->where('active', true);
+    }
     // Relationships
     public function contactType()
     {

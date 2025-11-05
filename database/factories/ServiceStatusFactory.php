@@ -2,22 +2,20 @@
 
 namespace Database\Factories;
 
+use App\Models\ServiceStatus;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ServiceStatus>
- */
 class ServiceStatusFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
+    protected $model = ServiceStatus::class;
+
     public function definition(): array
     {
         return [
-            //
+            'name' => $this->faker->unique()->randomElement([
+                'Received', 'Diagnosed', 'In Repair', 'Testing', 'Ready for Delivery',
+                'Delivered', 'Cancelled', 'On Hold'
+            ]),
         ];
     }
 }

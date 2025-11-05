@@ -18,6 +18,8 @@ import AppLogo from './app-logo';
 import {index as blogs} from '@/routes/blogs';
 import { index as contactTypes } from '@/routes/contact-types';
 import { index as contacts } from '@/routes/contacts';
+import { index as service_inward } from '@/routes/service_inwards';
+import { index as job_cards } from '@/routes/job_cards';
 
 const mainNavItems: NavItem[] = [
     {
@@ -38,6 +40,16 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Contact',
         href: contacts(),
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Service Inward',
+        href: service_inward(),
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Job-card',
+        href: job_cards(),
         icon: LayoutGrid,
     },
 ];
