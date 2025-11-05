@@ -63,7 +63,7 @@ export default function Index() {
                     <div className="flex justify-between items-center">
                         <div>
                             <h1 className="text-3xl font-bold tracking-tight">Service Inwards</h1>
-                            <p className="text-muted-foreground mt-1">Track devices service received for service</p>
+                            <p className="text-muted-foreground mt-1">Track devices received for service</p>
                         </div>
 
                         <div className="flex gap-3">

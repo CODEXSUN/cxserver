@@ -72,7 +72,7 @@ export default function Create() {
                                     id="rma"
                                     value={data.rma}
                                     onChange={(e) => setData('rma', e.target.value)}
-                                    placeholder="RMA-2025-001"
+                                    placeholder=""
                                 />
                                 {errors.rma && <p className="text-sm text-red-600 mt-1">{errors.rma}</p>}
                             </div>
@@ -115,7 +115,7 @@ export default function Create() {
                                     id="brand"
                                     value={data.brand}
                                     onChange={(e) => setData('brand', e.target.value)}
-                                    placeholder="Dell, HP, etc."
+                                    placeholder=""
                                 />
                             </div>
 
@@ -125,7 +125,7 @@ export default function Create() {
                                     id="model"
                                     value={data.model}
                                     onChange={(e) => setData('model', e.target.value)}
-                                    placeholder="Latitude 7420"
+                                    placeholder=""
                                 />
                             </div>
 
@@ -135,7 +135,7 @@ export default function Create() {
                                     id="serial_no"
                                     value={data.serial_no}
                                     onChange={(e) => setData('serial_no', e.target.value)}
-                                    placeholder="ABC123XYZ"
+                                    placeholder=""
                                 />
                                 {errors.serial_no && <p className="text-sm text-red-600 mt-1">{errors.serial_no}</p>}
                             </div>
@@ -172,7 +172,7 @@ export default function Create() {
                                     id="photo_url"
                                     value={data.photo_url}
                                     onChange={(e) => setData('photo_url', e.target.value)}
-                                    placeholder="https://..."
+                                    placeholder=""
                                 />
                             </div>
                         </div>
