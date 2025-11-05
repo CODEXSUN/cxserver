@@ -15,8 +15,13 @@ interface ContactOption {
     company: string | null;
 }
 
+interface UserOption {
+    id: number;
+    name: string;
+}
 interface CreatePageProps {
     contacts: ContactOption[];
+    users: UserOption[];
 }
 
 export default function Create() {
@@ -35,7 +40,7 @@ export default function Create() {
         received_date: '',
     });
 
-    const { contacts } = usePage().props as unknown as CreatePageProps;
+    const { contacts, users } = usePage().props as unknown as CreatePageProps;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -133,6 +138,22 @@ export default function Create() {
                                     placeholder="ABC123XYZ"
                                 />
                                 {errors.serial_no && <p className="text-sm text-red-600 mt-1">{errors.serial_no}</p>}
+                            </div>
+
+                            <div>
+                                <Label htmlFor="received_by">Received By</Label>
+                                <Select value={data.received_by} onValueChange={(v) => setData('received_by', v)}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select receiver (optional)" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {users.map((u) => (
+                                            <SelectItem key={u.id} value={String(u.id)}>
+                                                {u.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
 
                             <div>

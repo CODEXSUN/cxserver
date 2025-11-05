@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Contact;
 use App\Models\ServiceInward;
+use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
@@ -57,8 +58,11 @@ class ServiceInwardController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'company']);
 
+        $users = User::orderBy('name')->get(['id', 'name']);
+
         return Inertia::render('ServiceInwards/Create', [
             'contacts' => $contacts,
+            'users'    => $users
         ]);
     }
 
@@ -83,7 +87,8 @@ class ServiceInwardController extends Controller
             'received_date' => 'nullable|date',
         ]);
 
-        $data['received_by'] ??= auth()->id();
+        // ← CHANGE: only fallback to logged-in user if not provided
+        $data['received_by'] = $request->filled('received_by') ? $request->received_by : auth()->id();
 
         ServiceInward::create($data);
 
@@ -120,9 +125,12 @@ class ServiceInwardController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'company']);
 
+        $users = User::orderBy('name')->get(['id', 'name']);
+
         return Inertia::render('ServiceInwards/Edit', [
             'inward' => $serviceInward,
             'contacts' => $contacts,
+            'users'    => $users
         ]);
     }
 
@@ -146,6 +154,11 @@ class ServiceInwardController extends Controller
             'received_by' => 'nullable|exists:users,id',
             'received_date' => 'nullable|date',
         ]);
+
+        // ← CHANGE: keep existing if empty, otherwise update
+        if ($request->filled('received_by')) {
+            $data['received_by'] = $request->received_by;
+        }
 
         $serviceInward->update($data);
 
