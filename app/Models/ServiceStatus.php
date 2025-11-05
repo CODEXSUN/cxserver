@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class ServiceStatus extends Model
 {
-    /** @use HasFactory<\Database\Factories\ServiceStatusFactory> */
     use HasFactory;
+
+    protected $fillable = ['name'];
+
+    public $timestamps = false;
+
 }

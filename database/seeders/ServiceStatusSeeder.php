@@ -2,16 +2,26 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\ServiceStatus;
 use Illuminate\Database\Seeder;
 
 class ServiceStatusSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        //
+        $statuses = [
+            'Received',
+            'Diagnosed',
+            'In Repair',
+            'Testing',
+            'Ready for Delivery',
+            'Delivered',
+            'Cancelled',
+            'On Hold',
+        ];
+
+        foreach ($statuses as $name) {
+            ServiceStatus::firstOrCreate(['name' => $name]);
+        }
     }
 }

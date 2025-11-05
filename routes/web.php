@@ -3,6 +3,7 @@
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ContactTypeController;
+use App\Http\Controllers\JobCardController;
 use App\Http\Controllers\ServiceInwardController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -75,4 +76,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->name('test.inertia');
 
+});
+
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::resource('job_cards', JobCardController::class)->names('job_cards');
+
+    Route::get('job_cards/trash', [JobCardController::class, 'trash'])
+        ->name('job_cards.trash');
+
+    Route::post('job_cards/{id}/restore', [JobCardController::class, 'restore'])
+        ->name('job_cards.restore');
+
+    Route::delete('job_cards/{id}/force', [JobCardController::class, 'forceDelete'])
+        ->name('job_cards.forceDelete');
+
+    Route::resource('service_statuses', ServiceStatusController::class)
+        ->names('service_statuses');
 });

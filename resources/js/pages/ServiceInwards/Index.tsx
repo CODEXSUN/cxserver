@@ -191,7 +191,14 @@ export default function Index() {
                                     <TableCell>{inward.receiver?.name || <span className="text-muted-foreground">—</span>}</TableCell>
 
                                     <TableCell className="text-center">
-                                        <Badge variant={inward.job_created ? "default" : "secondary"}>
+                                        <Badge
+                                            variant={inward.job_created ? "default" : "destructive"}
+                                            className={
+                                                inward.job_created
+                                                    ? "bg-green-400 text-white"
+                                                    : "bg-red-500 text-white"
+                                            }
+                                        >
                                             {inward.job_created ? "Yes" : "No"}
                                         </Badge>
                                     </TableCell>
