@@ -72,8 +72,7 @@ export default function Trash() {
                                             restoreRoute={route('job_cards.restore', job.id)}
                                             forceDeleteRoute={route('job_cards.forceDelete', job.id)}
                                             isDeleted={true}
-                                            canDelete={true}
-                                        />
+                                            canDelete={true} editRoute={''} deleteRoute={''}                                        />
                                     </TableCell>
                                 </TableRow>
                             ))}
