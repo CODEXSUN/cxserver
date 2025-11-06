@@ -61,9 +61,9 @@ export default function WebMenu() {
                             href="/"
                             className="group flex items-center space-x-2"
                         >
-                            <div className="h-8 w-8 rounded-lg bg-[#f53003] transition-transform group-hover:scale-110">
+                            <div className="h-10 w-12 rounded-lg bg-[#f53003] transition-transform group-hover:scale-110">
                                 <span className="text-white flex justify-center items-center text-center text-2xl w-full">
-                                    C
+                                    TM
                                 </span>
                             </div>
                             <span
@@ -73,7 +73,7 @@ export default function WebMenu() {
                                         : 'text-white'
                                 } group-hover:text-[#f53003] dark:group-hover:text-[#FF4433]`}
                             >
-                                {app?.name || 'Codexsun'}
+                                {app?.name || 'Tech media Service Center'}
                             </span>
                         </Link>
 
@@ -136,12 +136,12 @@ export default function WebMenu() {
                                         <LogIn className="mr-1 inline h-4 w-4 transition-transform group-hover:scale-110" />
                                         Log in
                                     </Link>
-                                    <Link
-                                        href={register()}
-                                        className="inline-block rounded-sm border border-[#19140035] px-5 py-1.5 text-sm font-medium transition-all duration-200 hover:border-[#f53003] hover:bg-[#f53003] hover:text-white dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#FF4433] dark:hover:bg-[#FF4433] dark:hover:text-white"
-                                    >
-                                        Register
-                                    </Link>
+                                    {/*<Link*/}
+                                    {/*    href={register()}*/}
+                                    {/*    className="inline-block rounded-sm border border-[#19140035] px-5 py-1.5 text-sm font-medium transition-all duration-200 hover:border-[#f53003] hover:bg-[#f53003] hover:text-white dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#FF4433] dark:hover:bg-[#FF4433] dark:hover:text-white"*/}
+                                    {/*>*/}
+                                    {/*    Register*/}
+                                    {/*</Link>*/}
                                 </>
                             )}
                             <button
