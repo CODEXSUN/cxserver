@@ -44,7 +44,7 @@ export default function Home() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
                         <div>
                             <h3 className="text-2xl font-bold mb-4">Tech Media Service Center</h3>
-                            <p className="text-gray-400">Trusted computer repair since 2015.</p>
+                            <p className="text-gray-400">Trusted computer repair since 2002.</p>
                         </div>
                         <div>
                             <h4 className="font-semibold mb-4">Hours</h4>

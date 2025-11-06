@@ -1,6 +1,5 @@
 'use client';
 
-import FullScreenSlider from '@/pages/web/slider';
 import { dashboard, login, register } from '@/routes';
 import { Link, usePage } from '@inertiajs/react';
 import { LayoutDashboard, LogIn, Menu, Moon, Sun, X } from 'lucide-react';
@@ -38,9 +37,9 @@ export default function WebMenu() {
 
     const navItems = [
         { name: 'Home', href: '/' },
-        { name: 'About', href: '/about' },
-        { name: 'Services', href: '/services' },
-        { name: 'Contact', href: '/contact' },
+        { name: 'About', href: '/abouts' },
+        { name: 'Services', href: '/web-services' },
+        { name: 'Contact', href: '/web-contacts' },
     ];
 
     const current = navItems.find((i) => i.href === currentUrl)?.name || '';

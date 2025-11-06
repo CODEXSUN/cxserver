@@ -15,6 +15,20 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
+
+Route::get('/abouts', function () {
+    return Inertia::render('web/About');
+})->name('abouts');
+
+Route::get('/web-services', function () {
+    return Inertia::render('web/Service');
+})->name('web-services');
+
+Route::get('/web-contacts', function () {
+    return Inertia::render('web/web-contact');
+})->name('web-contacts');
+
+
 Route::middleware(['auth', 'verified','role:super-admin'])->group(function () {
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');
