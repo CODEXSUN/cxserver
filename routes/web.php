@@ -2,9 +2,11 @@
 
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\ContactSearchController;
 use App\Http\Controllers\ContactTypeController;
 use App\Http\Controllers\JobCardController;
 use App\Http\Controllers\ServiceInwardController;
+use App\Http\Controllers\ServiceStatusController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -56,6 +58,9 @@ Route::middleware(['auth', 'verified','role:super-admin'])->group(function () {
 
 
 Route::middleware(['auth', 'verified'])->group(function () {
+
+    Route::get('/contacts/search', ContactSearchController::class)
+        ->name('contacts.search');
 
     // Contact Types
     Route::resource('contact-types', ContactTypeController::class)->except(['show']);

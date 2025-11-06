@@ -55,7 +55,7 @@ class ContactController extends Controller
     public function create()
     {
         $this->authorize('create', Contact::class);
-        $contactTypes = ContactType::active()->orderBy('name')->get();
+        $contactTypes = ContactType::orderBy('name')->get();
 
         return Inertia::render('Contacts/Create', [
             'contactTypes' => $contactTypes,
@@ -104,7 +104,7 @@ class ContactController extends Controller
     public function edit(Contact $contact)
     {
         $this->authorize('update', $contact);
-        $contactTypes = ContactType::active()->orderBy('name')->get();
+        $contactTypes = ContactType::orderBy('name')->get();
 
         return Inertia::render('Contacts/Edit', [
             'contact' => $contact,
