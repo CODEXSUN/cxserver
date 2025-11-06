@@ -48,7 +48,7 @@ export default function Home() {
                         </div>
                         <div>
                             <h4 className="font-semibold mb-4">Hours</h4>
-                            <p className="text-gray-400">Mon-Fri: 9AM-8PM<br />Sat: 10AM-6PM</p>
+                            <p className="text-gray-400">Mon-Fri: 10AM-8PM<br />Sat: 10AM-6PM</p>
                         </div>
                         <div>
                             <h4 className="font-semibold mb-4">Contact</h4>
