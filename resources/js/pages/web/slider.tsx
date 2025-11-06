@@ -10,24 +10,45 @@ interface Slide { id: number; title: string; tagline: string; action: { text: st
 const slides: Slide[] = [
     {
         id: 1,
-        title: "Welcome to Modern Web",
-        tagline: "Build amazing experiences with Laravel & React",
-        action: { text: "Get Started", href: "/register" },
-        image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1200&h=600&fit=crop"
+        title: "Your Trusted Computer Repair Partner",
+        tagline: "Fast, reliable & affordable solutions for all devices",
+        action: { text: "Book Service", href: "/contact" },
+        image: "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=1200&h=600&fit=crop"
     },
     {
         id: 2,
-        title: "Powerful Full-Stack",
-        tagline: "Inertia.js bridges Laravel and React seamlessly",
-        action: { text: "Learn More", href: "/about" },
-        image: "https://images.unsplash.com/photo-1517180102446-f3ece451e9d8?w=1200&h=600&fit=crop"
+        title: "Expert Hardware & Software Fixes",
+        tagline: "From virus removal to system upgrades — we do it all",
+        action: { text: "View Services", href: "/services" },
+        image: "https://images.unsplash.com/photo-1581093450021-4a7360e9a6b5?w=1200&h=600&fit=crop"
     },
     {
         id: 3,
-        title: "Deploy with Confidence",
-        tagline: "Production-ready apps in minutes",
-        action: { text: "Deploy Now", href: "https://cloud.laravel.com" },
-        image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=1200&h=600&fit=crop"
+        title: "24/7 Emergency Support",
+        tagline: "Critical issues? We’re here when you need us most",
+        action: { text: "Call Now", href: "tel:+1234567890" },
+        image: "https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=1200&h=600&fit=crop"
+    },
+    // {
+    //     id: 4,
+    //     title: "Data Recovery Specialists",
+    //     tagline: "Lost files? We recover photos, documents & more safely",
+    //     action: { text: "Start Recovery", href: "/contact" },
+    //     image: "https://images.unsplash.com/photo-1581092160607-6e7e8e4c5d7f?w=1200&h=600&fit=crop"
+    // },
+    // {
+    //     id: 5,
+    //     title: "Network & Wi-Fi Setup",
+    //     tagline: "Secure, fast internet for home or business",
+    //     action: { text: "Get Connected", href: "/services" },
+    //     image: "https://images.unsplash.com/photo-1518770660439-24e9af1fe654?w=1200&h=600&fit=crop"
+    // },
+    {
+        id: 6,
+        title: "Business IT Solutions",
+        tagline: "Managed services, cloud backup & cybersecurity",
+        action: { text: "Talk to Expert", href: "/contact" },
+        image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=600&fit=crop"
     }
 ];
 
