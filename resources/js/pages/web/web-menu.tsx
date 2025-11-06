@@ -238,7 +238,6 @@ export default function WebMenu() {
                     )}
                 </div>
             </header>
-            <FullScreenSlider />
         </>
     );
 }
