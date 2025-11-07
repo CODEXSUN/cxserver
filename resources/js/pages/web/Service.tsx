@@ -4,6 +4,7 @@ import WebMenu from '@/pages/web/web-menu';
 import { motion } from 'framer-motion';
 import { Monitor, Laptop, Camera, Server, Printer, Wrench, Shield, Zap, ArrowRight } from 'lucide-react';
 import { Link } from '@inertiajs/react';
+import FooterSection from '@/pages/web/home/FooterSection';
 
 const categories = [
     {
@@ -199,30 +200,7 @@ export default function Services() {
             </section>
 
             {/* Footer */}
-            <footer className="bg-gray-900 text-white py-12">
-                <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-                        <div>
-                            <h3 className="text-2xl font-bold mb-4">Tech Media Service Center</h3>
-                            <p className="text-gray-400">Since 2002 — Fixing tech, building trust.</p>
-                        </div>
-                        <div>
-                            <h4 className="font-semibold mb-4">Hours</h4>
-                            <p className="text-gray-400">Mon-Sat: 9AM-8PM<br />Sun: Emergency</p>
-                        </div>
-                        <div>
-                            <h4 className="font-semibold mb-4">Location</h4>
-                            <p className="text-gray-400">
-                                Electronic City, Bangalore<br />
-                                <a href="mailto:service@techmedia.in" className="hover:text-[#f53003]">service@techmedia.in</a>
-                            </p>
-                        </div>
-                    </div>
-                    <div className="text-center text-gray-400 text-sm">
-                        © {new Date().getFullYear()} Tech Media Service Center
-                    </div>
-                </div>
-            </footer>
+            <FooterSection/>
         </>
     );
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import AppLogoIcon from '@/components/app-logo-icon';
 import { dashboard, login, register } from '@/routes';
 import { Link, usePage } from '@inertiajs/react';
 import { LayoutDashboard, LogIn, Menu, Moon, Sun, X } from 'lucide-react';
@@ -9,7 +10,9 @@ export default function WebMenu() {
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenu, setMobileMenu] = useState(false);
     const [darkMode, setDarkMode] = useState(false);
-    const { auth, app } = usePage<any>().props;
+    const { auth } = usePage<any>().props;
+
+    const { appName } = usePage().props as unknown as { appName: string };
     const currentUrl = usePage<any>().url;
 
     useEffect(() => {
@@ -60,22 +63,26 @@ export default function WebMenu() {
                             href="/"
                             className="group flex items-center space-x-2"
                         >
-                            <div className="h-10 w-12 rounded-lg bg-[#f53003] transition-transform group-hover:scale-110">
-                                <span className="text-white flex justify-center items-center text-center text-2xl w-full">
-                                    TM
-                                </span>
+                            <div className="h-10 w-12 rounded-lg transition-transform group-hover:scale-110">
+                                {/*<span className="text-white flex justify-center items-center text-center text-2xl w-full">*/}
+                                {/*    TM*/}
+                                {/*</span>*/}
 
-
-
+                                <AppLogoIcon className={`h-10 w-auto ${
+                                    scrolled || darkMode
+                                        ? 'text-[#1b1b18] fill-[#8F1F8D]  dark:text-[#EDEDEC]'
+                                        : 'text-white fill-white'
+                                }`} />
                             </div>
+
                             <span
                                 className={`text-2xl font-medium transition-colors ${
                                     scrolled || darkMode
-                                        ? 'text-[#1b1b18] dark:text-[#EDEDEC]'
+                                        ? 'text-[#1b1b18] fill-black dark:text-[#EDEDEC]'
                                         : 'text-white'
-                                } group-hover:text-[#f53003] dark:group-hover:text-[#FF4433]`}
+                                } group-hover:text-[#8F1F8D] dark:group-hover:text-[#8F1F8D]`}
                             >
-                                {app?.name || 'Tech media Service Center'}
+                                {appName || 'Tech Media'}
                             </span>
                         </Link>
 
@@ -98,7 +105,7 @@ export default function WebMenu() {
                                                     {item.name}
                                                 </span>
                                                 <span
-                                                    className={`absolute right-0 bottom-0 left-0 h-0.5 transform bg-[#f53003] transition-transform duration-300 ${
+                                                    className={`absolute right-0 bottom-0 left-0 h-0.5 transform bg-[#8F1F8D] transition-transform duration-300 ${
                                                         active
                                                             ? 'scale-x-100'
                                                             : 'scale-x-0 group-hover:scale-x-100'

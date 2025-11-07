@@ -4,6 +4,7 @@ import WebMenu from '@/pages/web/web-menu';
 import { motion } from 'framer-motion';
 import { Shield, Users, Award, Clock, MapPin, Phone, Mail } from 'lucide-react';
 import { Link } from '@inertiajs/react';
+import FooterSection from '@/pages/web/home/FooterSection';
 
 export default function About() {
     return (
@@ -164,41 +165,7 @@ export default function About() {
             </section>
 
             {/* Footer */}
-            <footer className="bg-gray-900 text-white py-12">
-                <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-                        <div>
-                            <h3 className="text-2xl font-bold mb-4">Tech Media Service Center</h3>
-                            <p className="text-gray-400">Since 2002 — Your trusted tech partner.</p>
-                        </div>
-                        <div>
-                            <h4 className="font-semibold mb-4 flex items-center gap-2">
-                                <Clock className="w-5 h-5" /> Hours
-                            </h4>
-                            <p className="text-gray-400">
-                                Mon-Fri: 9AM-8PM<br />
-                                Sat: 10AM-6PM<br />
-                                Sun: Emergency Only
-                            </p>
-                        </div>
-                        <div>
-                            <h4 className="font-semibold mb-4 flex items-center gap-2">
-                                <MapPin className="w-5 h-5" /> Visit Us
-                            </h4>
-                            <p className="text-gray-400">
-                                Electronic City, Phase II<br />
-                                Bangalore, Karnataka 560100<br />
-                                <a href="mailto:info@techmedia.in" className="flex items-center gap-2 mt-2 hover:text-[#f53003] transition">
-                                    <Mail className="w-4 h-4" /> info@techmedia.in
-                                </a>
-                            </p>
-                        </div>
-                    </div>
-                    <div className="text-center text-gray-400 text-sm">
-                        © {new Date().getFullYear()} Tech Media Service Center. All rights reserved.
-                    </div>
-                </div>
-            </footer>
+            <FooterSection/>
         </>
     );
 }

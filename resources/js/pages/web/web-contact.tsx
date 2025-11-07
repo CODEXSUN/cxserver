@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { MapPin, Phone, Mail, Clock, Send, CheckCircle } from 'lucide-react';
 import { Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
+import FooterSection from '@/pages/web/home/FooterSection';
 
 export default function Contact() {
     const { data, setData, post, processing, errors, reset, wasSuccessful } = useForm({
@@ -77,8 +78,9 @@ export default function Contact() {
                                         <h3 className="font-semibold text-gray-900 dark:text-white">Location</h3>
                                         <p className="text-gray-600 dark:text-gray-300">
                                             Tech Media Service Center<br />
-                                            Plot 45, Electronic City Phase II<br />
-                                            Bangalore, Karnataka 560100
+                                            436, Avinashi Road,<br />
+                                            Near CITU Office,<br />
+                                            Tiruppur, Tamil Nadu 641602.<br />
                                         </p>
                                     </div>
                                 </motion.div>
@@ -96,8 +98,8 @@ export default function Contact() {
                                     <div>
                                         <h3 className="font-semibold text-gray-900 dark:text-white">Phone</h3>
                                         <p className="text-gray-600 dark:text-gray-300">
-                                            <a href="tel:+919876543210" className="hover:text-[#f53003]">+91 98765 43210</a><br />
-                                            <a href="tel:+918765432109" className="hover:text-[#f53003]">+91 87654 32109</a>
+                                            <a href="tel:+919894244460" className="hover:text-[#f53003]">+91 9894244460</a><br />
+                                            <a href="tel:+919894244450" className="hover:text-[#f53003]">+91 9894244450</a>
                                         </p>
                                     </div>
                                 </motion.div>
@@ -134,7 +136,7 @@ export default function Contact() {
                                     <div>
                                         <h3 className="font-semibold text-gray-900 dark:text-white">Open Hours</h3>
                                         <p className="text-gray-600 dark:text-gray-300">
-                                            Mon-Sat: 9:00 AM - 8:00 PM<br />
+                                            Mon-Sat: 10:00 AM - 8:00 PM<br />
                                             Sunday: Emergency Only
                                         </p>
                                     </div>
@@ -285,40 +287,13 @@ export default function Contact() {
                         href="tel:+919876543210"
                         className="inline-flex items-center gap-3 bg-white text-[#f53003] px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100"
                     >
-                        <Phone className="w-5 h-5" /> +91 98765 43210
+                        <Phone className="w-5 h-5" /> +91 9894244460
                     </Link>
                 </div>
             </section>
 
             {/* Footer */}
-            <footer className="bg-gray-900 text-white py-12">
-                <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-                        <div>
-                            <h3 className="text-2xl font-bold mb-4">Tech Media Service Center</h3>
-                            <p className="text-gray-400">Since 2002 — Your tech lifeline.</p>
-                        </div>
-                        <div>
-                            <h4 className="font-semibold mb-4">Quick Links</h4>
-                            <p className="text-gray-400">
-                                <Link href="/" className="block hover:text-[#f53003]">Home</Link>
-                                <Link href="/services" className="block hover:text-[#f53003]">Services</Link>
-                                <Link href="/about" className="block hover:text-[#f53003]">About</Link>
-                            </p>
-                        </div>
-                        <div>
-                            <h4 className="font-semibold mb-4">Support</h4>
-                            <p className="text-gray-400">
-                                <a href="tel:+919876543210" className="hover:text-[#f53003]">+91 98765 43210</a><br />
-                                <a href="mailto:support@techmedia.in" className="hover:text-[#f53003]">support@techmedia.in</a>
-                            </p>
-                        </div>
-                    </div>
-                    <div className="text-center text-gray-400 text-sm">
-                        © {new Date().getFullYear()} Tech Media Service Center
-                    </div>
-                </div>
-            </footer>
+            <FooterSection/>
         </>
     );
 }
