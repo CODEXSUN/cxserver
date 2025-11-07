@@ -36,6 +36,8 @@ class ServiceInwardController extends Controller
             ->when($request->job_filter === 'yes', fn($q) => $q->where('job_created', true))
             ->when($request->job_filter === 'no', fn($q) => $q->where('job_created', false))
             ->when($request->type_filter && $request->type_filter !== 'all', fn($q) => $q->where('material_type', $request->type_filter))
+            ->when($request->filled('date_from'), fn($q) => $q->whereDate('received_date', '>=', $request->date_from))
+            ->when($request->filled('date_to'), fn($q) => $q->whereDate('received_date', '<=', $request->date_to))
             ->latest();
 
         $inwards = $query->paginate(10)->withQueryString();

@@ -2,18 +2,22 @@
 import Layout from '@/layouts/app-layout';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import { useRoute } from 'ziggy-js';
+import { useState, useEffect, useCallback, useMemo, JSX } from 'react';
+import { debounce } from 'lodash';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Trash2, Search, RotateCcw } from 'lucide-react';
+import { Plus, Trash2, Search, RotateCcw, Calendar as CalendarIcon, X } from 'lucide-react';
 import DataTable from '@/components/table/DataTable';
 import TableActions from '@/components/table/TableActions';
 import { TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 interface ServiceInward {
     id: number;
@@ -42,6 +46,8 @@ interface ServiceInwardsPageProps {
         search?: string;
         job_filter?: 'all' | 'yes' | 'no';
         type_filter?: 'all' | 'laptop' | 'desktop' | 'printer';
+        date_from?: string;
+        date_to?: string;
         page?: number;
     };
     can: { create: boolean; delete: boolean };
@@ -49,38 +55,221 @@ interface ServiceInwardsPageProps {
 }
 
 export default function Index() {
-    const { inwards, filters, can, trashedCount } = usePage().props as unknown as ServiceInwardsPageProps;
+    const { inwards, filters: serverFilters, can, trashedCount } = usePage().props as unknown as ServiceInwardsPageProps;
     const route = useRoute();
 
-    const hasActiveFilters = !!filters.search || filters.job_filter !== 'all' || filters.type_filter !== 'all';
+    // LOCAL FILTER STATE (Instant UI)
+    const [localFilters, setLocalFilters] = useState({
+        search: serverFilters.search || '',
+        job_filter: serverFilters.job_filter || 'all',
+        type_filter: serverFilters.type_filter || 'all',
+        date_from: serverFilters.date_from ? parseISO(serverFilters.date_from) : undefined,
+        date_to: serverFilters.date_to ? parseISO(serverFilters.date_to) : undefined,
+    });
 
-    const updateFilters = (newFilters: Partial<typeof filters>) => {
-        router.get(
-            route('service_inwards.index'),
-            {
-                search: newFilters.search ?? filters.search,
-                job_filter: newFilters.job_filter === 'all' ? undefined : newFilters.job_filter ?? filters.job_filter,
-                type_filter: newFilters.type_filter === 'all' ? undefined : newFilters.type_filter ?? filters.type_filter,
+    const [isNavigating, setIsNavigating] = useState(false);
+
+    // SYNC WITH SERVER ON INERTIA VISIT
+    useEffect(() => {
+        setLocalFilters({
+            search: serverFilters.search || '',
+            job_filter: serverFilters.job_filter || 'all',
+            type_filter: serverFilters.type_filter || 'all',
+            date_from: serverFilters.date_from ? parseISO(serverFilters.date_from) : undefined,
+            date_to: serverFilters.date_to ? parseISO(serverFilters.date_to) : undefined,
+        });
+    }, [serverFilters]);
+
+    // DEBOUNCED SEARCH
+    const debouncedSearch = useCallback(
+        debounce((value: string) => {
+            updateFilters({ search: value || undefined });
+        }, 500),
+        []
+    );
+
+    useEffect(() => {
+        return () => debouncedSearch.cancel();
+    }, [debouncedSearch]);
+
+    // UPDATE FILTERS
+    const updateFilters = useCallback(
+        (updates: Partial<typeof serverFilters>) => {
+            setIsNavigating(true);
+
+            const payload: any = {
+                search: 'search' in updates ? updates.search : (localFilters.search || undefined),
+                job_filter:
+                    updates.job_filter === 'all'
+                        ? undefined
+                        : updates.job_filter ?? (localFilters.job_filter === 'all' ? undefined : localFilters.job_filter),
+                type_filter:
+                    updates.type_filter === 'all'
+                        ? undefined
+                        : updates.type_filter ?? (localFilters.type_filter === 'all' ? undefined : localFilters.type_filter),
+                date_from: updates.date_from ?? (localFilters.date_from ? format(localFilters.date_from, 'yyyy-MM-dd') : undefined),
+                date_to: updates.date_to ?? (localFilters.date_to ? format(localFilters.date_to, 'yyyy-MM-dd') : undefined),
                 page: 1,
-            },
-            { preserveState: true, replace: true }
-        );
+            };
+
+            router.get(route('service_inwards.index'), payload, {
+                preserveState: true,
+                replace: true,
+                onFinish: () => setIsNavigating(false),
+            });
+        },
+        [route, localFilters]
+    );
+
+    // CLEAR INDIVIDUAL FILTER
+    const clearFilter = (key: keyof typeof localFilters) => {
+        const updates: any = {};
+        if (key === 'search') updates.search = '';
+        if (key === 'job_filter') updates.job_filter = 'all';
+        if (key === 'type_filter') updates.type_filter = 'all';
+        if (key === 'date_from' || key === 'date_to') {
+            updates.date_from = undefined;
+            updates.date_to = undefined;
+        }
+
+        setLocalFilters(prev => ({
+            ...prev,
+            ...(key === 'search' ? { search: '' } : {}),
+            ...(key === 'job_filter' ? { job_filter: 'all' } : {}),
+            ...(key === 'type_filter' ? { type_filter: 'all' } : {}),
+            ...(key === 'date_from' || key === 'date_to' ? { date_from: undefined, date_to: undefined } : {}),
+        }));
+
+        updateFilters(updates);
     };
 
-    const handleSearch = (value: string) => {
-        updateFilters({ search: value || undefined });
+    // HANDLERS
+    const handleSearchChange = (value: string) => {
+        setLocalFilters(prev => ({ ...prev, search: value }));
+        debouncedSearch(value);
     };
 
     const handleJobFilterChange = (value: 'all' | 'yes' | 'no') => {
+        setLocalFilters(prev => ({ ...prev, job_filter: value }));
         updateFilters({ job_filter: value });
     };
 
     const handleTypeFilterChange = (value: 'all' | 'laptop' | 'desktop' | 'printer') => {
+        setLocalFilters(prev => ({ ...prev, type_filter: value }));
         updateFilters({ type_filter: value });
     };
 
+    const handleDateRangeChange = (range: { from?: Date; to?: Date } | undefined) => {
+        const newRange = range || { from: undefined, to: undefined };
+        setLocalFilters(prev => ({
+            ...prev,
+            date_from: newRange.from,
+            date_to: newRange.to,
+        }));
+        updateFilters({
+            date_from: newRange.from ? format(newRange.from, 'yyyy-MM-dd') : undefined,
+            date_to: newRange.to ? format(newRange.to, 'yyyy-MM-dd') : undefined,
+        });
+    };
+
     const handleResetFilters = () => {
+        const empty = {
+            search: '',
+            job_filter: 'all' as const,
+            type_filter: 'all' as const,
+            date_from: undefined,
+            date_to: undefined,
+        };
+        setLocalFilters(empty);
         router.get(route('service_inwards.index'), {}, { preserveState: true, replace: true });
+    };
+
+    const handleSearch = () => updateFilters({ search: localFilters.search || undefined });
+
+    // ALWAYS SHOW ACTIVE FILTERS (even if empty)
+    const activeFilterBadges = useMemo(() => {
+        const badges: JSX.Element[] = [];
+
+        // Search
+        if (localFilters.search) {
+            badges.push(
+                <Badge key="search" variant="secondary" className="text-xs flex items-center gap-1">
+                    Search: "{localFilters.search}"
+                    <button
+                        onClick={() => clearFilter('search')}
+                        className="ml-1 hover:bg-muted rounded-sm p-0.5"
+                    >
+                        <X className="h-3 w-3" />
+                    </button>
+                </Badge>
+            );
+        }
+
+        // Job Filter
+        if (localFilters.job_filter !== 'all') {
+            badges.push(
+                <Badge key="job" variant="secondary" className="text-xs flex items-center gap-1">
+                    Job: {localFilters.job_filter === 'yes' ? 'Created' : 'Not Created'}
+                    <button
+                        onClick={() => clearFilter('job_filter')}
+                        className="ml-1 hover:bg-muted rounded-sm p-0.5"
+                    >
+                        <X className="h-3 w-3" />
+                    </button>
+                </Badge>
+            );
+        }
+
+        // Type Filter
+        if (localFilters.type_filter !== 'all') {
+            badges.push(
+                <Badge key="type" variant="secondary" className="text-xs flex items-center gap-1">
+                    Type: {localFilters.type_filter.charAt(0).toUpperCase() + localFilters.type_filter.slice(1)}
+                    <button
+                        onClick={() => clearFilter('type_filter')}
+                        className="ml-1 hover:bg-muted rounded-sm p-0.5"
+                    >
+                        <X className="h-3 w-3" />
+                    </button>
+                </Badge>
+            );
+        }
+
+        // Date Range
+        if (localFilters.date_from || localFilters.date_to) {
+            badges.push(
+                <Badge key="date" variant="secondary" className="text-xs flex items-center gap-1">
+                    Date: {localFilters.date_from ? format(localFilters.date_from, 'dd MMM') : '...'} -{' '}
+                    {localFilters.date_to ? format(localFilters.date_to, 'dd MMM yyyy') : '...'}
+                    <button
+                        onClick={() => clearFilter('date_from')}
+                        className="ml-1 hover:bg-muted rounded-sm p-0.5"
+                    >
+                        <X className="h-3 w-3" />
+                    </button>
+                </Badge>
+            );
+        }
+
+        // Show placeholder if no filters
+        if (badges.length === 0) {
+            badges.push(
+                <span key="no-filter" className="text-xs text-muted-foreground italic">
+                    No active filters
+                </span>
+            );
+        }
+
+        return badges;
+    }, [localFilters]);
+
+    const formatDateRange = () => {
+        const { date_from, date_to } = localFilters;
+        if (!date_from && !date_to) return 'Pick a date range';
+        if (date_from && date_to) return `${format(date_from, 'dd MMM yyyy')} - ${format(date_to, 'dd MMM yyyy')}`;
+        if (date_from) return `${format(date_from, 'dd MMM yyyy')} - ...`;
+        if (date_to) return `... - ${format(date_to, 'dd MMM yyyy')}`;
+        return 'Pick a date range';
     };
 
     return (
@@ -96,7 +285,6 @@ export default function Index() {
                         </div>
 
                         <div className="flex gap-3">
-                            {/* CREATE BUTTON */}
                             {can.create && (
                                 <TooltipProvider>
                                     <Tooltip>
@@ -108,14 +296,11 @@ export default function Index() {
                                                 </Link>
                                             </Button>
                                         </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Add a new service inward</p>
-                                        </TooltipContent>
+                                        <TooltipContent><p>Add a new service inward</p></TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
                             )}
 
-                            {/* TRASH BUTTON */}
                             {trashedCount > 0 && (
                                 <Button variant="outline" asChild>
                                     <Link href={route('service_inwards.trash')}>
@@ -129,104 +314,86 @@ export default function Index() {
 
                     <Separator />
 
-                    {/* FILTER BAR - INTUITIVE & RESPONSIVE */}
-                    <div className="flex flex-col lg:flex-row gap-4 items-end">
-                        {/* Search Input */}
-                        <div className="flex-1 max-w-md">
+                    {/* FILTER BAR */}
+                    <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex-1 min-w-[200px] max-w-md">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                                 <Input
-                                    placeholder="Search by RMA, Serial, Contact, or Phone..."
-                                    className="pl-10"
-                                    defaultValue={filters.search || ''}
-                                    onKeyUp={(e) => {
-                                        if (e.key === 'Enter') {
-                                            handleSearch(e.currentTarget.value);
-                                        }
-                                    }}
+                                    placeholder="Search by RMA, Serial, Contact, Phone..."
+                                    className="pl-10 h-9"
+                                    value={localFilters.search}
+                                    onChange={(e) => handleSearchChange(e.target.value)}
+                                    onKeyUp={(e) => e.key === 'Enter' && handleSearch()}
+                                    disabled={isNavigating}
                                 />
                             </div>
                         </div>
 
-                        {/* Filter Selects */}
-                        <div className="flex flex-wrap gap-2">
-                            <Select
-                                value={filters.job_filter || 'all'}
-                                onValueChange={handleJobFilterChange}
-                            >
-                                <SelectTrigger className="w-[160px]">
-                                    <SelectValue placeholder="Job Status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Jobs</SelectItem>
-                                    <SelectItem value="yes">Job Created</SelectItem>
-                                    <SelectItem value="no">No Job</SelectItem>
-                                </SelectContent>
-                            </Select>
+                        <Select value={localFilters.job_filter} onValueChange={handleJobFilterChange} disabled={isNavigating}>
+                            <SelectTrigger className="w-[130px] h-9">
+                                <SelectValue placeholder="All Jobs" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Jobs</SelectItem>
+                                <SelectItem value="yes">Job Created</SelectItem>
+                                <SelectItem value="no">No Job</SelectItem>
+                            </SelectContent>
+                        </Select>
 
-                            <Select
-                                value={filters.type_filter || 'all'}
-                                onValueChange={handleTypeFilterChange}
-                            >
-                                <SelectTrigger className="w-[160px]">
-                                    <SelectValue placeholder="Device Type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Types</SelectItem>
-                                    <SelectItem value="laptop">Laptop</SelectItem>
-                                    <SelectItem value="desktop">Desktop</SelectItem>
-                                    <SelectItem value="printer">Printer</SelectItem>
-                                </SelectContent>
-                            </Select>
+                        <Select value={localFilters.type_filter} onValueChange={handleTypeFilterChange} disabled={isNavigating}>
+                            <SelectTrigger className="w-[130px] h-9">
+                                <SelectValue placeholder="All Types" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Types</SelectItem>
+                                <SelectItem value="laptop">Laptop</SelectItem>
+                                <SelectItem value="desktop">Desktop</SelectItem>
+                                <SelectItem value="printer">Printer</SelectItem>
+                            </SelectContent>
+                        </Select>
 
-                            {/* Reset Button - Only shown when filters are active */}
-                            {hasActiveFilters && (
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleResetFilters}
-                                    className="flex items-center gap-1"
-                                >
-                                    <RotateCcw className="h-3.5 w-3.5" />
-                                    Reset
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className="h-9 px-3 text-left font-normal" disabled={isNavigating}>
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    <span className="truncate max-w-[140px]">{formatDateRange()}</span>
                                 </Button>
-                            )}
-                        </div>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="range"
+                                    selected={{ from: localFilters.date_from, to: localFilters.date_to }}
+                                    onSelect={handleDateRangeChange}
+                                    numberOfMonths={2}
+                                    disabled={isNavigating}
+                                />
+                            </PopoverContent>
+                        </Popover>
 
-                        {/* Search Button */}
-                        <Button
-                            variant="default"
-                            size="sm"
-                            onClick={() => {
-                                const input = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement;
-                                handleSearch(input?.value || '');
-                            }}
-                        >
-                            <Search className="mr-2 h-4 w-4" />
-                            Search
-                        </Button>
+                        <div className="flex gap-1">
+                            <Button size="sm" className="h-9" onClick={handleSearch} disabled={isNavigating}>
+                                <Search className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-9"
+                                onClick={handleResetFilters}
+                                disabled={isNavigating}
+                            >
+                                <RotateCcw className="h-4 w-4" />
+                            </Button>
+                        </div>
                     </div>
 
-                    {/* Active Filters Summary (Optional Visual Feedback) */}
-                    {hasActiveFilters && (
-                        <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-                            {filters.search && (
-                                <Badge variant="secondary">
-                                    Search: "{filters.search}"
-                                </Badge>
-                            )}
-                            {filters.job_filter && filters.job_filter !== 'all' && (
-                                <Badge variant="secondary">
-                                    Job: {filters.job_filter === 'yes' ? 'Created' : 'Not Created'}
-                                </Badge>
-                            )}
-                            {filters.type_filter && filters.type_filter !== 'all' && (
-                                <Badge variant="secondary">
-                                    Type: {filters.type_filter.charAt(0).toUpperCase() + filters.type_filter.slice(1)}
-                                </Badge>
-                            )}
+                    {/* ACTIVE FILTERS – ALWAYS VISIBLE */}
+                    <div className="flex flex-wrap gap-2 text-sm mt-2 p-3 bg-muted/30 rounded-md border">
+                        <span className="font-medium text-foreground">Active Filters:</span>
+                        <div className="flex flex-wrap gap-2">
+                            {activeFilterBadges}
                         </div>
-                    )}
+                    </div>
 
                     {/* DATA TABLE */}
                     <DataTable
@@ -235,11 +402,14 @@ export default function Index() {
                         pagination={inwards}
                         routeName="service_inwards.index"
                         queryParams={{
-                            search: filters.search,
-                            job_filter: filters.job_filter === 'all' ? undefined : filters.job_filter,
-                            type_filter: filters.type_filter === 'all' ? undefined : filters.type_filter,
+                            search: localFilters.search || undefined,
+                            job_filter: localFilters.job_filter === 'all' ? undefined : localFilters.job_filter,
+                            type_filter: localFilters.type_filter === 'all' ? undefined : localFilters.type_filter,
+                            date_from: localFilters.date_from ? format(localFilters.date_from, 'yyyy-MM-dd') : undefined,
+                            date_to: localFilters.date_to ? format(localFilters.date_to, 'yyyy-MM-dd') : undefined,
                         }}
                         emptyMessage="No service inwards found."
+                        isLoading={isNavigating}
                     >
                         <TableHeader>
                             <TableRow className="bg-muted font-semibold text-foreground">
@@ -304,20 +474,14 @@ export default function Index() {
                                         {inward.received_date ? format(new Date(inward.received_date), 'dd MMM yyyy') : '—'}
                                     </TableCell>
                                     <TableCell>{inward.receiver?.name || <span className="text-muted-foreground">—</span>}</TableCell>
-
                                     <TableCell className="text-center">
                                         <Badge
                                             variant={inward.job_created ? "default" : "destructive"}
-                                            className={
-                                                inward.job_created
-                                                    ? "bg-green-400 text-white"
-                                                    : "bg-red-500 text-white"
-                                            }
+                                            className={inward.job_created ? "bg-green-400 text-white" : "bg-red-500 text-white"}
                                         >
                                             {inward.job_created ? "Yes" : "No"}
                                         </Badge>
                                     </TableCell>
-
                                     <TableCell className="text-right">
                                         <TableActions
                                             id={inward.id}
