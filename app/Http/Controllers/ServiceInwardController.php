@@ -31,7 +31,7 @@ class ServiceInwardController extends Controller
                 $q->where('rma', 'like', "%{$search}%")
                     ->orWhere('serial_no', 'like', "%{$search}%")
                     ->orWhereHas('contact', fn($cq) => $cq->where('name', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%"));
+                        ->orWhere('mobile', 'like', "%{$search}%"));
             }))
             ->when($request->job_filter === 'yes', fn($q) => $q->where('job_created', true))
             ->when($request->job_filter === 'no', fn($q) => $q->where('job_created', false))

@@ -28,7 +28,7 @@ interface ServiceInward {
     serial_no: string | null;
     received_date: string | null;
     deleted_at: string | null;
-    contact: { id: number; name: string; company: string | null; phone: string | null };
+    contact: { id: number; name: string; company: string | null; mobile: string | null };
     receiver: { id: number; name: string } | null;
     job_created: boolean;
 }
@@ -311,7 +311,7 @@ export default function Index() {
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                                 <Input
-                                    placeholder="Search by RMA, Serial, Contact, Phone..."
+                                    placeholder="Search by RMA, Serial, Contact, Mobile..."
                                     className="pl-10 h-9"
                                     value={localFilters.search}
                                     onChange={(e) => handleSearchChange(e.target.value)}
@@ -406,7 +406,7 @@ export default function Index() {
                             <TableRow className="bg-muted font-semibold text-foreground">
                                 <TableHead>RMA</TableHead>
                                 <TableHead>Contact</TableHead>
-                                <TableHead>Phone</TableHead>
+                                <TableHead>Mobile</TableHead>
                                 <TableHead>Type</TableHead>
                                 <TableHead>Brand / Model</TableHead>
                                 <TableHead>Serial No</TableHead>
@@ -437,9 +437,9 @@ export default function Index() {
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        {inward.contact.phone ? (
-                                            <a href={`tel:${inward.contact.phone}`} className="text-primary hover:underline">
-                                                {inward.contact.phone}
+                                        {inward.contact.mobile ? (
+                                            <a href={`tel:${inward.contact.mobile}`} className="text-primary hover:underline">
+                                                {inward.contact.mobile}
                                             </a>
                                         ) : (
                                             <span className="text-muted-foreground">—</span>
