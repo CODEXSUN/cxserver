@@ -18,9 +18,15 @@ class UserSeeder extends Seeder
             ['Sundar',           'sundar@sundar.com',     'kalarani',    ['super-admin']],
             ['Admin',            'admin@admin.com',       'Password1',   ['admin']],
             ['Demo',             'demo@demo.com',         'Password1',   ['admin']],
-//            ['Manager',          'manager@manager.com',   'Password1',   ['manager']],
-//            ['User',             'user@user.com',         'Password1',   ['user']],
-//            ['Client',           'client@client.com',     'Password1',   ['client']],
+            ['Vijay',             'vijay@techmedia.in',         'Password1',   ['admin']],
+            ['Ashok',             'ashok@techmedia.in',         'Password1',   ['admin']],
+
+            ['Sivarasitha',          'sivarasitha@techmedia.in',   'Password1',   ['user']],
+            ['Vinothini',             'vinothini@techmedia.in',         'Password1',   ['user']],
+            ['Sriram',           'sriram@techmedia.in',     'Password1',   ['user']],
+
+            ['Sriram',           'sriram@techmedia.in',     'Password1',   ['user']],
+
 //            ['Dealer',           'dealer@dealer.com',     'Password1',   ['dealer']],
 //            ['DevOps',           'devops@codexsun.com',   'DevOps123!',  ['devops']],
 //            ['Restricted User',  'restricted@codexsun.com','Password1', ['restricted']],

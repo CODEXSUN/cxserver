@@ -18,12 +18,12 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             PermissionSeeder::class,
             UserSeeder::class,
-            BlogSeeder::class,
+//            BlogSeeder::class,
             ContactTypeSeeder::class,
-            ContactSeeder::class,
-            ServiceInwardSeeder::class,
-            ServiceStatusSeeder::class,
-            JobCardSeeder::class,
+//            ContactSeeder::class,
+//            ServiceInwardSeeder::class,
+//            ServiceStatusSeeder::class,
+//            JobCardSeeder::class,
         ]);
     }
 }
