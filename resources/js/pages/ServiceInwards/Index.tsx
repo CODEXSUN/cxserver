@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Trash2, Search } from 'lucide-react';
+import { Plus, Trash2, Search, RotateCcw } from 'lucide-react';
 import DataTable from '@/components/table/DataTable';
 import TableActions from '@/components/table/TableActions';
 import { TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
@@ -38,7 +38,12 @@ interface ServiceInwardsPageProps {
         to: number;
         total: number;
     };
-    filters: { search?: string; job_filter?: 'all' | 'yes' | 'no'; page?: number };
+    filters: {
+        search?: string;
+        job_filter?: 'all' | 'yes' | 'no';
+        type_filter?: 'all' | 'laptop' | 'desktop' | 'printer';
+        page?: number;
+    };
     can: { create: boolean; delete: boolean };
     trashedCount: number;
 }
@@ -47,20 +52,35 @@ export default function Index() {
     const { inwards, filters, can, trashedCount } = usePage().props as unknown as ServiceInwardsPageProps;
     const route = useRoute();
 
-    const handleSearch = (value: string) => {
+    const hasActiveFilters = !!filters.search || filters.job_filter !== 'all' || filters.type_filter !== 'all';
+
+    const updateFilters = (newFilters: Partial<typeof filters>) => {
         router.get(
             route('service_inwards.index'),
-            { search: value || undefined, job_filter: filters.job_filter, page: 1 },
+            {
+                search: newFilters.search ?? filters.search,
+                job_filter: newFilters.job_filter === 'all' ? undefined : newFilters.job_filter ?? filters.job_filter,
+                type_filter: newFilters.type_filter === 'all' ? undefined : newFilters.type_filter ?? filters.type_filter,
+                page: 1,
+            },
             { preserveState: true, replace: true }
         );
     };
 
+    const handleSearch = (value: string) => {
+        updateFilters({ search: value || undefined });
+    };
+
     const handleJobFilterChange = (value: 'all' | 'yes' | 'no') => {
-        router.get(
-            route('service_inwards.index'),
-            { search: filters.search, job_filter: value === 'all' ? undefined : value, page: 1 },
-            { preserveState: true, replace: true }
-        );
+        updateFilters({ job_filter: value });
+    };
+
+    const handleTypeFilterChange = (value: 'all' | 'laptop' | 'desktop' | 'printer') => {
+        updateFilters({ type_filter: value });
+    };
+
+    const handleResetFilters = () => {
+        router.get(route('service_inwards.index'), {}, { preserveState: true, replace: true });
     };
 
     return (
@@ -76,7 +96,7 @@ export default function Index() {
                         </div>
 
                         <div className="flex gap-3">
-                            {/* CREATE BUTTON – ALWAYS SHOWN IF USER CAN CREATE */}
+                            {/* CREATE BUTTON */}
                             {can.create && (
                                 <TooltipProvider>
                                     <Tooltip>
@@ -109,13 +129,14 @@ export default function Index() {
 
                     <Separator />
 
-                    {/* SEARCH & FILTER BAR */}
-                    <div className="flex flex-col sm:flex-row gap-4 items-end">
+                    {/* FILTER BAR - INTUITIVE & RESPONSIVE */}
+                    <div className="flex flex-col lg:flex-row gap-4 items-end">
+                        {/* Search Input */}
                         <div className="flex-1 max-w-md">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                                 <Input
-                                    placeholder="Search by RMA, Serial, or Contact..."
+                                    placeholder="Search by RMA, Serial, Contact, or Phone..."
                                     className="pl-10"
                                     defaultValue={filters.search || ''}
                                     onKeyUp={(e) => {
@@ -127,12 +148,13 @@ export default function Index() {
                             </div>
                         </div>
 
-                        <div className="flex gap-2">
+                        {/* Filter Selects */}
+                        <div className="flex flex-wrap gap-2">
                             <Select
                                 value={filters.job_filter || 'all'}
                                 onValueChange={handleJobFilterChange}
                             >
-                                <SelectTrigger className="w-[180px]">
+                                <SelectTrigger className="w-[160px]">
                                     <SelectValue placeholder="Job Status" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -142,18 +164,69 @@ export default function Index() {
                                 </SelectContent>
                             </Select>
 
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                    const input = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement;
-                                    handleSearch(input?.value || '');
-                                }}
+                            <Select
+                                value={filters.type_filter || 'all'}
+                                onValueChange={handleTypeFilterChange}
                             >
-                                Search
-                            </Button>
+                                <SelectTrigger className="w-[160px]">
+                                    <SelectValue placeholder="Device Type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Types</SelectItem>
+                                    <SelectItem value="laptop">Laptop</SelectItem>
+                                    <SelectItem value="desktop">Desktop</SelectItem>
+                                    <SelectItem value="printer">Printer</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            {/* Reset Button - Only shown when filters are active */}
+                            {hasActiveFilters && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleResetFilters}
+                                    className="flex items-center gap-1"
+                                >
+                                    <RotateCcw className="h-3.5 w-3.5" />
+                                    Reset
+                                </Button>
+                            )}
                         </div>
+
+                        {/* Search Button */}
+                        <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => {
+                                const input = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement;
+                                handleSearch(input?.value || '');
+                            }}
+                        >
+                            <Search className="mr-2 h-4 w-4" />
+                            Search
+                        </Button>
                     </div>
+
+                    {/* Active Filters Summary (Optional Visual Feedback) */}
+                    {hasActiveFilters && (
+                        <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+                            {filters.search && (
+                                <Badge variant="secondary">
+                                    Search: "{filters.search}"
+                                </Badge>
+                            )}
+                            {filters.job_filter && filters.job_filter !== 'all' && (
+                                <Badge variant="secondary">
+                                    Job: {filters.job_filter === 'yes' ? 'Created' : 'Not Created'}
+                                </Badge>
+                            )}
+                            {filters.type_filter && filters.type_filter !== 'all' && (
+                                <Badge variant="secondary">
+                                    Type: {filters.type_filter.charAt(0).toUpperCase() + filters.type_filter.slice(1)}
+                                </Badge>
+                            )}
+                        </div>
+                    )}
 
                     {/* DATA TABLE */}
                     <DataTable
@@ -161,7 +234,11 @@ export default function Index() {
                         data={inwards.data}
                         pagination={inwards}
                         routeName="service_inwards.index"
-                        queryParams={{ search: filters.search, job_filter: filters.job_filter }}
+                        queryParams={{
+                            search: filters.search,
+                            job_filter: filters.job_filter === 'all' ? undefined : filters.job_filter,
+                            type_filter: filters.type_filter === 'all' ? undefined : filters.type_filter,
+                        }}
                         emptyMessage="No service inwards found."
                     >
                         <TableHeader>
