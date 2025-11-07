@@ -3,7 +3,6 @@ import Layout from '@/layouts/app-layout';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import { useRoute } from 'ziggy-js';
 import { useState, useEffect, useCallback, useMemo, JSX } from 'react';
-import { debounce } from 'lodash';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -86,18 +85,6 @@ export default function Index() {
         setLocalPerPage(serverFilters.per_page ? parseInt(serverFilters.per_page) : 100);
     }, [serverFilters]);
 
-    // DEBOUNCED SEARCH
-    const debouncedSearch = useCallback(
-        debounce((value: string) => {
-            updateFilters({ search: value || undefined });
-        }, 500),
-        []
-    );
-
-    useEffect(() => {
-        return () => debouncedSearch.cancel();
-    }, [debouncedSearch]);
-
     // UPDATE FILTERS
     const updateFilters = useCallback(
         (updates: Partial<typeof serverFilters>) => {
@@ -153,7 +140,7 @@ export default function Index() {
     // HANDLERS
     const handleSearchChange = (value: string) => {
         setLocalFilters(prev => ({ ...prev, search: value }));
-        debouncedSearch(value);
+        // NO DEBOUNCE – just update local state
     };
 
     const handleJobFilterChange = (value: 'all' | 'yes' | 'no') => {

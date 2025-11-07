@@ -68,8 +68,8 @@ export default function DataTable<T>({
     }
 
     return (
-        <Card>
-            <CardContent className="p-0">
+        <div>
+            <div className="bg-card text-card-foreground flex flex-col rounded-xl border p-0.5 shadow-sm">
                 <div className="rounded-md border overflow-hidden">
                     <Table>{children}</Table>
                 </div>
@@ -142,7 +142,7 @@ export default function DataTable<T>({
                         </Button>
                     </div>
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }
