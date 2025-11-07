@@ -40,7 +40,7 @@ class ServiceInwardController extends Controller
             ->when($request->filled('date_to'), fn($q) => $q->whereDate('received_date', '<=', $request->date_to))
             ->latest();
 
-        $inwards = $query->paginate(10)->withQueryString();
+        $inwards = $query->paginate(100)->withQueryString();
 
         return Inertia::render('ServiceInwards/Index', [
             'inwards' => $inwards,
