@@ -28,8 +28,13 @@ class ServiceInwardController extends Controller
             ->when($search, fn($q) => $q->where(function ($q) use ($search) {
                 $q->where('rma', 'like', "%{$search}%")
                     ->orWhere('serial_no', 'like', "%{$search}%")
-                    ->orWhereHas('contact', fn($cq) => $cq->where('name', 'like', "%{$search}%"));
+                    ->orWhereHas('contact', function ($cq) use ($search) {
+                        $cq->where('name', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+                    });
             }))
+            ->when($request->job_filter === 'yes', fn($q) => $q->where('job_created', true))
+            ->when($request->job_filter === 'no', fn($q) => $q->where('job_created', false))
             ->latest();
 
         $inwards = $query->paginate(10)->withQueryString();

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Plus, Trash2, Search } from 'lucide-react';
 import DataTable from '@/components/table/DataTable';
@@ -23,7 +24,7 @@ interface ServiceInward {
     serial_no: string | null;
     received_date: string | null;
     deleted_at: string | null;
-    contact: { id: number; name: string; company: string | null };
+    contact: { id: number; name: string; company: string | null; phone: string | null };
     receiver: { id: number; name: string } | null;
     job_created: boolean;
 }
@@ -37,7 +38,7 @@ interface ServiceInwardsPageProps {
         to: number;
         total: number;
     };
-    filters: { search?: string; page?: number };
+    filters: { search?: string; job_filter?: 'all' | 'yes' | 'no'; page?: number };
     can: { create: boolean; delete: boolean };
     trashedCount: number;
 }
@@ -49,7 +50,15 @@ export default function Index() {
     const handleSearch = (value: string) => {
         router.get(
             route('service_inwards.index'),
-            { search: value || undefined, page: 1 },
+            { search: value || undefined, job_filter: filters.job_filter, page: 1 },
+            { preserveState: true, replace: true }
+        );
+    };
+
+    const handleJobFilterChange = (value: 'all' | 'yes' | 'no') => {
+        router.get(
+            route('service_inwards.index'),
+            { search: filters.search, job_filter: value === 'all' ? undefined : value, page: 1 },
             { preserveState: true, replace: true }
         );
     };
@@ -100,31 +109,50 @@ export default function Index() {
 
                     <Separator />
 
-                    {/* SEARCH BAR */}
-                    <div className="flex gap-4 items-center max-w-md">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                            <Input
-                                placeholder="Search by RMA, Serial, or Contact..."
-                                className="pl-10"
-                                defaultValue={filters.search || ''}
-                                onKeyUp={(e) => {
-                                    if (e.key === 'Enter') {
-                                        handleSearch(e.currentTarget.value);
-                                    }
-                                }}
-                            />
+                    {/* SEARCH & FILTER BAR */}
+                    <div className="flex flex-col sm:flex-row gap-4 items-end">
+                        <div className="flex-1 max-w-md">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                                <Input
+                                    placeholder="Search by RMA, Serial, or Contact..."
+                                    className="pl-10"
+                                    defaultValue={filters.search || ''}
+                                    onKeyUp={(e) => {
+                                        if (e.key === 'Enter') {
+                                            handleSearch(e.currentTarget.value);
+                                        }
+                                    }}
+                                />
+                            </div>
                         </div>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                                const input = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement;
-                                handleSearch(input?.value || '');
-                            }}
-                        >
-                            Search
-                        </Button>
+
+                        <div className="flex gap-2">
+                            <Select
+                                value={filters.job_filter || 'all'}
+                                onValueChange={handleJobFilterChange}
+                            >
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="Job Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Jobs</SelectItem>
+                                    <SelectItem value="yes">Job Created</SelectItem>
+                                    <SelectItem value="no">No Job</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                    const input = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement;
+                                    handleSearch(input?.value || '');
+                                }}
+                            >
+                                Search
+                            </Button>
+                        </div>
                     </div>
 
                     {/* DATA TABLE */}
@@ -133,13 +161,14 @@ export default function Index() {
                         data={inwards.data}
                         pagination={inwards}
                         routeName="service_inwards.index"
-                        queryParams={{ search: filters.search }}
+                        queryParams={{ search: filters.search, job_filter: filters.job_filter }}
                         emptyMessage="No service inwards found."
                     >
                         <TableHeader>
                             <TableRow className="bg-muted font-semibold text-foreground">
                                 <TableHead>RMA</TableHead>
                                 <TableHead>Contact</TableHead>
+                                <TableHead>Phone</TableHead>
                                 <TableHead>Type</TableHead>
                                 <TableHead>Brand / Model</TableHead>
                                 <TableHead>Serial No</TableHead>
@@ -168,6 +197,15 @@ export default function Index() {
                                                 <div className="text-sm text-muted-foreground">{inward.contact.company}</div>
                                             )}
                                         </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        {inward.contact.phone ? (
+                                            <a href={`tel:${inward.contact.phone}`} className="text-primary hover:underline">
+                                                {inward.contact.phone}
+                                            </a>
+                                        ) : (
+                                            <span className="text-muted-foreground">—</span>
+                                        )}
                                     </TableCell>
                                     <TableCell>
                                         <Badge variant="outline">
