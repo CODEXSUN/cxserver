@@ -5,30 +5,46 @@ import { useRoute } from 'ziggy-js';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft } from 'lucide-react';
+import ContactAutocomplete from '@/components/blocks/ContactAutocomplete';
+import React from 'react';
 
-interface ContactOption {
+interface Contact {
     id: number;
     name: string;
+    email: string | null;
+    phone: string | null;
+    mobile: string;
     company: string | null;
+    contact_type: { id: number; name: string };
 }
+
 
 interface UserOption {
     id: number;
     name: string;
 }
+
 interface CreatePageProps {
-    contacts: ContactOption[];
+    contacts: Contact[];          // still passed for fallback, not used directly
     users: UserOption[];
 }
 
 export default function Create() {
     const route = useRoute();
+    const { users } = usePage().props as unknown as CreatePageProps;
+
     const { data, setData, post, processing, errors } = useForm({
         rma: '',
-        contact_id: '',
+        contact_id: '',               // <-- will be set to string(id)
         material_type: '',
         brand: '',
         model: '',
@@ -40,7 +56,22 @@ export default function Create() {
         received_date: '',
     });
 
-    const { contacts, users } = usePage().props as unknown as CreatePageProps;
+    // -----------------------------------------------------------------
+    //  CONTACT AUTOCOMPLETE HANDLERS
+    // -----------------------------------------------------------------
+    const [selectedContact, setSelectedContact] = React.useState<Contact | null>(null);
+
+    const handleContactSelect = (contact: Contact | null) => {
+        setSelectedContact(contact);
+        setData('contact_id', contact ? String(contact.id) : '');
+    };
+
+    const handleContactCreate = (name: string) => {
+        // Optional: open a modal / redirect to contacts.create
+        // For demo we just alert – replace with your own flow
+        alert(`Create new contact: "${name}"`);
+    };
+    // -----------------------------------------------------------------
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -66,37 +97,45 @@ export default function Create() {
 
                     <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* ---------- RMA ---------- */}
                             <div>
-                                <Label htmlFor="rma">RMA <span className="text-red-500">*</span></Label>
+                                <Label htmlFor="rma">
+                                    RMA <span className="text-red-500">*</span>
+                                </Label>
                                 <Input
                                     id="rma"
                                     value={data.rma}
                                     onChange={(e) => setData('rma', e.target.value)}
-                                    placeholder=""
                                 />
                                 {errors.rma && <p className="text-sm text-red-600 mt-1">{errors.rma}</p>}
                             </div>
 
+                            {/* ---------- CONTACT (AUTOCOMPLETE) ---------- */}
                             <div>
-                                <Label htmlFor="contact_id">Contact <span className="text-red-500">*</span></Label>
-                                <Select value={data.contact_id} onValueChange={(v) => setData('contact_id', v)}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select contact" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {contacts.map((c) => (
-                                            <SelectItem key={c.id} value={String(c.id)}>
-                                                {c.name} {c.company && `- ${c.company}`}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {errors.contact_id && <p className="text-sm text-red-600 mt-1">{errors.contact_id}</p>}
+                                <Label htmlFor="contact-autocomplete">
+                                    Contact <span className="text-red-500">*</span>
+                                </Label>
+                                <ContactAutocomplete
+                                    value={selectedContact}
+                                    onSelect={handleContactSelect}
+                                    onCreateNew={handleContactCreate}
+                                    placeholder="Search contacts by name, phone, email..."
+                                    label=""
+                                />
+                                {errors.contact_id && (
+                                    <p className="text-sm text-red-600 mt-1">{errors.contact_id}</p>
+                                )}
                             </div>
 
+                            {/* ---------- MATERIAL TYPE ---------- */}
                             <div>
-                                <Label htmlFor="material_type">Material Type <span className="text-red-500">*</span></Label>
-                                <Select value={data.material_type} onValueChange={(v) => setData('material_type', v)}>
+                                <Label htmlFor="material_type">
+                                    Material Type <span className="text-red-500">*</span>
+                                </Label>
+                                <Select
+                                    value={data.material_type}
+                                    onValueChange={(v) => setData('material_type', v)}
+                                >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select type" />
                                     </SelectTrigger>
@@ -106,43 +145,51 @@ export default function Create() {
                                         <SelectItem value="printer">Printer</SelectItem>
                                     </SelectContent>
                                 </Select>
-                                {errors.material_type && <p className="text-sm text-red-600 mt-1">{errors.material_type}</p>}
+                                {errors.material_type && (
+                                    <p className="text-sm text-red-600 mt-1">{errors.material_type}</p>
+                                )}
                             </div>
 
+                            {/* ---------- BRAND ---------- */}
                             <div>
                                 <Label htmlFor="brand">Brand</Label>
                                 <Input
                                     id="brand"
                                     value={data.brand}
                                     onChange={(e) => setData('brand', e.target.value)}
-                                    placeholder=""
                                 />
                             </div>
 
+                            {/* ---------- MODEL ---------- */}
                             <div>
                                 <Label htmlFor="model">Model</Label>
                                 <Input
                                     id="model"
                                     value={data.model}
                                     onChange={(e) => setData('model', e.target.value)}
-                                    placeholder=""
                                 />
                             </div>
 
+                            {/* ---------- SERIAL NO ---------- */}
                             <div>
                                 <Label htmlFor="serial_no">Serial No</Label>
                                 <Input
                                     id="serial_no"
                                     value={data.serial_no}
                                     onChange={(e) => setData('serial_no', e.target.value)}
-                                    placeholder=""
                                 />
-                                {errors.serial_no && <p className="text-sm text-red-600 mt-1">{errors.serial_no}</p>}
+                                {errors.serial_no && (
+                                    <p className="text-sm text-red-600 mt-1">{errors.serial_no}</p>
+                                )}
                             </div>
 
+                            {/* ---------- RECEIVED BY ---------- */}
                             <div>
                                 <Label htmlFor="received_by">Received By</Label>
-                                <Select value={data.received_by} onValueChange={(v) => setData('received_by', v)}>
+                                <Select
+                                    value={data.received_by}
+                                    onValueChange={(v) => setData('received_by', v)}
+                                >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select receiver (optional)" />
                                     </SelectTrigger>
@@ -156,6 +203,7 @@ export default function Create() {
                                 </Select>
                             </div>
 
+                            {/* ---------- RECEIVED DATE ---------- */}
                             <div>
                                 <Label htmlFor="received_date">Received Date</Label>
                                 <Input
@@ -166,17 +214,18 @@ export default function Create() {
                                 />
                             </div>
 
+                            {/* ---------- PHOTO URL ---------- */}
                             <div>
                                 <Label htmlFor="photo_url">Photo URL</Label>
                                 <Input
                                     id="photo_url"
                                     value={data.photo_url}
                                     onChange={(e) => setData('photo_url', e.target.value)}
-                                    placeholder=""
                                 />
                             </div>
                         </div>
 
+                        {/* ---------- PASSWORDS ---------- */}
                         <div>
                             <Label htmlFor="passwords">Passwords / Access Info</Label>
                             <Textarea
@@ -188,6 +237,7 @@ export default function Create() {
                             />
                         </div>
 
+                        {/* ---------- OBSERVATION ---------- */}
                         <div>
                             <Label htmlFor="observation">Observation / Issue Description</Label>
                             <Textarea
@@ -199,6 +249,7 @@ export default function Create() {
                             />
                         </div>
 
+                        {/* ---------- ACTIONS ---------- */}
                         <div className="flex justify-end gap-3">
                             <Button type="button" variant="outline" asChild>
                                 <Link href={route('service_inwards.index')}>Cancel</Link>

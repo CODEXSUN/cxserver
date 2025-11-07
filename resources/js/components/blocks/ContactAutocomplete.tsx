@@ -45,6 +45,7 @@ export default function ContactAutocomplete({
 
     const inputRef = useRef<HTMLInputElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null); // New: reference to parent container
     const itemRefs = useRef<(HTMLLIElement | null)[]>([]);
     const route = useRoute();
     const abortControllerRef = useRef<AbortController | null>(null);
@@ -237,7 +238,8 @@ export default function ContactAutocomplete({
         <div className={cn('space-y-2', className)}>
             {label && <Label htmlFor="contact-autocomplete">{label}</Label>}
 
-            <div className="relative">
+            {/* Fixed container with position context */}
+            <div ref={containerRef} className="relative w-full max-w-md">
                 <Input
                     id="contact-autocomplete"
                     ref={inputRef}
@@ -264,7 +266,7 @@ export default function ContactAutocomplete({
                         }
                     }}
                     placeholder={placeholder}
-                    className="pr-10 transition-none"
+                    className="pr-10 transition-none w-full"
                 />
 
                 {/* Icons */}
@@ -290,97 +292,97 @@ export default function ContactAutocomplete({
                         {showDropdown ? <ChevronDown className="h-4 w-4" /> : <Search className="h-4 w-4" />}
                     </div>
                 )}
-            </div>
 
-            {/* Dropdown */}
-            {showDropdown && (
-                <div
-                    ref={dropdownRef}
-                    className={cn(
-                        'absolute z-50 mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-lg',
-                        'max-h-60 overflow-auto p-1 transition-opacity duration-100'
-                    )}
-                    style={{ display: 'block' }}
-                >
-                    {results.length > 0 ? (
-                        <ul className="space-y-1">
-                            {results.map((contact, idx) => (
-                                <li
-                                    key={contact.id}
-                                    ref={(el) => {
-                                        itemRefs.current[idx] = el;
-                                    }}
-                                    onClick={() => handleSelect(contact)}
-                                    onMouseEnter={() => setHighlightedIndex(idx)}
-                                    className={cn(
-                                        'relative cursor-pointer select-none rounded-sm px-3 py-2 text-sm outline-none transition-colors duration-75',
-                                        highlightedIndex === idx
-                                            ? 'bg-accent text-accent-foreground'
-                                            : 'hover:bg-accent hover:text-accent-foreground'
-                                    )}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-medium">{contact.name}</span>
-                                                <span className="text-xs font-medium text-muted-foreground">
-                                                    {contact.contact_type.name}
-                                                </span>
-                                            </div>
-                                            <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                                                {contact.mobile && (
-                                                    <div className="flex items-center gap-1">
-                                                        <Phone className="h-3 w-3" />
-                                                        {contact.mobile}
-                                                    </div>
-                                                )}
-                                                {contact.email && (
-                                                    <div className="flex items-center gap-1">
-                                                        <Mail className="h-3 w-3" />
-                                                        {contact.email}
-                                                    </div>
-                                                )}
-                                                {contact.company && (
-                                                    <div className="flex items-center gap-1">
-                                                        <Building className="h-3 w-3" />
-                                                        {contact.company}
-                                                    </div>
-                                                )}
+                {/* Dropdown: Positioned relative to container */}
+                {showDropdown && (
+                    <div
+                        ref={dropdownRef}
+                        className={cn(
+                            'absolute left-0 right-0 top-full mt-1 z-50',
+                            'w-full max-w-md rounded-md border bg-popover text-popover-foreground shadow-lg',
+                            'max-h-60 overflow-auto p-1 transition-opacity duration-100'
+                        )}
+                    >
+                        {results.length > 0 ? (
+                            <ul className="space-y-1">
+                                {results.map((contact, idx) => (
+                                    <li
+                                        key={contact.id}
+                                        ref={(el) => {
+                                            itemRefs.current[idx] = el;
+                                        }}
+                                        onClick={() => handleSelect(contact)}
+                                        onMouseEnter={() => setHighlightedIndex(idx)}
+                                        className={cn(
+                                            'relative cursor-pointer select-none rounded-sm px-3 py-2 text-sm outline-none transition-colors duration-75',
+                                            highlightedIndex === idx
+                                                ? 'bg-accent text-accent-foreground'
+                                                : 'hover:bg-accent hover:text-accent-foreground'
+                                        )}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-medium truncate">{contact.name}</span>
+                                                    <span className="text-xs font-medium text-muted-foreground flex-shrink-0">
+                                                        {contact.contact_type.name}
+                                                    </span>
+                                                </div>
+                                                <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
+                                                    {contact.mobile && (
+                                                        <div className="flex items-center gap-1 flex-shrink-0">
+                                                            <Phone className="h-3 w-3" />
+                                                            <span className="truncate">{contact.mobile}</span>
+                                                        </div>
+                                                    )}
+                                                    {contact.email && (
+                                                        <div className="flex items-center gap-1 flex-shrink-0">
+                                                            <Mail className="h-3 w-3" />
+                                                            <span className="truncate">{contact.email}</span>
+                                                        </div>
+                                                    )}
+                                                    {contact.company && (
+                                                        <div className="flex items-center gap-1 flex-shrink-0">
+                                                            <Building className="h-3 w-3" />
+                                                            <span className="truncate">{contact.company}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
-                    ) : null}
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : null}
 
-                    {/* Create New Button */}
-                    {showCreateButton && (
-                        <div className="border-t border-border pt-2 mt-2">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className={cn(
-                                    'w-full justify-start text-sm transition-colors duration-75',
-                                    highlightedIndex === results.length && 'bg-accent text-accent-foreground'
-                                )}
-                                onClick={handleCreateNew}
-                                onMouseEnter={() => setHighlightedIndex(results.length)}
-                            >
-                                <Plus className="mr-2 h-4 w-4" />
-                                Create new contact: <span className="ml-1 font-medium">"{query}"</span>
-                            </Button>
-                        </div>
-                    )}
+                        {/* Create New Button */}
+                        {showCreateButton && (
+                            <div className="border-t border-border pt-2 mt-2">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className={cn(
+                                        'w-full justify-start text-sm transition-colors duration-75',
+                                        highlightedIndex === results.length && 'bg-accent text-accent-foreground'
+                                    )}
+                                    onClick={handleCreateNew}
+                                    onMouseEnter={() => setHighlightedIndex(results.length)}
+                                >
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Create new contact: <span className="ml-1 font-medium">"{query}"</span>
+                                </Button>
+                            </div>
+                        )}
 
-                    {/* Empty State */}
-                    {!showCreateButton && results.length === 0 && query.length >= 2 && (
-                        <div className="px-3 py-2 text-center text-sm text-muted-foreground">
-                            No contacts found
-                        </div>
-                    )}
-                </div>
-            )}
+                        {/* Empty State */}
+                        {!showCreateButton && results.length === 0 && query.length >= 2 && (
+                            <div className="px-3 py-2 text-center text-sm text-muted-foreground">
+                                No contacts found
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

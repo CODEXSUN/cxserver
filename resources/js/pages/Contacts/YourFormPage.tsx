@@ -1,5 +1,5 @@
 // resources/js/Pages/Contacts/YourFormPage.tsx
-import ContactAutocomplete from './ContactAutocomplete';
+import ContactAutocomplete from '../../components/blocks/ContactAutocomplete';
 import React, { useState } from 'react';
 import { Head } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
