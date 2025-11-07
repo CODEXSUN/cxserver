@@ -13,7 +13,9 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
+import { BookOpen,MonitorCog, Folder, LayoutGrid,Laptop,Contact,StickyNote,UserRoundSearch } from 'lucide-react';
+
+
 import AppLogo from './app-logo';
 import {index as blogs} from '@/routes/blogs';
 import { index as contactTypes } from '@/routes/contact-types';
@@ -30,27 +32,27 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Blog',
         href: blogs(),
-        icon: LayoutGrid,
+        icon: StickyNote,
     },
     {
         title: 'Contact-type',
         href: contactTypes(),
-        icon: LayoutGrid,
+        icon: UserRoundSearch,
     },
     {
         title: 'Contact',
         href: contacts(),
-        icon: LayoutGrid,
+        icon: Contact,
     },
     {
         title: 'Service Inward',
         href: service_inward(),
-        icon: LayoutGrid,
+        icon: Laptop,
     },
     {
         title: 'Job-card',
         href: job_cards(),
-        icon: LayoutGrid,
+        icon: MonitorCog,
     },
 ];
 
