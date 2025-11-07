@@ -41,6 +41,7 @@ interface ServiceInwardsPageProps {
         from: number;
         to: number;
         total: number;
+        per_page: number;
     };
     filters: {
         search?: string;
@@ -48,7 +49,7 @@ interface ServiceInwardsPageProps {
         type_filter?: 'all' | 'laptop' | 'desktop' | 'printer';
         date_from?: string;
         date_to?: string;
-        page?: number;
+        per_page?: string;
     };
     can: { create: boolean; delete: boolean };
     trashedCount: number;
@@ -58,7 +59,7 @@ export default function Index() {
     const { inwards, filters: serverFilters, can, trashedCount } = usePage().props as unknown as ServiceInwardsPageProps;
     const route = useRoute();
 
-    // LOCAL FILTER STATE (Instant UI)
+    // LOCAL FILTER STATE
     const [localFilters, setLocalFilters] = useState({
         search: serverFilters.search || '',
         job_filter: serverFilters.job_filter || 'all',
@@ -67,9 +68,13 @@ export default function Index() {
         date_to: serverFilters.date_to ? parseISO(serverFilters.date_to) : undefined,
     });
 
+    const [localPerPage, setLocalPerPage] = useState(
+        serverFilters.per_page ? parseInt(serverFilters.per_page) : 100
+    );
+
     const [isNavigating, setIsNavigating] = useState(false);
 
-    // SYNC WITH SERVER ON INERTIA VISIT
+    // SYNC WITH SERVER
     useEffect(() => {
         setLocalFilters({
             search: serverFilters.search || '',
@@ -78,6 +83,7 @@ export default function Index() {
             date_from: serverFilters.date_from ? parseISO(serverFilters.date_from) : undefined,
             date_to: serverFilters.date_to ? parseISO(serverFilters.date_to) : undefined,
         });
+        setLocalPerPage(serverFilters.per_page ? parseInt(serverFilters.per_page) : 100);
     }, [serverFilters]);
 
     // DEBOUNCED SEARCH
@@ -109,6 +115,7 @@ export default function Index() {
                         : updates.type_filter ?? (localFilters.type_filter === 'all' ? undefined : localFilters.type_filter),
                 date_from: updates.date_from ?? (localFilters.date_from ? format(localFilters.date_from, 'yyyy-MM-dd') : undefined),
                 date_to: updates.date_to ?? (localFilters.date_to ? format(localFilters.date_to, 'yyyy-MM-dd') : undefined),
+                per_page: localPerPage,
                 page: 1,
             };
 
@@ -118,10 +125,10 @@ export default function Index() {
                 onFinish: () => setIsNavigating(false),
             });
         },
-        [route, localFilters]
+        [route, localFilters, localPerPage]
     );
 
-    // CLEAR INDIVIDUAL FILTER
+    // CLEAR FILTER
     const clearFilter = (key: keyof typeof localFilters) => {
         const updates: any = {};
         if (key === 'search') updates.search = '';
@@ -181,77 +188,61 @@ export default function Index() {
             date_to: undefined,
         };
         setLocalFilters(empty);
+        setLocalPerPage(100);
         router.get(route('service_inwards.index'), {}, { preserveState: true, replace: true });
     };
 
     const handleSearch = () => updateFilters({ search: localFilters.search || undefined });
 
-    // ALWAYS SHOW ACTIVE FILTERS (even if empty)
+    // ACTIVE FILTER BADGES
     const activeFilterBadges = useMemo(() => {
         const badges: JSX.Element[] = [];
 
-        // Search
         if (localFilters.search) {
             badges.push(
                 <Badge key="search" variant="secondary" className="text-xs flex items-center gap-1">
                     Search: "{localFilters.search}"
-                    <button
-                        onClick={() => clearFilter('search')}
-                        className="ml-1 hover:bg-muted rounded-sm p-0.5"
-                    >
+                    <button onClick={() => clearFilter('search')} className="ml-1 hover:bg-muted rounded-sm p-0.5">
                         <X className="h-3 w-3" />
                     </button>
                 </Badge>
             );
         }
 
-        // Job Filter
         if (localFilters.job_filter !== 'all') {
             badges.push(
                 <Badge key="job" variant="secondary" className="text-xs flex items-center gap-1">
                     Job: {localFilters.job_filter === 'yes' ? 'Created' : 'Not Created'}
-                    <button
-                        onClick={() => clearFilter('job_filter')}
-                        className="ml-1 hover:bg-muted rounded-sm p-0.5"
-                    >
+                    <button onClick={() => clearFilter('job_filter')} className="ml-1 hover:bg-muted rounded-sm p-0.5">
                         <X className="h-3 w-3" />
                     </button>
                 </Badge>
             );
         }
 
-        // Type Filter
         if (localFilters.type_filter !== 'all') {
             badges.push(
                 <Badge key="type" variant="secondary" className="text-xs flex items-center gap-1">
                     Type: {localFilters.type_filter.charAt(0).toUpperCase() + localFilters.type_filter.slice(1)}
-                    <button
-                        onClick={() => clearFilter('type_filter')}
-                        className="ml-1 hover:bg-muted rounded-sm p-0.5"
-                    >
+                    <button onClick={() => clearFilter('type_filter')} className="ml-1 hover:bg-muted rounded-sm p-0.5">
                         <X className="h-3 w-3" />
                     </button>
                 </Badge>
             );
         }
 
-        // Date Range
         if (localFilters.date_from || localFilters.date_to) {
             badges.push(
                 <Badge key="date" variant="secondary" className="text-xs flex items-center gap-1">
                     Date: {localFilters.date_from ? format(localFilters.date_from, 'dd MMM') : '...'} -{' '}
                     {localFilters.date_to ? format(localFilters.date_to, 'dd MMM yyyy') : '...'}
-                    <button
-                        onClick={() => clearFilter('date_from')}
-                        className="ml-1 hover:bg-muted rounded-sm p-0.5"
-                    >
+                    <button onClick={() => clearFilter('date_from')} className="ml-1 hover:bg-muted rounded-sm p-0.5">
                         <X className="h-3 w-3" />
                     </button>
                 </Badge>
             );
         }
 
-        // Show placeholder if no filters
         if (badges.length === 0) {
             badges.push(
                 <span key="no-filter" className="text-xs text-muted-foreground italic">
@@ -387,7 +378,7 @@ export default function Index() {
                         </div>
                     </div>
 
-                    {/* ACTIVE FILTERS – ALWAYS VISIBLE */}
+                    {/* ACTIVE FILTERS */}
                     <div className="flex flex-wrap gap-2 text-sm mt-2 p-3 bg-muted/30 rounded-md border">
                         <span className="font-medium text-foreground">Active Filters:</span>
                         <div className="flex flex-wrap gap-2">
@@ -397,7 +388,6 @@ export default function Index() {
 
                     {/* DATA TABLE */}
                     <DataTable
-                        title="All Service Inwards"
                         data={inwards.data}
                         pagination={inwards}
                         routeName="service_inwards.index"
@@ -407,6 +397,7 @@ export default function Index() {
                             type_filter: localFilters.type_filter === 'all' ? undefined : localFilters.type_filter,
                             date_from: localFilters.date_from ? format(localFilters.date_from, 'yyyy-MM-dd') : undefined,
                             date_to: localFilters.date_to ? format(localFilters.date_to, 'yyyy-MM-dd') : undefined,
+                            per_page: localPerPage,
                         }}
                         emptyMessage="No service inwards found."
                         isLoading={isNavigating}

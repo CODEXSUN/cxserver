@@ -21,17 +21,17 @@ class ServiceInwardController extends Controller
     {
         $this->authorize('viewAny', ServiceInward::class);
 
-        $search = $request->input('search');
+        $perPage = (int) $request->input('per_page', 100); // Default 100
+        $perPage = in_array($perPage, [10, 25, 50, 100, 200]) ? $perPage : 100;
 
         $query = ServiceInward::with(['contact', 'receiver'])
             ->select('service_inwards.*')
-            ->when($search, fn($q) => $q->where(function ($q) use ($search) {
+            ->when($request->filled('search'), fn($q) => $q->where(function ($q) use ($request) {
+                $search = $request->search;
                 $q->where('rma', 'like', "%{$search}%")
                     ->orWhere('serial_no', 'like', "%{$search}%")
-                    ->orWhereHas('contact', function ($cq) use ($search) {
-                        $cq->where('name', 'like', "%{$search}%")
-                            ->orWhere('phone', 'like', "%{$search}%");
-                    });
+                    ->orWhereHas('contact', fn($cq) => $cq->where('name', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%"));
             }))
             ->when($request->job_filter === 'yes', fn($q) => $q->where('job_created', true))
             ->when($request->job_filter === 'no', fn($q) => $q->where('job_created', false))
@@ -40,16 +40,14 @@ class ServiceInwardController extends Controller
             ->when($request->filled('date_to'), fn($q) => $q->whereDate('received_date', '<=', $request->date_to))
             ->latest();
 
-        $inwards = $query->paginate(100)->withQueryString();
+        $inwards = $query->paginate($perPage)->withQueryString();
 
         return Inertia::render('ServiceInwards/Index', [
             'inwards' => $inwards,
-            'filters' => ['search' => $search],
+            'filters' => $request->only(['search', 'job_filter', 'type_filter', 'date_from', 'date_to', 'per_page']),
             'can' => [
-//                'create' => auth()->user()->hasPermissionTo('service_inward.create'),
-//                'delete' => auth()->user()->hasPermissionTo('service_inward.delete'),
-                'create' => Gate::allows('create', ServiceInward::class), // ← CHANGE
-                'delete' => Gate::allows('delete', ServiceInward::class), // ← CHANGE
+                'create' => Gate::allows('create', ServiceInward::class),
+                'delete' => Gate::allows('delete', ServiceInward::class),
             ],
             'trashedCount' => ServiceInward::onlyTrashed()->count(),
         ]);
