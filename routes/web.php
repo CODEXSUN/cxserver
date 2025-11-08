@@ -31,7 +31,7 @@ Route::get('/web-contacts', function () {
 })->name('web-contacts');
 
 
-Route::middleware(['auth', 'verified','role:super-admin'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
 //    Route::get('dashboard', function () {
 //        return Inertia::render('dashboard');
 //    })->name('dashboard');
@@ -101,6 +101,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/service-inwards/next-rma', [ServiceInwardController::class, 'nextRma'])
         ->name('service_inwards.nextRma');
 
+    Route::get('/service-inwards/search', [App\Http\Controllers\ServiceInwardController::class, 'search'])
+        ->name('service_inwards.search');
+
 });
 
 
@@ -119,3 +122,36 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('service_statuses', ServiceStatusController::class)
         ->names('service_statuses');
 });
+
+Route::middleware(['auth', 'verified'])
+    ->prefix('users')
+    ->name('users.')
+    ->group(function () {
+
+        Route::get('/', [App\Http\Controllers\UserController::class, 'index'])
+            ->name('index');
+
+        Route::get('create', [App\Http\Controllers\UserController::class, 'create'])
+            ->name('create');
+        Route::post('/', [App\Http\Controllers\UserController::class, 'store'])
+            ->name('store');
+
+        Route::get('{user}', [App\Http\Controllers\UserController::class, 'show'])
+            ->name('show');
+
+        Route::get('{user}/edit', [App\Http\Controllers\UserController::class, 'edit'])
+            ->name('edit');
+        Route::match(['put', 'patch'], '{user}', [App\Http\Controllers\UserController::class, 'update'])
+            ->name('update');
+
+        Route::delete('{user}', [App\Http\Controllers\UserController::class, 'destroy'])
+            ->name('destroy');
+
+        // Trash
+        Route::get('trash', [App\Http\Controllers\UserController::class, 'trash'])
+            ->name('trash');
+        Route::post('{id}/restore', [App\Http\Controllers\UserController::class, 'restore'])
+            ->name('restore');
+        Route::delete('{id}/force', [App\Http\Controllers\UserController::class, 'forceDelete'])
+            ->name('forceDelete');
+    });

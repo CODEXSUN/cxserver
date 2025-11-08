@@ -18,20 +18,40 @@ class JobCardController extends Controller
     {
         $this->authorize('viewAny', JobCard::class);
 
-        $search = $request->input('search');
+        $perPage = (int) $request->input('per_page', 100);
+        $perPage = in_array($perPage, [10, 25, 50, 100, 200]) ? $perPage : 100;
 
         $query = JobCard::with(['serviceInward.contact', 'status', 'contact'])
-            ->when($search, fn($q) => $q->where('job_no', 'like', "%{$search}%")
-                ->orWhereHas('serviceInward', fn($sq) => $sq->where('rma', 'like', "%{$search}%"))
-                ->orWhereHas('contact', fn($cq) => $cq->where('name', 'like', "%{$search}%"))
+            ->when($request->filled('search'), fn($q) => $q->where(function ($q) use ($request) {
+                $search = $request->search;
+                $q->where('job_no', 'like', "%{$search}%")
+                    ->orWhereHas('serviceInward', fn($sq) => $sq->where('rma', 'like', "%{$search}%"))
+                    ->orWhereHas('contact', fn($cq) => $cq->where('name', 'like', "%{$search}%"));
+            }))
+            ->when($request->filled('status_filter') && $request->status_filter !== 'all', fn($q) =>
+            $q->where('service_status_id', $request->status_filter)
             )
-            ->latest();
+            ->when($request->filled('type_filter') && $request->type_filter !== 'all', fn($q) =>
+            $q->whereHas('serviceInward', fn($sq) => $sq->where('material_type', $request->type_filter))
+            )
+            ->when($request->filled('date_from'), fn($q) =>
+            $q->whereDate('received_at', '>=', $request->date_from)
+            )
+            ->when($request->filled('date_to'), fn($q) =>
+            $q->whereDate('received_at', '<=', $request->date_to)
+            )
+            ->latest('received_at');
 
-        $jobs = $query->paginate(10)->withQueryString();
+        $jobs = $query->paginate($perPage)->withQueryString();
+
+        $statuses = ServiceStatus::orderBy('name')->get(['id', 'name']);
 
         return Inertia::render('JobCards/Index', [
             'jobs' => $jobs,
-            'filters' => ['search' => $search],
+            'filters' => $request->only([
+                'search', 'status_filter', 'type_filter', 'date_from', 'date_to', 'per_page'
+            ]),
+            'statuses' => $statuses,
             'can' => [
                 'create' => Gate::allows('create', JobCard::class),
                 'delete' => Gate::allows('delete', JobCard::class),

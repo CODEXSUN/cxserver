@@ -8,6 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft } from 'lucide-react';
+import ServiceInwardAutocomplete from '@/components/blocks/ServiceInwardAutocomplete';
+import React, { useEffect } from 'react';
+import { ServiceInward } from '@/types';
 
 interface JobCard {
     id: number;
@@ -18,8 +21,8 @@ interface JobCard {
     advance_paid: string | null;
     final_status: string | null;
     spares_applied: string | null;
-    service_inward: { rma: string; contact: { name: string } };
-    status: { name: string };
+    service_inward: ServiceInward;
+    status: { id: number; name: string };
 }
 
 interface StatusOption {
@@ -35,8 +38,10 @@ interface Props {
 export default function Edit() {
     const route = useRoute();
     const { job, statuses } = usePage().props as unknown as Props;
+    const [selectedInward, setSelectedInward] = React.useState<ServiceInward | null>(null);
 
     const { data, setData, put, processing, errors } = useForm({
+        service_inward_id: String(job.service_inward_id),
         service_status_id: String(job.service_status_id),
         diagnosis: job.diagnosis || '',
         estimated_cost: job.estimated_cost || '',
@@ -44,6 +49,17 @@ export default function Edit() {
         final_status: job.final_status || '',
         spares_applied: job.spares_applied || '',
     });
+
+    // Sync initial inward
+    useEffect(() => {
+        setSelectedInward(job.service_inward);
+        setData('service_inward_id', String(job.service_inward_id));
+    }, [job]);
+
+    const handleInwardSelect = (inward: ServiceInward | null) => {
+        setSelectedInward(inward);
+        setData('service_inward_id', inward ? String(inward.id) : '');
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -70,12 +86,23 @@ export default function Edit() {
                     <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <Label>Inward</Label>
-                                <Input value={`${job.service_inward.rma} – ${job.service_inward.contact.name}`} disabled />
+                                <Label htmlFor="service_inward_id">
+                                    Service Inward <span className="text-red-500">*</span>
+                                </Label>
+                                <ServiceInwardAutocomplete
+                                    value={selectedInward}
+                                    onSelect={handleInwardSelect}
+                                    placeholder="Search by RMA, Serial, Customer, Mobile..."
+                                />
+                                {errors.service_inward_id && (
+                                    <p className="text-sm text-red-600 mt-1">{errors.service_inward_id}</p>
+                                )}
                             </div>
 
                             <div>
-                                <Label htmlFor="service_status_id">Status <span className="text-red-500">*</span></Label>
+                                <Label htmlFor="service_status_id">
+                                    Status <span className="text-red-500">*</span>
+                                </Label>
                                 <Select value={data.service_status_id} onValueChange={(v) => setData('service_status_id', v)}>
                                     <SelectTrigger>
                                         <SelectValue />
@@ -88,11 +115,10 @@ export default function Edit() {
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                {errors.service_status_id && <p className="text-sm text-red-600 mt-1">{errors.service_status_id}</p>}
+                                {errors.service_status_id && (
+                                    <p className="text-sm text-red-600 mt-1">{errors.service_status_id}</p>
+                                )}
                             </div>
-
-                            {/* Same fields as Create.tsx */}
-                            {/* ... diagnosis, estimated_cost, advance_paid, final_status, spares_applied ... */}
 
                             <div className="md:col-span-2">
                                 <Label htmlFor="diagnosis">Diagnosis</Label>
@@ -104,7 +130,45 @@ export default function Edit() {
                                 />
                             </div>
 
-                            {/* ... rest of fields ... */}
+                            <div>
+                                <Label htmlFor="estimated_cost">Estimated Cost</Label>
+                                <Input
+                                    id="estimated_cost"
+                                    type="number"
+                                    step="0.01"
+                                    value={data.estimated_cost}
+                                    onChange={(e) => setData('estimated_cost', e.target.value)}
+                                />
+                            </div>
+
+                            <div>
+                                <Label htmlFor="advance_paid">Advance Paid</Label>
+                                <Input
+                                    id="advance_paid"
+                                    type="number"
+                                    step="0.01"
+                                    value={data.advance_paid}
+                                    onChange={(e) => setData('advance_paid', e.target.value)}
+                                />
+                            </div>
+
+                            <div>
+                                <Label htmlFor="final_status">Final Status</Label>
+                                <Input
+                                    id="final_status"
+                                    value={data.final_status}
+                                    onChange={(e) => setData('final_status', e.target.value)}
+                                />
+                            </div>
+
+                            <div>
+                                <Label htmlFor="spares_applied">Spares Applied</Label>
+                                <Input
+                                    id="spares_applied"
+                                    value={data.spares_applied}
+                                    onChange={(e) => setData('spares_applied', e.target.value)}
+                                />
+                            </div>
                         </div>
 
                         <div className="flex justify-end gap-3">

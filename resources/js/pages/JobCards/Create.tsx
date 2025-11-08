@@ -8,12 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft } from 'lucide-react';
-
-interface InwardOption {
-    id: number;
-    rma: string;
-    contact: { name: string };
-}
+import ServiceInwardAutocomplete from '@/components/blocks/ServiceInwardAutocomplete'; // Fixed path
+import React from 'react';
+import { ServiceInward } from '@/types';
 
 interface StatusOption {
     id: number;
@@ -21,13 +18,14 @@ interface StatusOption {
 }
 
 interface Props {
-    inwards: InwardOption[];
+    inwards: any[]; // Not used anymore
     statuses: StatusOption[];
 }
 
 export default function Create() {
     const route = useRoute();
-    const { inwards, statuses } = usePage().props as unknown as Props;
+    const { statuses } = usePage().props as unknown as Props;
+    const [selectedInward, setSelectedInward] = React.useState<ServiceInward | null>(null);
 
     const { data, setData, post, processing, errors } = useForm({
         service_inward_id: '',
@@ -38,6 +36,11 @@ export default function Create() {
         final_status: '',
         spares_applied: '',
     });
+
+    const handleInwardSelect = (inward: ServiceInward | null) => {
+        setSelectedInward(inward);
+        setData('service_inward_id', inward ? String(inward.id) : '');
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -64,24 +67,23 @@ export default function Create() {
                     <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <Label htmlFor="service_inward_id">Service Inward <span className="text-red-500">*</span></Label>
-                                <Select value={data.service_inward_id} onValueChange={(v) => setData('service_inward_id', v)}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select inward" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {inwards.map((i) => (
-                                            <SelectItem key={i.id} value={String(i.id)}>
-                                                {i.rma} – {i.contact.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {errors.service_inward_id && <p className="text-sm text-red-600 mt-1">{errors.service_inward_id}</p>}
+                                <Label htmlFor="service_inward_id">
+                                    Service Inward <span className="text-red-500">*</span>
+                                </Label>
+                                <ServiceInwardAutocomplete
+                                    value={selectedInward}
+                                    onSelect={handleInwardSelect}
+                                    placeholder="Search by RMA, Serial, Customer, Mobile..."
+                                />
+                                {errors.service_inward_id && (
+                                    <p className="text-sm text-red-600 mt-1">{errors.service_inward_id}</p>
+                                )}
                             </div>
 
                             <div>
-                                <Label htmlFor="service_status_id">Status <span className="text-red-500">*</span></Label>
+                                <Label htmlFor="service_status_id">
+                                    Status <span className="text-red-500">*</span>
+                                </Label>
                                 <Select value={data.service_status_id} onValueChange={(v) => setData('service_status_id', v)}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select status" />
@@ -94,7 +96,9 @@ export default function Create() {
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                {errors.service_status_id && <p className="text-sm text-red-600 mt-1">{errors.service_status_id}</p>}
+                                {errors.service_status_id && (
+                                    <p className="text-sm text-red-600 mt-1">{errors.service_status_id}</p>
+                                )}
                             </div>
 
                             <div className="md:col-span-2">

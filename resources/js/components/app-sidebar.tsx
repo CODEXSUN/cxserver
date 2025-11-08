@@ -22,6 +22,7 @@ import { index as contactTypes } from '@/routes/contact-types';
 import { index as contacts } from '@/routes/contacts';
 import { index as service_inward } from '@/routes/service_inwards';
 import { index as job_cards } from '@/routes/job_cards';
+import { index as users } from '@/routes/users';
 
 const mainNavItems: NavItem[] = [
     {
@@ -54,6 +55,12 @@ const mainNavItems: NavItem[] = [
         href: job_cards(),
         icon: MonitorCog,
     },
+    //
+    // {
+    //     title: 'User',
+    //     href: users(),
+    //     icon: MonitorCog,
+    // },
 ];
 
 const footerNavItems: NavItem[] = [

@@ -62,3 +62,21 @@ export interface PaginatedData<T> {
     total: number;
     links: Array<{ url: string | null; label: string; active: boolean }>;
 }
+
+// resources/js/types/index.ts
+export interface ServiceInward {
+    id: number;
+    rma: string;
+    material_type: 'laptop' | 'desktop' | 'printer';
+    serial_no: string | null;
+    brand: string | null;
+    model: string | null;
+    received_date: string | null;
+    deleted_at: string | null;
+    contact: {
+        id: number;
+        name: string;
+        mobile: string | null;
+        company?: string | null;
+    };
+}

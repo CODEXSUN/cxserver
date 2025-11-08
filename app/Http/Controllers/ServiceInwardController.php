@@ -312,4 +312,27 @@ class ServiceInwardController extends Controller
         ]);
     }
 
+    public function search(Request $request)
+    {
+        $q = $request->query('q', '');
+        if (strlen($q) < 2) {
+            return response()->json(['inwards' => []]);
+        }
+
+        $inwards = ServiceInward::with('contact')
+            ->where('job_created', false)
+            ->where(function ($query) use ($q) {
+                $query->where('rma', 'like', "%{$q}%")
+                    ->orWhere('serial_no', 'like', "%{$q}%")
+                    ->orWhereHas('contact', function ($cq) use ($q) {
+                        $cq->where('name', 'like', "%{$q}%")
+                            ->orWhere('mobile', 'like', "%{$q}%");
+                    });
+            })
+            ->limit(10)
+            ->get(['id', 'rma', 'material_type', 'serial_no', 'contact_id']);
+
+        return response()->json(['inwards' => $inwards]);
+    }
+
 }
