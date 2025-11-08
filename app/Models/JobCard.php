@@ -38,6 +38,11 @@ class JobCard extends Model
         return $this->belongsTo(ServiceInward::class);
     }
 
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(JobAssignment::class);
+    }
+
     public function contact(): BelongsTo
     {
         return $this->belongsTo(Contact::class);

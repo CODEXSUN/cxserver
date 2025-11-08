@@ -4,6 +4,7 @@ use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ContactSearchController;
 use App\Http\Controllers\ContactTypeController;
+use App\Http\Controllers\JobAssignmentController;
 use App\Http\Controllers\JobCardController;
 use App\Http\Controllers\ServiceInwardController;
 use App\Http\Controllers\ServiceStatusController;
@@ -40,9 +41,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('dashboard');
 });
 
-require __DIR__.'/settings.php';
+require __DIR__ . '/settings.php';
 
-Route::middleware(['auth', 'verified','role:super-admin'])->group(function () {
+Route::middleware(['auth', 'verified', 'role:super-admin'])->group(function () {
     Route::prefix('blogs')->name('blogs.')->group(function () {
         Route::get('/', [BlogController::class, 'index'])->name('index');
         Route::get('blogs/{blog:slug}', [BlogController::class, 'show'])->name('show');
@@ -155,3 +156,19 @@ Route::middleware(['auth', 'verified'])
         Route::delete('{id}/force', [App\Http\Controllers\UserController::class, 'forceDelete'])
             ->name('forceDelete');
     });
+
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::resource('job_assignments', JobAssignmentController::class)
+        ->names('job_assignments');
+
+    Route::post('job_assignments/{id}/restore', [JobAssignmentController::class, 'restore'])
+        ->name('job_assignments.restore');
+
+    Route::delete('job_assignments/{id}/force', [JobAssignmentController::class, 'forceDelete'])
+        ->name('job_assignments.forceDelete');
+
+    Route::get('job_assignments/trash', [JobAssignmentController::class, 'trash'])
+        ->name('job_assignments.trash');
+
+});

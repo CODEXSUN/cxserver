@@ -13,15 +13,19 @@ return new class extends Migration
     {
         Schema::create('job_assignments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('job_card_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('employee_id')->constrained('employees');
+            $table->foreignId('job_card_id')->references('id')->on('job_cards');
+            $table->foreignId('user_id')->references('id')->on('users');
             $table->dateTime('assigned_at');
             $table->dateTime('started_at')->nullable();
             $table->dateTime('completed_at')->nullable();
             $table->integer('time_spent_minutes')->default(0);
+            $table->longText('report')->nullable();
+            $table->text('remarks')->nullable();
+            $table->foreignId('service_status_id')->references('id')->on('service_statuses');
             $table->timestamps();
+            $table->softDeletes();
 
-            $table->unique(['job_card_id', 'employee_id']);
+            $table->unique(['job_card_id', 'user_id']);
         });
     }
 
