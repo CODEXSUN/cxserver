@@ -98,6 +98,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->name('test.inertia');
 
+    Route::get('/service-inwards/next-rma', [ServiceInwardController::class, 'nextRma'])
+        ->name('service_inwards.nextRma');
+
 });
 
 

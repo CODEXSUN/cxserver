@@ -8,14 +8,42 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Trash2, Search, RotateCcw, Calendar as CalendarIcon, X } from 'lucide-react';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+    Plus,
+    Trash2,
+    Search,
+    RotateCcw,
+    Calendar as CalendarIcon,
+    X,
+} from 'lucide-react';
 import DataTable from '@/components/table/DataTable';
 import TableActions from '@/components/table/TableActions';
-import { TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import {
+    TableHeader,
+    TableRow,
+    TableHead,
+    TableBody,
+    TableCell,
+} from '@/components/ui/table';
 import { format, parseISO } from 'date-fns';
 
 interface ServiceInward {
@@ -55,16 +83,23 @@ interface ServiceInwardsPageProps {
 }
 
 export default function Index() {
-    const { inwards, filters: serverFilters, can, trashedCount } = usePage().props as unknown as ServiceInwardsPageProps;
+    const { inwards, filters: serverFilters, can, trashedCount } =
+        usePage().props as unknown as ServiceInwardsPageProps;
     const route = useRoute();
 
-    // LOCAL FILTER STATE
+    // ──────────────────────────────────────────────────────────────
+    // LOCAL STATE – filters + per-page
+    // ──────────────────────────────────────────────────────────────
     const [localFilters, setLocalFilters] = useState({
         search: serverFilters.search || '',
         job_filter: serverFilters.job_filter || 'all',
         type_filter: serverFilters.type_filter || 'all',
-        date_from: serverFilters.date_from ? parseISO(serverFilters.date_from) : undefined,
-        date_to: serverFilters.date_to ? parseISO(serverFilters.date_to) : undefined,
+        date_from: serverFilters.date_from
+            ? parseISO(serverFilters.date_from)
+            : undefined,
+        date_to: serverFilters.date_to
+            ? parseISO(serverFilters.date_to)
+            : undefined,
     });
 
     const [localPerPage, setLocalPerPage] = useState(
@@ -73,51 +108,113 @@ export default function Index() {
 
     const [isNavigating, setIsNavigating] = useState(false);
 
-    // SYNC WITH SERVER
+    // ──────────────────────────────────────────────────────────────
+    // Sync server → local state (when page reloads, back-button, etc.)
+    // ──────────────────────────────────────────────────────────────
     useEffect(() => {
         setLocalFilters({
             search: serverFilters.search || '',
             job_filter: serverFilters.job_filter || 'all',
             type_filter: serverFilters.type_filter || 'all',
-            date_from: serverFilters.date_from ? parseISO(serverFilters.date_from) : undefined,
-            date_to: serverFilters.date_to ? parseISO(serverFilters.date_to) : undefined,
+            date_from: serverFilters.date_from
+                ? parseISO(serverFilters.date_from)
+                : undefined,
+            date_to: serverFilters.date_to
+                ? parseISO(serverFilters.date_to)
+                : undefined,
         });
-        setLocalPerPage(serverFilters.per_page ? parseInt(serverFilters.per_page) : 100);
+        setLocalPerPage(
+            serverFilters.per_page ? parseInt(serverFilters.per_page) : 100
+        );
     }, [serverFilters]);
 
-    // UPDATE FILTERS
-    const updateFilters = useCallback(
-        (updates: Partial<typeof serverFilters>) => {
-            setIsNavigating(true);
-
-            const payload: any = {
-                search: 'search' in updates ? updates.search : (localFilters.search || undefined),
-                job_filter:
-                    updates.job_filter === 'all'
-                        ? undefined
-                        : updates.job_filter ?? (localFilters.job_filter === 'all' ? undefined : localFilters.job_filter),
-                type_filter:
-                    updates.type_filter === 'all'
-                        ? undefined
-                        : updates.type_filter ?? (localFilters.type_filter === 'all' ? undefined : localFilters.type_filter),
-                date_from: updates.date_from ?? (localFilters.date_from ? format(localFilters.date_from, 'yyyy-MM-dd') : undefined),
-                date_to: updates.date_to ?? (localFilters.date_to ? format(localFilters.date_to, 'yyyy-MM-dd') : undefined),
-                per_page: localPerPage,
-                page: 1,
-            };
-
-            router.get(route('service_inwards.index'), payload, {
-                preserveState: true,
-                replace: true,
-                onFinish: () => setIsNavigating(false),
-            });
-        },
-        [route, localFilters, localPerPage]
+    // ──────────────────────────────────────────────────────────────
+    // Helper – build payload (keeps undefined values out of URL)
+    // ──────────────────────────────────────────────────────────────
+    const buildPayload = useCallback(
+        (extra: Record<string, any> = {}) => ({
+            search: localFilters.search || undefined,
+            job_filter:
+                localFilters.job_filter === 'all'
+                    ? undefined
+                    : localFilters.job_filter,
+            type_filter:
+                localFilters.type_filter === 'all'
+                    ? undefined
+                    : localFilters.type_filter,
+            date_from: localFilters.date_from
+                ? format(localFilters.date_from, 'yyyy-MM-dd')
+                : undefined,
+            date_to: localFilters.date_to
+                ? format(localFilters.date_to, 'yyyy-MM-dd')
+                : undefined,
+            per_page: localPerPage,
+            ...extra,
+        }),
+        [localFilters, localPerPage]
     );
 
-    // CLEAR FILTER
+    // ──────────────────────────────────────────────────────────────
+    // Generic navigation (used by filters, page change, per-page)
+    // ──────────────────────────────────────────────────────────────
+    const navigate = useCallback(
+        (extra: Record<string, any> = {}) => {
+            setIsNavigating(true);
+            router.get(
+                route('service_inwards.index'),
+                { ...buildPayload(extra), page: extra.page ?? 1 },
+                {
+                    preserveState: true,
+                    replace: true,
+                    onFinish: () => setIsNavigating(false),
+                }
+            );
+        },
+        [route, buildPayload]
+    );
+
+    // ──────────────────────────────────────────────────────────────
+    // FILTER HANDLERS
+    // ──────────────────────────────────────────────────────────────
+    const handleSearchChange = (value: string) => {
+        setLocalFilters((prev) => ({ ...prev, search: value }));
+    };
+
+    const handleSearch = () => navigate({ search: localFilters.search });
+
+    const handleJobFilterChange = (value: 'all' | 'yes' | 'no') => {
+        setLocalFilters((prev) => ({ ...prev, job_filter: value }));
+        navigate({ job_filter: value });
+    };
+
+    const handleTypeFilterChange = (
+        value: 'all' | 'laptop' | 'desktop' | 'printer'
+    ) => {
+        setLocalFilters((prev) => ({ ...prev, type_filter: value }));
+        navigate({ type_filter: value });
+    };
+
+    const handleDateRangeChange = (
+        range: { from?: Date; to?: Date } | undefined
+    ) => {
+        const newRange = range || { from: undefined, to: undefined };
+        setLocalFilters((prev) => ({
+            ...prev,
+            date_from: newRange.from,
+            date_to: newRange.to,
+        }));
+        navigate({
+            date_from: newRange.from
+                ? format(newRange.from, 'yyyy-MM-dd')
+                : undefined,
+            date_to: newRange.to
+                ? format(newRange.to, 'yyyy-MM-dd')
+                : undefined,
+        });
+    };
+
     const clearFilter = (key: keyof typeof localFilters) => {
-        const updates: any = {};
+        const updates: Partial<typeof localFilters> = {};
         if (key === 'search') updates.search = '';
         if (key === 'job_filter') updates.job_filter = 'all';
         if (key === 'type_filter') updates.type_filter = 'all';
@@ -126,44 +223,8 @@ export default function Index() {
             updates.date_to = undefined;
         }
 
-        setLocalFilters(prev => ({
-            ...prev,
-            ...(key === 'search' ? { search: '' } : {}),
-            ...(key === 'job_filter' ? { job_filter: 'all' } : {}),
-            ...(key === 'type_filter' ? { type_filter: 'all' } : {}),
-            ...(key === 'date_from' || key === 'date_to' ? { date_from: undefined, date_to: undefined } : {}),
-        }));
-
-        updateFilters(updates);
-    };
-
-    // HANDLERS
-    const handleSearchChange = (value: string) => {
-        setLocalFilters(prev => ({ ...prev, search: value }));
-        // NO DEBOUNCE – just update local state
-    };
-
-    const handleJobFilterChange = (value: 'all' | 'yes' | 'no') => {
-        setLocalFilters(prev => ({ ...prev, job_filter: value }));
-        updateFilters({ job_filter: value });
-    };
-
-    const handleTypeFilterChange = (value: 'all' | 'laptop' | 'desktop' | 'printer') => {
-        setLocalFilters(prev => ({ ...prev, type_filter: value }));
-        updateFilters({ type_filter: value });
-    };
-
-    const handleDateRangeChange = (range: { from?: Date; to?: Date } | undefined) => {
-        const newRange = range || { from: undefined, to: undefined };
-        setLocalFilters(prev => ({
-            ...prev,
-            date_from: newRange.from,
-            date_to: newRange.to,
-        }));
-        updateFilters({
-            date_from: newRange.from ? format(newRange.from, 'yyyy-MM-dd') : undefined,
-            date_to: newRange.to ? format(newRange.to, 'yyyy-MM-dd') : undefined,
-        });
+        setLocalFilters((prev) => ({ ...prev, ...updates }));
+        navigate(updates);
     };
 
     const handleResetFilters = () => {
@@ -179,17 +240,40 @@ export default function Index() {
         router.get(route('service_inwards.index'), {}, { preserveState: true, replace: true });
     };
 
-    const handleSearch = () => updateFilters({ search: localFilters.search || undefined });
+    // ──────────────────────────────────────────────────────────────
+    // PAGINATION HANDLERS (passed to DataTable)
+    // ──────────────────────────────────────────────────────────────
+    const handlePageChange = useCallback(
+        (page: number) => navigate({ page }),
+        [navigate]
+    );
 
+    const handlePerPageChange = useCallback(
+        (perPage: number) => {
+            setLocalPerPage(perPage);
+            navigate({ per_page: perPage, page: 1 });
+        },
+        [navigate]
+    );
+
+    // ──────────────────────────────────────────────────────────────
     // ACTIVE FILTER BADGES
+    // ──────────────────────────────────────────────────────────────
     const activeFilterBadges = useMemo(() => {
         const badges: JSX.Element[] = [];
 
         if (localFilters.search) {
             badges.push(
-                <Badge key="search" variant="secondary" className="text-xs flex items-center gap-1">
+                <Badge
+                    key="search"
+                    variant="secondary"
+                    className="text-xs flex items-center gap-1"
+                >
                     Search: "{localFilters.search}"
-                    <button onClick={() => clearFilter('search')} className="ml-1 hover:bg-muted rounded-sm p-0.5">
+                    <button
+                        onClick={() => clearFilter('search')}
+                        className="ml-1 hover:bg-muted rounded-sm p-0.5"
+                    >
                         <X className="h-3 w-3" />
                     </button>
                 </Badge>
@@ -198,9 +282,17 @@ export default function Index() {
 
         if (localFilters.job_filter !== 'all') {
             badges.push(
-                <Badge key="job" variant="secondary" className="text-xs flex items-center gap-1">
-                    Job: {localFilters.job_filter === 'yes' ? 'Created' : 'Not Created'}
-                    <button onClick={() => clearFilter('job_filter')} className="ml-1 hover:bg-muted rounded-sm p-0.5">
+                <Badge
+                    key="job"
+                    variant="secondary"
+                    className="text-xs flex items-center gap-1"
+                >
+                    Job:{' '}
+                    {localFilters.job_filter === 'yes' ? 'Created' : 'Not Created'}
+                    <button
+                        onClick={() => clearFilter('job_filter')}
+                        className="ml-1 hover:bg-muted rounded-sm p-0.5"
+                    >
                         <X className="h-3 w-3" />
                     </button>
                 </Badge>
@@ -209,9 +301,18 @@ export default function Index() {
 
         if (localFilters.type_filter !== 'all') {
             badges.push(
-                <Badge key="type" variant="secondary" className="text-xs flex items-center gap-1">
-                    Type: {localFilters.type_filter.charAt(0).toUpperCase() + localFilters.type_filter.slice(1)}
-                    <button onClick={() => clearFilter('type_filter')} className="ml-1 hover:bg-muted rounded-sm p-0.5">
+                <Badge
+                    key="type"
+                    variant="secondary"
+                    className="text-xs flex items-center gap-1"
+                >
+                    Type:{' '}
+                    {localFilters.type_filter.charAt(0).toUpperCase() +
+                        localFilters.type_filter.slice(1)}
+                    <button
+                        onClick={() => clearFilter('type_filter')}
+                        className="ml-1 hover:bg-muted rounded-sm p-0.5"
+                    >
                         <X className="h-3 w-3" />
                     </button>
                 </Badge>
@@ -220,10 +321,22 @@ export default function Index() {
 
         if (localFilters.date_from || localFilters.date_to) {
             badges.push(
-                <Badge key="date" variant="secondary" className="text-xs flex items-center gap-1">
-                    Date: {localFilters.date_from ? format(localFilters.date_from, 'dd MMM') : '...'} -{' '}
-                    {localFilters.date_to ? format(localFilters.date_to, 'dd MMM yyyy') : '...'}
-                    <button onClick={() => clearFilter('date_from')} className="ml-1 hover:bg-muted rounded-sm p-0.5">
+                <Badge
+                    key="date"
+                    variant="secondary"
+                    className="text-xs flex items-center gap-1"
+                >
+                    Date:{' '}
+                    {localFilters.date_from
+                        ? format(localFilters.date_from, 'dd MMM')
+                        : '...'} -{' '}
+                    {localFilters.date_to
+                        ? format(localFilters.date_to, 'dd MMM yyyy')
+                        : '...'}
+                    <button
+                        onClick={() => clearFilter('date_from')}
+                        className="ml-1 hover:bg-muted rounded-sm p-0.5"
+                    >
                         <X className="h-3 w-3" />
                     </button>
                 </Badge>
@@ -232,7 +345,10 @@ export default function Index() {
 
         if (badges.length === 0) {
             badges.push(
-                <span key="no-filter" className="text-xs text-muted-foreground italic">
+                <span
+                    key="no-filter"
+                    className="text-xs text-muted-foreground italic"
+                >
                     No active filters
                 </span>
             );
@@ -244,12 +360,19 @@ export default function Index() {
     const formatDateRange = () => {
         const { date_from, date_to } = localFilters;
         if (!date_from && !date_to) return 'Pick a date range';
-        if (date_from && date_to) return `${format(date_from, 'dd MMM yyyy')} - ${format(date_to, 'dd MMM yyyy')}`;
+        if (date_from && date_to)
+            return `${format(date_from, 'dd MMM yyyy')} - ${format(
+                date_to,
+                'dd MMM yyyy'
+            )}`;
         if (date_from) return `${format(date_from, 'dd MMM yyyy')} - ...`;
         if (date_to) return `... - ${format(date_to, 'dd MMM yyyy')}`;
         return 'Pick a date range';
     };
 
+    // ──────────────────────────────────────────────────────────────
+    // RENDER
+    // ──────────────────────────────────────────────────────────────
     return (
         <Layout>
             <Head title="Service Inwards" />
@@ -258,8 +381,12 @@ export default function Index() {
                     {/* Header */}
                     <div className="flex justify-between items-center">
                         <div>
-                            <h1 className="text-3xl font-bold tracking-tight">Service Inwards</h1>
-                            <p className="text-muted-foreground mt-1">Track devices received for service</p>
+                            <h1 className="text-3xl font-bold tracking-tight">
+                                Service Inwards
+                            </h1>
+                            <p className="text-muted-foreground mt-1">
+                                Track received for service
+                            </p>
                         </div>
 
                         <div className="flex gap-3">
@@ -268,20 +395,28 @@ export default function Index() {
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <Button asChild>
-                                                <Link href={route('service_inwards.create')}>
+                                                <Link
+                                                    href={route(
+                                                        'service_inwards.nextRma'
+                                                    )}
+                                                >
                                                     <Plus className="mr-2 h-4 w-4" />
                                                     New Inward
                                                 </Link>
                                             </Button>
                                         </TooltipTrigger>
-                                        <TooltipContent><p>Add a new service inward</p></TooltipContent>
+                                        <TooltipContent>
+                                            <p>Add a new service inward</p>
+                                        </TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
                             )}
 
                             {trashedCount > 0 && (
                                 <Button variant="outline" asChild>
-                                    <Link href={route('service_inwards.trash')}>
+                                    <Link
+                                        href={route('service_inwards.trash')}
+                                    >
                                         <Trash2 className="mr-2 h-4 w-4" />
                                         Trash ({trashedCount})
                                     </Link>
@@ -301,14 +436,22 @@ export default function Index() {
                                     placeholder="Search by RMA, Serial, Contact, Mobile..."
                                     className="pl-10 h-9"
                                     value={localFilters.search}
-                                    onChange={(e) => handleSearchChange(e.target.value)}
-                                    onKeyUp={(e) => e.key === 'Enter' && handleSearch()}
+                                    onChange={(e) =>
+                                        handleSearchChange(e.target.value)
+                                    }
+                                    onKeyUp={(e) =>
+                                        e.key === 'Enter' && handleSearch()
+                                    }
                                     disabled={isNavigating}
                                 />
                             </div>
                         </div>
 
-                        <Select value={localFilters.job_filter} onValueChange={handleJobFilterChange} disabled={isNavigating}>
+                        <Select
+                            value={localFilters.job_filter}
+                            onValueChange={handleJobFilterChange}
+                            disabled={isNavigating}
+                        >
                             <SelectTrigger className="w-[130px] h-9">
                                 <SelectValue placeholder="All Jobs" />
                             </SelectTrigger>
@@ -319,7 +462,11 @@ export default function Index() {
                             </SelectContent>
                         </Select>
 
-                        <Select value={localFilters.type_filter} onValueChange={handleTypeFilterChange} disabled={isNavigating}>
+                        <Select
+                            value={localFilters.type_filter}
+                            onValueChange={handleTypeFilterChange}
+                            disabled={isNavigating}
+                        >
                             <SelectTrigger className="w-[130px] h-9">
                                 <SelectValue placeholder="All Types" />
                             </SelectTrigger>
@@ -333,15 +480,24 @@ export default function Index() {
 
                         <Popover>
                             <PopoverTrigger asChild>
-                                <Button variant="outline" className="h-9 px-3 text-left font-normal" disabled={isNavigating}>
+                                <Button
+                                    variant="outline"
+                                    className="h-9 px-3 text-left font-normal"
+                                    disabled={isNavigating}
+                                >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    <span className="truncate max-w-[140px]">{formatDateRange()}</span>
+                                    <span className="truncate max-w-[140px]">
+                                        {formatDateRange()}
+                                    </span>
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0" align="start">
                                 <Calendar
                                     mode="range"
-                                    selected={{ from: localFilters.date_from, to: localFilters.date_to }}
+                                    selected={{
+                                        from: localFilters.date_from,
+                                        to: localFilters.date_to,
+                                    }}
                                     onSelect={handleDateRangeChange}
                                     numberOfMonths={2}
                                     disabled={isNavigating}
@@ -350,7 +506,12 @@ export default function Index() {
                         </Popover>
 
                         <div className="flex gap-1">
-                            <Button size="sm" className="h-9" onClick={handleSearch} disabled={isNavigating}>
+                            <Button
+                                size="sm"
+                                className="h-9"
+                                onClick={handleSearch}
+                                disabled={isNavigating}
+                            >
                                 <Search className="h-4 w-4" />
                             </Button>
                             <Button
@@ -367,7 +528,9 @@ export default function Index() {
 
                     {/* ACTIVE FILTERS */}
                     <div className="flex flex-wrap gap-2 text-sm mt-2 p-3 bg-muted/30 rounded-md border">
-                        <span className="font-medium text-foreground">Active Filters:</span>
+                        <span className="font-medium text-foreground">
+                            Active Filters:
+                        </span>
                         <div className="flex flex-wrap gap-2">
                             {activeFilterBadges}
                         </div>
@@ -377,15 +540,9 @@ export default function Index() {
                     <DataTable
                         data={inwards.data}
                         pagination={inwards}
-                        routeName="service_inwards.index"
-                        queryParams={{
-                            search: localFilters.search || undefined,
-                            job_filter: localFilters.job_filter === 'all' ? undefined : localFilters.job_filter,
-                            type_filter: localFilters.type_filter === 'all' ? undefined : localFilters.type_filter,
-                            date_from: localFilters.date_from ? format(localFilters.date_from, 'yyyy-MM-dd') : undefined,
-                            date_to: localFilters.date_to ? format(localFilters.date_to, 'yyyy-MM-dd') : undefined,
-                            per_page: localPerPage,
-                        }}
+                        perPage={localPerPage}
+                        onPerPageChange={handlePerPageChange}
+                        onPageChange={handlePageChange}
                         emptyMessage="No service inwards found."
                         isLoading={isNavigating}
                     >
@@ -399,74 +556,157 @@ export default function Index() {
                                 <TableHead>Serial No</TableHead>
                                 <TableHead>Received</TableHead>
                                 <TableHead>Received By</TableHead>
-                                <TableHead className="text-center">Job?</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                                <TableHead className="text-center">
+                                    Job?
+                                </TableHead>
+                                <TableHead className="text-right">
+                                    Actions
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {inwards.data.map((inward) => (
-                                <TableRow key={inward.id} className={inward.deleted_at ? 'opacity-60' : ''}>
+                                <TableRow
+                                    key={inward.id}
+                                    className={
+                                        inward.deleted_at ? 'opacity-60' : ''
+                                    }
+                                >
                                     <TableCell className="font-medium">
                                         {inward.deleted_at ? (
-                                            <span className="text-muted-foreground">{inward.rma}</span>
+                                            <span className="text-muted-foreground">
+                                                {inward.rma}
+                                            </span>
                                         ) : (
-                                            <Link href={route('service_inwards.show', inward.id)} className="hover:text-primary">
+                                            <Link
+                                                href={route(
+                                                    'service_inwards.show',
+                                                    inward.id
+                                                )}
+                                                className="hover:text-primary"
+                                            >
                                                 {inward.rma}
                                             </Link>
                                         )}
                                     </TableCell>
                                     <TableCell>
                                         <div>
-                                            <div className="font-medium">{inward.contact.name}</div>
+                                            <div className="font-medium">
+                                                {inward.contact.name}
+                                            </div>
                                             {inward.contact.company && (
-                                                <div className="text-sm text-muted-foreground">{inward.contact.company}</div>
+                                                <div className="text-sm text-muted-foreground">
+                                                    {inward.contact.company}
+                                                </div>
                                             )}
                                         </div>
                                     </TableCell>
                                     <TableCell>
                                         {inward.contact.mobile ? (
-                                            <a href={`tel:${inward.contact.mobile}`} className="text-primary hover:underline">
+                                            <a
+                                                href={`tel:${inward.contact.mobile}`}
+                                                className="text-primary hover:underline"
+                                            >
                                                 {inward.contact.mobile}
                                             </a>
                                         ) : (
-                                            <span className="text-muted-foreground">—</span>
+                                            <span className="text-muted-foreground">
+                                                —
+                                            </span>
                                         )}
                                     </TableCell>
                                     <TableCell>
                                         <Badge variant="outline">
-                                            {inward.material_type.charAt(0).toUpperCase() + inward.material_type.slice(1)}
+                                            {inward.material_type
+                                                    .charAt(0)
+                                                    .toUpperCase() +
+                                                inward.material_type.slice(1)}
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
                                         {inward.brand || inward.model ? (
                                             <>
-                                                {inward.brand && <span>{inward.brand}</span>}
-                                                {inward.model && <span className="text-muted-foreground"> / {inward.model}</span>}
+                                                {inward.brand && (
+                                                    <span>{inward.brand}</span>
+                                                )}
+                                                {inward.model && (
+                                                    <span className="text-muted-foreground">
+                                                        {' '}
+                                                        / {inward.model}
+                                                    </span>
+                                                )}
                                             </>
                                         ) : (
-                                            <span className="text-muted-foreground">—</span>
+                                            <span className="text-muted-foreground">
+                                                —
+                                            </span>
                                         )}
                                     </TableCell>
-                                    <TableCell>{inward.serial_no || <span className="text-muted-foreground">—</span>}</TableCell>
                                     <TableCell>
-                                        {inward.received_date ? format(new Date(inward.received_date), 'dd MMM yyyy') : '—'}
+                                        {inward.serial_no || (
+                                            <span className="text-muted-foreground">
+                                                —
+                                            </span>
+                                        )}
                                     </TableCell>
-                                    <TableCell>{inward.receiver?.name || <span className="text-muted-foreground">—</span>}</TableCell>
+                                    <TableCell>
+                                        {inward.received_date
+                                            ? format(
+                                                new Date(inward.received_date),
+                                                'dd MMM yyyy'
+                                            )
+                                            : '—'}
+                                    </TableCell>
+                                    <TableCell>
+                                        {inward.receiver?.name || (
+                                            <span className="text-muted-foreground">
+                                                —
+                                            </span>
+                                        )}
+                                    </TableCell>
                                     <TableCell className="text-center">
                                         <Badge
-                                            variant={inward.job_created ? "default" : "destructive"}
-                                            className={inward.job_created ? "bg-green-400 text-white" : "bg-red-500 text-white"}
+                                            variant={
+                                                inward.job_created
+                                                    ? 'default'
+                                                    : 'destructive'
+                                            }
+                                            className={
+                                                inward.job_created
+                                                    ? 'bg-green-400 text-white'
+                                                    : 'bg-red-500 text-white'
+                                            }
                                         >
-                                            {inward.job_created ? "Yes" : "No"}
+                                            {inward.job_created ? 'Yes' : 'No'}
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <TableActions
                                             id={inward.id}
-                                            editRoute={route('service_inwards.edit', inward.id)}
-                                            deleteRoute={route('service_inwards.destroy', inward.id)}
-                                            restoreRoute={inward.deleted_at ? route('service_inwards.restore', inward.id) : undefined}
-                                            forceDeleteRoute={inward.deleted_at ? route('service_inwards.forceDelete', inward.id) : undefined}
+                                            editRoute={route(
+                                                'service_inwards.edit',
+                                                inward.id
+                                            )}
+                                            deleteRoute={route(
+                                                'service_inwards.destroy',
+                                                inward.id
+                                            )}
+                                            restoreRoute={
+                                                inward.deleted_at
+                                                    ? route(
+                                                        'service_inwards.restore',
+                                                        inward.id
+                                                    )
+                                                    : undefined
+                                            }
+                                            forceDeleteRoute={
+                                                inward.deleted_at
+                                                    ? route(
+                                                        'service_inwards.forceDelete',
+                                                        inward.id
+                                                    )
+                                                    : undefined
+                                            }
                                             isDeleted={!!inward.deleted_at}
                                             canDelete={can.delete}
                                         />

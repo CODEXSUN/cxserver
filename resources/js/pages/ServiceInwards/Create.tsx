@@ -2,6 +2,7 @@
 import Layout from '@/layouts/app-layout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { useRoute } from 'ziggy-js';
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,7 +16,6 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft } from 'lucide-react';
 import ContactAutocomplete from '@/components/blocks/ContactAutocomplete';
-import React from 'react';
 
 interface Contact {
     id: number;
@@ -27,24 +27,27 @@ interface Contact {
     contact_type: { id: number; name: string };
 }
 
-
 interface UserOption {
     id: number;
     name: string;
 }
 
+/* --------------------------------------------------------------
+   Props that come from the controller
+   -------------------------------------------------------------- */
 interface CreatePageProps {
-    contacts: Contact[];          // still passed for fallback, not used directly
+    contacts: Contact[];
     users: UserOption[];
+    nextRma?: string;               // <-- added by nextRma() endpoint
 }
 
 export default function Create() {
     const route = useRoute();
-    const { users } = usePage().props as unknown as CreatePageProps;
+    const { users, nextRma } = usePage().props as unknown as CreatePageProps;
 
     const { data, setData, post, processing, errors } = useForm({
-        rma: '',
-        contact_id: '',               // <-- will be set to string(id)
+        rma: nextRma ?? '',
+        contact_id: '',
         material_type: '',
         brand: '',
         model: '',
@@ -56,9 +59,31 @@ export default function Create() {
         received_date: '',
     });
 
-    // -----------------------------------------------------------------
-    //  CONTACT AUTOCOMPLETE HANDLERS
-    // -----------------------------------------------------------------
+    /* --------------------------------------------------------------
+       Keep the RMA in sync with the suggested value only on first load.
+       If the user edits it, we no longer show the “suggested” badge.
+       -------------------------------------------------------------- */
+    const [suggestedRma, setSuggestedRma] = React.useState<string | null>(nextRma ?? null);
+
+    useEffect(() => {
+        if (nextRma && !data.rma) {
+            setData('rma', nextRma);
+            setSuggestedRma(nextRma);
+        }
+    }, [nextRma, data.rma, setData]);
+
+    const handleRmaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        setData('rma', val);
+        // If the user changes the value, hide the suggestion badge
+        if (val !== suggestedRma) {
+            setSuggestedRma(null);
+        }
+    };
+
+    /* --------------------------------------------------------------
+       Contact autocomplete (unchanged)
+       -------------------------------------------------------------- */
     const [selectedContact, setSelectedContact] = React.useState<Contact | null>(null);
 
     const handleContactSelect = (contact: Contact | null) => {
@@ -67,11 +92,8 @@ export default function Create() {
     };
 
     const handleContactCreate = (name: string) => {
-        // Optional: open a modal / redirect to contacts.create
-        // For demo we just alert – replace with your own flow
         alert(`Create new contact: "${name}"`);
     };
-    // -----------------------------------------------------------------
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -91,11 +113,16 @@ export default function Create() {
                         </Button>
                         <div>
                             <h1 className="text-2xl font-bold">New Service Inward</h1>
-                            <p className="text-muted-foreground">Register a new device for service</p>
+                            <p className="text-muted-foreground">
+                                Register a new device for service
+                            </p>
                         </div>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow">
+                    <form
+                        onSubmit={handleSubmit}
+                        className="space-y-6 bg-white p-6 rounded-lg shadow"
+                    >
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* ---------- RMA ---------- */}
                             <div>
@@ -105,9 +132,19 @@ export default function Create() {
                                 <Input
                                     id="rma"
                                     value={data.rma}
-                                    onChange={(e) => setData('rma', e.target.value)}
+                                    onChange={handleRmaChange}
+                                    placeholder="e.g. 12700.1"
                                 />
-                                {errors.rma && <p className="text-sm text-red-600 mt-1">{errors.rma}</p>}
+                                {suggestedRma && data.rma === suggestedRma && (
+                                    <p className="text-xs text-green-600 mt-1">
+                                        Suggested: {suggestedRma}
+                                    </p>
+                                )}
+                                {errors.rma && (
+                                    <p className="text-sm text-red-600 mt-1">
+                                        {errors.rma}
+                                    </p>
+                                )}
                             </div>
 
                             {/* ---------- CONTACT (AUTOCOMPLETE) ---------- */}
@@ -123,14 +160,17 @@ export default function Create() {
                                     label=""
                                 />
                                 {errors.contact_id && (
-                                    <p className="text-sm text-red-600 mt-1">{errors.contact_id}</p>
+                                    <p className="text-sm text-red-600 mt-1">
+                                        {errors.contact_id}
+                                    </p>
                                 )}
                             </div>
 
                             {/* ---------- MATERIAL TYPE ---------- */}
                             <div>
                                 <Label htmlFor="material_type">
-                                    Material Type <span className="text-red-500">*</span>
+                                    Material Type{' '}
+                                    <span className="text-red-500">*</span>
                                 </Label>
                                 <Select
                                     value={data.material_type}
@@ -146,7 +186,9 @@ export default function Create() {
                                     </SelectContent>
                                 </Select>
                                 {errors.material_type && (
-                                    <p className="text-sm text-red-600 mt-1">{errors.material_type}</p>
+                                    <p className="text-sm text-red-600 mt-1">
+                                        {errors.material_type}
+                                    </p>
                                 )}
                             </div>
 
@@ -179,7 +221,9 @@ export default function Create() {
                                     onChange={(e) => setData('serial_no', e.target.value)}
                                 />
                                 {errors.serial_no && (
-                                    <p className="text-sm text-red-600 mt-1">{errors.serial_no}</p>
+                                    <p className="text-sm text-red-600 mt-1">
+                                        {errors.serial_no}
+                                    </p>
                                 )}
                             </div>
 
@@ -239,7 +283,9 @@ export default function Create() {
 
                         {/* ---------- OBSERVATION ---------- */}
                         <div>
-                            <Label htmlFor="observation">Observation / Issue Description</Label>
+                            <Label htmlFor="observation">
+                                Observation / Issue Description
+                            </Label>
                             <Textarea
                                 id="observation"
                                 value={data.observation}

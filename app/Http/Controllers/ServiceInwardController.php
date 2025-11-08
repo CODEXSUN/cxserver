@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Contact;
 use App\Models\ServiceInward;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
@@ -21,11 +22,23 @@ class ServiceInwardController extends Controller
     {
         $this->authorize('viewAny', ServiceInward::class);
 
-        $perPage = (int) $request->input('per_page', 100); // Default 100
+        $perPage = (int)$request->input('per_page', 100);
         $perPage = in_array($perPage, [10, 25, 50, 100, 200]) ? $perPage : 100;
 
         $query = ServiceInward::with(['contact', 'receiver'])
             ->select('service_inwards.*')
+            ->addSelect([
+                // Extract base RMA (before dot)
+                DB::raw('CAST(SUBSTRING_INDEX(rma, ".", 1) AS UNSIGNED) as base_rma'),
+                // Extract sub-item (after dot), default 0 if no dot
+                DB::raw('
+                CASE
+                    WHEN LOCATE(".", rma) > 0
+                    THEN CAST(SUBSTRING(rma, LOCATE(".", rma) + 1) AS DECIMAL(10,2))
+                    ELSE 0
+                END as sub_item
+            ')
+            ])
             ->when($request->filled('search'), fn($q) => $q->where(function ($q) use ($request) {
                 $search = $request->search;
                 $q->where('rma', 'like', "%{$search}%")
@@ -37,10 +50,14 @@ class ServiceInwardController extends Controller
             ->when($request->job_filter === 'no', fn($q) => $q->where('job_created', false))
             ->when($request->type_filter && $request->type_filter !== 'all', fn($q) => $q->where('material_type', $request->type_filter))
             ->when($request->filled('date_from'), fn($q) => $q->whereDate('received_date', '>=', $request->date_from))
-            ->when($request->filled('date_to'), fn($q) => $q->whereDate('received_date', '<=', $request->date_to))
-            ->latest();
+            ->when($request->filled('date_to'), fn($q) => $q->whereDate('received_date', '<=', $request->date_to));
 
-        $inwards = $query->paginate($perPage)->withQueryString();
+        // Replace ->latest() with custom order
+        $inwards = $query
+            ->orderByDesc('base_rma')
+            ->orderByDesc('sub_item')
+            ->paginate($perPage)
+            ->withQueryString();
 
         return Inertia::render('ServiceInwards/Index', [
             'inwards' => $inwards,
@@ -68,7 +85,7 @@ class ServiceInwardController extends Controller
 
         return Inertia::render('ServiceInwards/Create', [
             'contacts' => $contacts,
-            'users'    => $users
+            'users' => $users
         ]);
     }
 
@@ -80,7 +97,17 @@ class ServiceInwardController extends Controller
         $this->authorize('create', ServiceInward::class);
 
         $data = $request->validate([
-            'rma' => 'required|string|unique:service_inwards,rma',
+            'rma' => [
+                'required',
+                'string',
+                'unique:service_inwards,rma',
+                'regex:/^[1-9]\d*(\.\d+)?$/',
+                function ($attribute, $value, $fail) {
+                    if (!preg_match('/^\d+\.\d+$/', $value)) {
+                        $fail('RMA must be in format: <number>.<number> (e.g., 12700.1)');
+                    }
+                },
+            ],
             'contact_id' => 'required|exists:contacts,id',
             'material_type' => 'required|in:laptop,desktop,printer',
             'brand' => 'nullable|string|max:255',
@@ -92,6 +119,17 @@ class ServiceInwardController extends Controller
             'received_by' => 'nullable|exists:users,id',
             'received_date' => 'nullable|date',
         ]);
+
+        // ← ADD THIS
+        preg_match('/^(\d+)\.(\d+(?:\.\d+)?)$/', $data['rma'], $matches);
+        $data['base_rma'] = (int)$matches[1];
+        $data['sub_item'] = (float)$matches[2];
+
+// Fallback if regex fails
+        if (!$matches) {
+            $data['base_rma'] = (int)$data['rma'];
+            $data['sub_item'] = 0;
+        }
 
         // ← CHANGE: only fallback to logged-in user if not provided
         $data['received_by'] = $request->filled('received_by') ? $request->received_by : auth()->id();
@@ -136,7 +174,7 @@ class ServiceInwardController extends Controller
         return Inertia::render('ServiceInwards/Edit', [
             'inward' => $serviceInward,
             'contacts' => $contacts,
-            'users'    => $users
+            'users' => $users
         ]);
     }
 
@@ -148,7 +186,17 @@ class ServiceInwardController extends Controller
         $this->authorize('update', $serviceInward);
 
         $data = $request->validate([
-            'rma' => 'required|string|unique:service_inwards,rma,' . $serviceInward->id,
+            'rma' => [
+                'required',
+                'string',
+                'unique:service_inwards,rma,' . $serviceInward->id,
+                'regex:/^[1-9]\d*(\.\d+)?$/',
+                function ($attribute, $value, $fail) {
+                    if (!preg_match('/^\d+\.\d+$/', $value)) {
+                        $fail('RMA must be in format: <number>.<number> (e.g., 12700.1)');
+                    }
+                },
+            ],
             'contact_id' => 'required|exists:contacts,id',
             'material_type' => 'required|in:laptop,desktop,printer',
             'brand' => 'nullable|string|max:255',
@@ -160,6 +208,15 @@ class ServiceInwardController extends Controller
             'received_by' => 'nullable|exists:users,id',
             'received_date' => 'nullable|date',
         ]);
+
+        preg_match('/^(\d+)\.(\d+(?:\.\d+)?)$/', $data['rma'], $matches);
+        $data['base_rma'] = (int)$matches[1];
+        $data['sub_item'] = (float)$matches[2];
+
+        if (!$matches) {
+            $data['base_rma'] = (int)$data['rma'];
+            $data['sub_item'] = 0;
+        }
 
         // ← CHANGE: keep existing if empty, otherwise update
         if ($request->filled('received_by')) {
@@ -221,4 +278,38 @@ class ServiceInwardController extends Controller
 
         return back()->with('success', 'Service inward permanently deleted.');
     }
+
+    /**
+     * Return the next global RMA (e.g. 1000.1, 1000.2, …)
+     */
+    public function nextRma(Request $request)
+    {
+        // 1. Find the highest base RMA in the whole table
+        $highestBase = ServiceInward::max(DB::raw('CAST(SUBSTRING_INDEX(rma, ".", 1) AS UNSIGNED)'));
+
+        // If table is empty → start at 1000
+        $base = $highestBase ? $highestBase + 1 : 1000;
+
+        // 2. Find all sub-items that already use this base
+        $usedSubs = ServiceInward::whereRaw('SUBSTRING_INDEX(rma, ".", 1) = ?', [$base])
+            ->pluck(DB::raw('CAST(SUBSTRING_INDEX(rma, ".", -1) AS DECIMAL(10,2))'))
+            ->toArray();
+
+        // 3. Next free sub-item
+        $sub = 1;
+        while (in_array($sub, $usedSubs)) {
+            $sub++;
+        }
+
+        $nextRma = "{$base}.{$sub}";
+
+        // Return as JSON for Inertia (props)
+        return inertia()->render('ServiceInwards/Create', [
+            'nextRma' => $nextRma,
+            // keep the collections you already send
+            'contacts' => Contact::active()->orderBy('name')->get(['id', 'name', 'company']),
+            'users' => User::orderBy('name')->get(['id', 'name']),
+        ]);
+    }
+
 }

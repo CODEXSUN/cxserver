@@ -3,10 +3,19 @@
 import { Table } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
-import { router } from '@inertiajs/react';
-import { useRoute } from 'ziggy-js';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
+    ChevronLeft,
+    ChevronRight,
+    ChevronsLeft,
+    ChevronsRight,
+} from 'lucide-react';
 import React from 'react';
 
 interface Pagination {
@@ -22,10 +31,12 @@ interface DataTableProps<T> {
     title?: string;
     data: T[];
     pagination: Pagination;
-    routeName: string;
-    queryParams?: Record<string, any>;
+    perPage?: number;               // current per-page (local state)
+    onPerPageChange?: (perPage: number) => void;
+    onPageChange?: (page: number) => void;
     emptyMessage?: string;
     children: React.ReactNode;
+    isLoading?: boolean;
 }
 
 const PER_PAGE_OPTIONS = [10, 25, 50, 100, 200] as const;
@@ -34,29 +45,29 @@ export default function DataTable<T>({
                                          title,
                                          data,
                                          pagination,
-                                         routeName,
-                                         queryParams = {},
+                                         perPage,
+                                         onPerPageChange,
+                                         onPageChange,
                                          emptyMessage = 'No records found.',
                                          children,
+                                         isLoading = false,
                                      }: DataTableProps<T>) {
-    const route = useRoute();
+    // -----------------------------------------------------------------
+    // Handlers – simply forward to parent (Index.tsx)
+    // -----------------------------------------------------------------
+    const changePerPage = (value: string) => {
+        const pp = parseInt(value, 10);
+        onPerPageChange?.(pp);
+    };
 
     const goToPage = (page: number) => {
-        router.get(route(routeName), { page, ...queryParams }, {
-            preserveState: true,
-            replace: true,
-        });
+        onPageChange?.(page);
     };
 
-    const changePerPage = (value: string) => {
-        const perPage = parseInt(value);
-        router.get(route(routeName), { per_page: perPage, page: 1, ...queryParams }, {
-            preserveState: true,
-            replace: true,
-        });
-    };
-
-    if (data.length === 0) {
+    // -----------------------------------------------------------------
+    // Empty state
+    // -----------------------------------------------------------------
+    if (data.length === 0 && !isLoading) {
         return (
             <Card>
                 <CardContent className="py-12 text-center">
@@ -67,6 +78,9 @@ export default function DataTable<T>({
         );
     }
 
+    // -----------------------------------------------------------------
+    // Main table + pagination UI
+    // -----------------------------------------------------------------
     return (
         <div>
             <div className="bg-card text-card-foreground flex flex-col rounded-xl border p-0.5 shadow-sm">
@@ -75,24 +89,31 @@ export default function DataTable<T>({
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 text-sm">
+                    {/* Page info */}
                     <div className="text-muted-foreground">
-                        Page <strong>{pagination.current_page}</strong> of <strong>{pagination.last_page}</strong>
+                        Page <strong>{pagination.current_page}</strong> of{' '}
+                        <strong>{pagination.last_page}</strong>
                     </div>
 
+                    {/* Per-page selector */}
                     <div className="flex items-center gap-3">
                         <span className="text-muted-foreground hidden sm:inline">
                             Show
                         </span>
                         <Select
-                            value={pagination.per_page.toString()}
+                            value={(perPage ?? pagination.per_page).toString()}
                             onValueChange={changePerPage}
+                            disabled={isLoading}
                         >
                             <SelectTrigger className="w-20 h-8">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                                 {PER_PAGE_OPTIONS.map((opt) => (
-                                    <SelectItem key={opt} value={opt.toString()}>
+                                    <SelectItem
+                                        key={opt}
+                                        value={opt.toString()}
+                                    >
                                         {opt}
                                     </SelectItem>
                                 ))}
@@ -103,32 +124,42 @@ export default function DataTable<T>({
                         </span>
                     </div>
 
+                    {/* Showing X-Y of Z */}
                     <p className="text-muted-foreground text-center sm:text-left">
-                        Showing {pagination.from}–{pagination.to} of {pagination.total}
+                        Showing {pagination.from}–{pagination.to} of{' '}
+                        {pagination.total}
                     </p>
 
+                    {/* Page navigation buttons */}
                     <div className="flex gap-1">
                         <Button
                             variant="outline"
                             size="icon"
                             onClick={() => goToPage(1)}
-                            disabled={pagination.current_page === 1}
+                            disabled={pagination.current_page === 1 || isLoading}
                         >
                             <ChevronsLeft className="h-4 w-4" />
                         </Button>
                         <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => goToPage(pagination.current_page - 1)}
-                            disabled={pagination.current_page === 1}
+                            onClick={() =>
+                                goToPage(pagination.current_page - 1)
+                            }
+                            disabled={pagination.current_page === 1 || isLoading}
                         >
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
                         <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => goToPage(pagination.current_page + 1)}
-                            disabled={pagination.current_page === pagination.last_page}
+                            onClick={() =>
+                                goToPage(pagination.current_page + 1)
+                            }
+                            disabled={
+                                pagination.current_page ===
+                                pagination.last_page || isLoading
+                            }
                         >
                             <ChevronRight className="h-4 w-4" />
                         </Button>
@@ -136,7 +167,10 @@ export default function DataTable<T>({
                             variant="outline"
                             size="icon"
                             onClick={() => goToPage(pagination.last_page)}
-                            disabled={pagination.current_page === pagination.last_page}
+                            disabled={
+                                pagination.current_page ===
+                                pagination.last_page || isLoading
+                            }
                         >
                             <ChevronsRight className="h-4 w-4" />
                         </Button>

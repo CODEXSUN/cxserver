@@ -29,6 +29,8 @@ class ServiceInward extends Model
     protected $casts = [
         'received_date' => 'datetime',
         'job_created' => 'boolean',
+        'base_rma' => 'integer',
+        'sub_item' => 'decimal:2',
     ];
 
     public function contact(): BelongsTo
@@ -39,5 +41,20 @@ class ServiceInward extends Model
     public function receiver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'received_by');
+    }
+
+    protected static function booted()
+    {
+        static::saving(function ($model) {
+            // Extract base and sub from RMA
+            if (preg_match('/^(\d+)\.(\d+(?:\.\d+)?)$/', $model->rma, $matches)) {
+                $model->base_rma = (int) $matches[1];
+                $model->sub_item = (float) $matches[2];
+            } else {
+                // Fallback: treat as .0
+                $model->base_rma = (int) $model->rma;
+                $model->sub_item = 0;
+            }
+        });
     }
 }
