@@ -5,12 +5,14 @@ namespace App\Providers;
 use App\Models\Blog;
 use App\Models\Contact;
 use App\Models\ContactType;
+use App\Models\JobSpareRequest;
 use App\Models\ServiceInward;
 use App\Models\ServicePart;
 use App\Models\User;
 use App\Policies\BlogPolicy;
 use App\Policies\ContactPolicy;
 use App\Policies\ContactTypePolicy;
+use App\Policies\JobSpareRequestPolicy;
 use App\Policies\ServiceInwardPolicy;
 use App\Policies\ServicePartPolicy;
 use App\Policies\UserPolicy;
@@ -28,6 +30,7 @@ class AuthServiceProvider extends ServiceProvider
         ContactType::class => ContactTypePolicy::class,
         ServiceInward::class => ServiceInwardPolicy::class,
         ServicePart::class => ServicePartPolicy::class,
+        JobSpareRequest::class => JobSpareRequestPolicy::class,
     ];
 
     public function register(): void

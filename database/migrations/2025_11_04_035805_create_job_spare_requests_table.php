@@ -20,8 +20,10 @@ return new class extends Migration
             $table->enum('status', ['pending','issued','customer_will_bring','cancelled'])
                 ->default('pending');
             $table->dateTime('requested_at')->useCurrent();
-            $table->foreignId('user_id')->references('id')->on('users');
+            $table->foreignId('user_id')->references('id')->on('users');//request by
+            $table->string('remarks')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

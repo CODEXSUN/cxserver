@@ -6,6 +6,7 @@ use App\Http\Controllers\ContactSearchController;
 use App\Http\Controllers\ContactTypeController;
 use App\Http\Controllers\JobAssignmentController;
 use App\Http\Controllers\JobCardController;
+use App\Http\Controllers\JobSpareRequestController;
 use App\Http\Controllers\ServiceInwardController;
 use App\Http\Controllers\ServicePartController;
 use App\Http\Controllers\ServiceStatusController;
@@ -187,4 +188,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('service_parts/trash', [ServicePartController::class, 'trash'])
         ->name('service_parts.trash');
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::resource('job_spare_requests', JobSpareRequestController::class)
+        ->except(['show']);
+
+    Route::post('job_spare_requests/{id}/restore', [JobSpareRequestController::class, 'restore'])
+        ->name('job_spare_requests.restore');
+
+    Route::delete('job_spare_requests/{id}/forceDelete', [JobSpareRequestController::class, 'forceDelete'])
+        ->name('job_spare_requests.forceDelete');
+
+    Route::get('job_spare_requests/trash', [JobSpareRequestController::class, 'trash'])
+        ->name('job_spare_requests.trash');
 });
