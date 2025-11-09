@@ -1,5 +1,6 @@
 // resources/js/Pages/ServiceParts/Index.tsx
-import Layout from '@/layouts/app-layout';
+
+import AppLayout from '@/layouts/app-layout';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import { useRoute } from 'ziggy-js';
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -11,6 +12,9 @@ import { Plus, Trash2, Search, RotateCcw, X } from 'lucide-react';
 import DataTable from '@/components/table/DataTable';
 import TableActions from '@/components/table/TableActions';
 import { TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { dashboard } from '@/routes';
+import { index as service_parts } from '@/routes/service_parts/index';
+import type { BreadcrumbItem } from '@/types';
 
 interface Part {
     id: number;
@@ -37,6 +41,11 @@ interface Props {
     can: { create: boolean; delete: boolean };
     trashedCount: number;
 }
+
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Dashboard', href: dashboard().url },
+    { title: 'Service Parts', href: service_parts().url },
+];
 
 export default function Index() {
     const { parts, filters, can, trashedCount } = usePage().props as unknown as Props;
@@ -107,16 +116,17 @@ export default function Index() {
     };
 
     return (
-        <Layout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Service Parts" />
-            <div className="py-12">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+
+            <div className="py-6">
+                <div className="mx-auto sm:px-6 lg:px-8 space-y-6">
 
                     {/* Header */}
                     <div className="flex justify-between items-center">
                         <div>
-                            <h1 className="text-3xl font-bold tracking-tight">Service Parts</h1>
-                            <p className="mt-1 text-muted-foreground">Manage spare parts inventory</p>
+                            <h1 className="text-2xl font-bold tracking-tight text-black/50">Service Parts</h1>
+                            <p className="mt-1 text-sm text-black/30">Manage spare parts inventory</p>
                         </div>
                         <div className="flex gap-3">
                             {can.create && (
@@ -221,6 +231,6 @@ export default function Index() {
 
                 </div>
             </div>
-        </Layout>
+        </AppLayout>
     );
 }
