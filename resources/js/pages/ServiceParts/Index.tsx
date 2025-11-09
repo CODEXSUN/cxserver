@@ -185,7 +185,16 @@ export default function Index() {
                         <TableBody>
                             {parts.data.map(p => (
                                 <TableRow key={p.id} className={p.deleted_at ? 'opacity-60' : ''}>
-                                    <TableCell className="font-medium">{p.part_code}</TableCell>
+                                    {/* ← CLICKABLE PART CODE → */}
+                                    <TableCell className="font-medium">
+                                        <Link
+                                            href={route('service_parts.show', p.id)}
+                                            className="text-primary hover:underline font-semibold"
+                                        >
+                                            {p.part_code}
+                                        </Link>
+                                    </TableCell>
+
                                     <TableCell>{p.name}</TableCell>
                                     <TableCell>{p.brand || ''} {p.model ? `/ ${p.model}` : ''}</TableCell>
                                     <TableCell className="text-right">₹{Number(p.unit_price).toFixed(2)}</TableCell>

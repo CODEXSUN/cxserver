@@ -42,6 +42,21 @@ class ServicePartController extends Controller
         ]);
     }
 
+    public function show(ServicePart $servicePart)
+    {
+        $this->authorize('view', $servicePart);
+
+        $servicePart->load('images');
+
+        return Inertia::render('ServiceParts/Show', [
+            'part' => $servicePart,
+            'can'  => [
+                'edit'   => Gate::allows('update', $servicePart),
+                'delete' => Gate::allows('delete', $servicePart),
+            ],
+        ]);
+    }
+
     public function create()
     {
         $this->authorize('create', ServicePart::class);
@@ -61,9 +76,14 @@ class ServicePartController extends Controller
             'current_stock' => 'required|integer|min:0',
             'remarks'       => 'nullable|string',
             'barcode'       => 'nullable|string|unique:service_parts,barcode',
+            'images.*'      => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
-        ServicePart::create($data);
+        $part = ServicePart::create($data);
+
+        if ($request->hasFile('images')) {
+            app(ServicePartImageController::class)->store($request, $part);
+        }
 
         return redirect()->route('service_parts.index')
             ->with('success', 'Part created.');
@@ -72,6 +92,7 @@ class ServicePartController extends Controller
     public function edit(ServicePart $servicePart)
     {
         $this->authorize('update', $servicePart);
+        $servicePart->load('images');
         return Inertia::render('ServiceParts/Edit', [
             'part' => $servicePart,
         ]);
@@ -90,12 +111,21 @@ class ServicePartController extends Controller
             'current_stock' => 'required|integer|min:0',
             'remarks'       => 'nullable|string',
             'barcode'       => 'nullable|string|unique:service_parts,barcode,' . $servicePart->id,
+            'images.*'      => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'images'        => 'nullable|array',
         ]);
 
         $servicePart->update($data);
 
+        if ($request->hasFile('images')) {
+            app(ServicePartImageController::class)->store($request, $servicePart);
+        }
+
+        // Inertia stays on the same page
+//        return back(303)->with('success', 'Part updated successfully.');
+
         return redirect()->route('service_parts.index')
-            ->with('success', 'Part updated.');
+            ->with('success', 'Part Updated.');
     }
 
     public function destroy(ServicePart $servicePart)
@@ -130,4 +160,6 @@ class ServicePartController extends Controller
 
         return Inertia::render('ServiceParts/Trash', ['parts' => $parts]);
     }
+
+
 }

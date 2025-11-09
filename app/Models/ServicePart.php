@@ -24,4 +24,12 @@ class ServicePart extends Model
     protected $casts = [
         'unit_price' => 'decimal:2',
     ];
+
+    public function images()
+    {
+        return $this->hasMany(ServicePartImage::class)
+            ->orderBy('is_primary', 'desc')
+            ->orderBy('sort_order')
+            ->orderBy('id');
+    }
 }

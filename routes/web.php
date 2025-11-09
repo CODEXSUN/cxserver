@@ -9,6 +9,7 @@ use App\Http\Controllers\JobCardController;
 use App\Http\Controllers\JobSpareRequestController;
 use App\Http\Controllers\ServiceInwardController;
 use App\Http\Controllers\ServicePartController;
+use App\Http\Controllers\ServicePartImageController;
 use App\Http\Controllers\ServiceStatusController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -202,4 +203,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('job_spare_requests/trash', [JobSpareRequestController::class, 'trash'])
         ->name('job_spare_requests.trash');
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
+
+    // ── Image actions ─────────────────────────────────────
+    Route::post('service_parts/{servicePart}/images', [ServicePartImageController::class, 'store'])
+        ->name('service_parts.images.store');
+
+    Route::post('service_parts/{servicePart}/images/primary/{image}', [ServicePartImageController::class, 'setPrimary'])
+        ->name('service_parts.images.primary');
+
+    Route::delete('service_parts/images/{image}', [ServicePartImageController::class, 'destroy'])
+        ->name('service_parts.images.destroy');
+
+    Route::post('service_parts/{servicePart}/images/reorder', [ServicePartImageController::class, 'reorder'])
+        ->name('service_parts.images.reorder');
+
+    // ── Service-Part CRUD ─────────────────────────────────
+    Route::resource('service_parts', ServicePartController::class)->except(['show']);
+
+    Route::get('service_parts/{servicePart}', [ServicePartController::class, 'show'])
+        ->name('service_parts.show');
 });
