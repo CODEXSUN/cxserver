@@ -13,6 +13,7 @@ use App\Http\Controllers\ServiceInwardController;
 use App\Http\Controllers\ServicePartController;
 use App\Http\Controllers\ServicePartImageController;
 use App\Http\Controllers\ServiceStatusController;
+use App\Http\Controllers\SystemManagerController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -294,4 +295,17 @@ Route::prefix('permissions')->name('permissions.')->group(function () {
     // Force Delete
     Route::delete('/{id}/force-delete', [PermissionController::class, 'forceDelete'])
         ->name('forceDelete');
+});
+
+
+Route::middleware(['web', 'auth'])->group(function () {
+    Route::get('/system-manager', function () {
+        return Inertia::render('SystemManager/Index', [
+            'output' => '',
+            'can' => ['manage' => auth()->user()->can('system.manage')],
+        ]);
+    })->name('system.manager');
+
+    Route::post('/system-manager/command', [SystemManagerController::class, 'run'])
+        ->name('system.manager.command');
 });

@@ -43,4 +43,9 @@ class UserPolicy
     {
         return $user->hasPermissionTo('user.restore');
     }
+
+    public function systemManage(User $user)
+    {
+        return $user->super_admin; // or role-based
+    }
 }
