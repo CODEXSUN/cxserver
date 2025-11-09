@@ -237,7 +237,10 @@ class ServiceInwardController extends Controller
         $this->authorize('delete', $serviceInward);
         $serviceInward->delete();
 
-        return back()->with('success', 'Service inward moved to trash.');
+//        return back()->with('success', 'Service inward moved to trash.');
+
+        return redirect()->route('service_parts.index')
+            ->with('success', 'Service inward moved to trash.');
     }
 
     /** --------------------------------------------------------------
@@ -249,7 +252,9 @@ class ServiceInwardController extends Controller
         $this->authorize('restore', $inward);
         $inward->restore();
 
-        return back()->with('success', 'Service inward restored.');
+//        return back()->with('success', 'Service inward restored.');
+        return redirect()->route('service_parts.index')
+            ->with('success', 'Service inward restored.');
     }
 
     /** --------------------------------------------------------------
@@ -276,7 +281,9 @@ class ServiceInwardController extends Controller
         $this->authorize('delete', $inward);
         $inward->forceDelete();
 
-        return back()->with('success', 'Service inward permanently deleted.');
+//        return back()->with('success', 'Service inward permanently deleted.');
+        return redirect()->route('service_parts.index')
+            ->with('success', 'Service inward permanently deleted.');
     }
 
     /**

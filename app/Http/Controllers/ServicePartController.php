@@ -132,7 +132,10 @@ class ServicePartController extends Controller
     {
         $this->authorize('delete', $servicePart);
         $servicePart->delete();
-        return back()->with('success', 'Part moved to trash.');
+//        return back()->with('success', 'Part moved to trash.');
+
+        return redirect()->route('service_parts.index')
+            ->with('success', 'Part moved to trash.');
     }
 
     public function restore($id)
@@ -148,7 +151,9 @@ class ServicePartController extends Controller
         $part = ServicePart::withTrashed()->findOrFail($id);
         $this->authorize('delete', $part);
         $part->forceDelete();
-        return back()->with('success', 'Part permanently deleted.');
+//        return back()->with('success', 'Part permanently deleted.');
+        return redirect()->route('service_parts.index')
+            ->with('success', 'Part permanently deleted.');
     }
 
     public function trash()
