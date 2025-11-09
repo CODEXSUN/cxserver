@@ -1,8 +1,9 @@
 // resources/js/Pages/JobCards/Index.tsx
-import Layout from '@/layouts/app-layout';
+
+import AppLayout from '@/layouts/app-layout';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import { useRoute } from 'ziggy-js';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, JSX } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +34,9 @@ import DataTable from '@/components/table/DataTable';
 import TableActions from '@/components/table/TableActions';
 import { TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { format, parseISO } from 'date-fns';
+import type { BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
+import { index as job_cards } from '@/routes/job_cards/index';
 
 interface JobCard {
     id: number;
@@ -76,6 +80,11 @@ interface Props {
     can: { create: boolean; delete: boolean };
     trashedCount: number;
 }
+
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Dashboard', href: dashboard().url },
+    { title: 'Job Card', href: job_cards().url },
+];
 
 export default function Index() {
     const { jobs, filters: serverFilters, statuses, can, trashedCount } =
@@ -239,15 +248,16 @@ export default function Index() {
     };
 
     return (
-        <Layout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Job Cards" />
-            <div className="py-12">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+
+            <div className="py-6">
+                <div className="mx-auto sm:px-6 lg:px-8 space-y-6">
                     {/* Header */}
                     <div className="flex justify-between items-center">
                         <div>
-                            <h1 className="text-3xl font-bold tracking-tight">Job Cards</h1>
-                            <p className="text-muted-foreground mt-1">Manage service jobs</p>
+                            <h1 className="text-2xl font-bold tracking-tight  text-black/50">Job Cards</h1>
+                            <p className=" mt-1 text-sm text-black/30">Manage service jobs</p>
                         </div>
                         <div className="flex gap-3">
                             {can.create && (
@@ -408,7 +418,15 @@ export default function Index() {
                                             </Link>
                                         )}
                                     </TableCell>
-                                    <TableCell>{job.service_inward.rma}</TableCell>
+
+                                    <TableCell>
+                                        {job.service_inward ? (
+                                            job.service_inward.rma
+                                        ) : (
+                                            <span className="text-muted-foreground italic">Missing Inward</span>
+                                        )}
+                                    </TableCell>
+
                                     <TableCell>
                                         <div>
                                             <div className="font-medium">{job.service_inward.contact.name}</div>
@@ -469,6 +487,6 @@ export default function Index() {
                     </DataTable>
                 </div>
             </div>
-        </Layout>
+        </AppLayout>
     );
 }

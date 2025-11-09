@@ -1,4 +1,5 @@
 // resources/js/Pages/ServiceInwards/Index.tsx
+
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { JSX, useCallback, useEffect, useMemo, useState } from 'react';
