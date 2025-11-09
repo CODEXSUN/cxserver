@@ -2,7 +2,7 @@
 import Layout from '@/layouts/app-layout';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import { useRoute } from 'ziggy-js';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, JSX } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -247,8 +247,8 @@ export default function Index() {
     return (
         <Layout>
             <Head title="Service Inwards" />
-            <div className="py-12">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            <div className="py-6">
+                <div className="mx-auto sm:px-6 lg:px-8 space-y-6">
                     {/* Header */}
                     <div className="flex justify-between items-center">
                         <div>
@@ -261,7 +261,7 @@ export default function Index() {
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <Button asChild>
-                                                <Link href={route('service_inwards.create')}>
+                                                <Link href={route('service_inwards.nextRma')}>
                                                     <Plus className="mr-2 h-4 w-4" />
                                                     New Inward
                                                 </Link>
@@ -392,10 +392,10 @@ export default function Index() {
                                 <TableHead>Customer</TableHead>
                                 <TableHead>Type</TableHead>
                                 <TableHead>Brand / Model</TableHead>
-                                <TableHead>Serial No</TableHead>
+                                {/*<TableHead>Serial No</TableHead>*/}
+                                <TableHead className="text-center">Job card?</TableHead>
                                 <TableHead>Received</TableHead>
                                 <TableHead>Receiver</TableHead>
-                                <TableHead className="text-center">Job</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -427,11 +427,8 @@ export default function Index() {
                                     <TableCell>
                                         {inward.brand || '—'} / {inward.model || '—'}
                                     </TableCell>
-                                    <TableCell>{inward.serial_no || '—'}</TableCell>
-                                    <TableCell>
-                                        {inward.received_date ? format(new Date(inward.received_date), 'dd MMM yyyy') : '—'}
-                                    </TableCell>
-                                    <TableCell>{inward.receiver?.name || '—'}</TableCell>
+                                    {/*<TableCell>{inward.serial_no || '—'}</TableCell>*/}
+
                                     <TableCell className="text-center">
                                         <Badge
                                             variant={inward.job_created ? 'default' : 'destructive'}
@@ -440,6 +437,12 @@ export default function Index() {
                                             {inward.job_created ? 'Yes' : 'No'}
                                         </Badge>
                                     </TableCell>
+
+                                    <TableCell>
+                                        {inward.received_date ? format(new Date(inward.received_date), 'dd MMM yyyy') : '—'}
+                                    </TableCell>
+                                    <TableCell>{inward.receiver?.name || '—'}</TableCell>
+
                                     <TableCell className="text-right">
                                         <TableActions
                                             id={inward.id}
