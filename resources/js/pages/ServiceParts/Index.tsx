@@ -315,7 +315,7 @@ export default function Index() {
                         isLoading={isNavigating}
                     >
                         <TableHeader>
-                            <TableRow>
+                            <TableRow className="bg-muted font-semibold text-foreground">
                                 <TableHead>Part Code</TableHead>
                                 <TableHead>Name</TableHead>
                                 <TableHead>Brand / Model</TableHead>
