@@ -21,6 +21,7 @@ class JobAssignment extends Model
         'time_spent_minutes',
         'report',
         'remarks',
+        'stage',
         'service_status_id',
     ];
 

@@ -20,6 +20,7 @@ interface Assignment {
     time_spent_minutes: number;
     report: string | null;
     remarks: string | null;
+    stage: string | null; // ← ADD
 }
 
 interface UserOption {
@@ -50,7 +51,17 @@ export default function Edit() {
         time_spent_minutes: String(assignment.time_spent_minutes),
         report: assignment.report || '',
         remarks: assignment.remarks || '',
+        stage: assignment.stage || '',
     });
+
+    const stageOptions = [
+        'New Case',
+        'Repeted',
+        'Free Service',
+        'From Out Service',
+        'Retaken',
+        'Swap Engineer',
+    ];
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -120,6 +131,23 @@ export default function Edit() {
                                     </SelectContent>
                                 </Select>
                                 {errors.service_status_id && <p className="text-sm text-red-600 mt-1">{errors.service_status_id}</p>}
+                            </div>
+
+                            {/* Add Stage Field */}
+                            <div>
+                                <Label htmlFor="stage">Stage</Label>
+                                <Select value={data.stage} onValueChange={(v) => setData('stage', v)}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select stage" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {stageOptions.map((opt) => (
+                                            <SelectItem key={opt} value={opt}>
+                                                {opt}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
 
                             <div>

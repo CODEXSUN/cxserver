@@ -31,6 +31,7 @@ interface Props {
     statuses: StatusOption[];
 }
 
+
 export default function Create() {
     const route = useRoute();
     const { jobCards, users, statuses } = usePage().props as unknown as Props;
@@ -39,8 +40,19 @@ export default function Create() {
         job_card_id: '',
         user_id: '',
         service_status_id: '',
+        stage: '', // ← ADD
         remarks: '',
     });
+
+    const stageOptions = [
+        'New Case',
+        'Repeted',
+        'Free Service',
+        'From Out Service',
+        'Retaken',
+        'Swap Engineer',
+    ];
+
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -121,6 +133,23 @@ export default function Create() {
                                     </SelectContent>
                                 </Select>
                                 {errors.service_status_id && <p className="text-sm text-red-600 mt-1">{errors.service_status_id}</p>}
+                            </div>
+
+                            {/* Add Stage Field */}
+                            <div>
+                                <Label htmlFor="stage">Stage</Label>
+                                <Select value={data.stage} onValueChange={(v) => setData('stage', v)}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select stage" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {stageOptions.map((opt) => (
+                                            <SelectItem key={opt} value={opt}>
+                                                {opt}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
 
                             <div className="md:col-span-2">

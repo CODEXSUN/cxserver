@@ -21,6 +21,7 @@ return new class extends Migration
             $table->integer('time_spent_minutes')->default(0);
             $table->longText('report')->nullable();
             $table->text('remarks')->nullable();
+            $table->string('stage')->nullable();
             $table->foreignId('service_status_id')->references('id')->on('service_statuses');
             $table->timestamps();
             $table->softDeletes();

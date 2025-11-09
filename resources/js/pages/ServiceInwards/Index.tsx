@@ -2,7 +2,7 @@
 import Layout from '@/layouts/app-layout';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import { useRoute } from 'ziggy-js';
-import { useState, useEffect, useCallback, useMemo, JSX } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -94,75 +94,45 @@ export default function Index() {
         search: serverFilters.search || '',
         job_filter: serverFilters.job_filter || 'all',
         type_filter: serverFilters.type_filter || 'all',
-        date_from: serverFilters.date_from
-            ? parseISO(serverFilters.date_from)
-            : undefined,
-        date_to: serverFilters.date_to
-            ? parseISO(serverFilters.date_to)
-            : undefined,
+        date_from: serverFilters.date_from ? parseISO(serverFilters.date_from) : undefined,
+        date_to: serverFilters.date_to ? parseISO(serverFilters.date_to) : undefined,
+        per_page: serverFilters.per_page || '50',
     });
-
-    const [localPerPage, setLocalPerPage] = useState(
-        serverFilters.per_page ? parseInt(serverFilters.per_page) : 100
-    );
 
     const [isNavigating, setIsNavigating] = useState(false);
 
-    // ──────────────────────────────────────────────────────────────
-    // Sync server → local state (when page reloads, back-button, etc.)
-    // ──────────────────────────────────────────────────────────────
+    // Sync server filters → local state
     useEffect(() => {
         setLocalFilters({
             search: serverFilters.search || '',
             job_filter: serverFilters.job_filter || 'all',
             type_filter: serverFilters.type_filter || 'all',
-            date_from: serverFilters.date_from
-                ? parseISO(serverFilters.date_from)
-                : undefined,
-            date_to: serverFilters.date_to
-                ? parseISO(serverFilters.date_to)
-                : undefined,
+            date_from: serverFilters.date_from ? parseISO(serverFilters.date_from) : undefined,
+            date_to: serverFilters.date_to ? parseISO(serverFilters.date_to) : undefined,
+            per_page: serverFilters.per_page || '50',
         });
-        setLocalPerPage(
-            serverFilters.per_page ? parseInt(serverFilters.per_page) : 100
-        );
     }, [serverFilters]);
 
-    // ──────────────────────────────────────────────────────────────
-    // Helper – build payload (keeps undefined values out of URL)
-    // ──────────────────────────────────────────────────────────────
+    // Build URL payload
     const buildPayload = useCallback(
-        (extra: Record<string, any> = {}) => ({
+        () => ({
             search: localFilters.search || undefined,
-            job_filter:
-                localFilters.job_filter === 'all'
-                    ? undefined
-                    : localFilters.job_filter,
-            type_filter:
-                localFilters.type_filter === 'all'
-                    ? undefined
-                    : localFilters.type_filter,
-            date_from: localFilters.date_from
-                ? format(localFilters.date_from, 'yyyy-MM-dd')
-                : undefined,
-            date_to: localFilters.date_to
-                ? format(localFilters.date_to, 'yyyy-MM-dd')
-                : undefined,
-            per_page: localPerPage,
-            ...extra,
+            job_filter: localFilters.job_filter === 'all' ? undefined : localFilters.job_filter,
+            type_filter: localFilters.type_filter === 'all' ? undefined : localFilters.type_filter,
+            date_from: localFilters.date_from ? format(localFilters.date_from, 'yyyy-MM-dd') : undefined,
+            date_to: localFilters.date_to ? format(localFilters.date_to, 'yyyy-MM-dd') : undefined,
+            per_page: localFilters.per_page,
         }),
-        [localFilters, localPerPage]
+        [localFilters]
     );
 
-    // ──────────────────────────────────────────────────────────────
-    // Generic navigation (used by filters, page change, per-page)
-    // ──────────────────────────────────────────────────────────────
+    // Navigate with filters
     const navigate = useCallback(
-        (extra: Record<string, any> = {}) => {
+        (extra = {}) => {
             setIsNavigating(true);
             router.get(
                 route('service_inwards.index'),
-                { ...buildPayload(extra), page: extra.page ?? 1 },
+                { ...buildPayload(), ...extra },
                 {
                     preserveState: true,
                     replace: true,
@@ -173,47 +143,15 @@ export default function Index() {
         [route, buildPayload]
     );
 
-    // ──────────────────────────────────────────────────────────────
-    // FILTER HANDLERS
-    // ──────────────────────────────────────────────────────────────
-    const handleSearchChange = (value: string) => {
-        setLocalFilters((prev) => ({ ...prev, search: value }));
+    // Reset all filters
+    const handleReset = () => {
+        router.get(route('service_inwards.index'), {}, { preserveState: true, replace: true });
     };
 
-    const handleSearch = () => navigate({ search: localFilters.search });
-
-    const handleJobFilterChange = (value: 'all' | 'yes' | 'no') => {
-        setLocalFilters((prev) => ({ ...prev, job_filter: value }));
-        navigate({ job_filter: value });
-    };
-
-    const handleTypeFilterChange = (
-        value: 'all' | 'laptop' | 'desktop' | 'printer'
+    // Clear single filter
+    const clearFilter = useCallback((
+        key: 'search' | 'job_filter' | 'type_filter' | 'date_from' | 'date_to' | 'per_page'
     ) => {
-        setLocalFilters((prev) => ({ ...prev, type_filter: value }));
-        navigate({ type_filter: value });
-    };
-
-    const handleDateRangeChange = (
-        range: { from?: Date; to?: Date } | undefined
-    ) => {
-        const newRange = range || { from: undefined, to: undefined };
-        setLocalFilters((prev) => ({
-            ...prev,
-            date_from: newRange.from,
-            date_to: newRange.to,
-        }));
-        navigate({
-            date_from: newRange.from
-                ? format(newRange.from, 'yyyy-MM-dd')
-                : undefined,
-            date_to: newRange.to
-                ? format(newRange.to, 'yyyy-MM-dd')
-                : undefined,
-        });
-    };
-
-    const clearFilter = (key: keyof typeof localFilters) => {
         const updates: Partial<typeof localFilters> = {};
         if (key === 'search') updates.search = '';
         if (key === 'job_filter') updates.job_filter = 'all';
@@ -222,58 +160,21 @@ export default function Index() {
             updates.date_from = undefined;
             updates.date_to = undefined;
         }
+        if (key === 'per_page') updates.per_page = '50';
 
-        setLocalFilters((prev) => ({ ...prev, ...updates }));
+        setLocalFilters(prev => ({ ...prev, ...updates }));
         navigate(updates);
-    };
+    }, [navigate]);
 
-    const handleResetFilters = () => {
-        const empty = {
-            search: '',
-            job_filter: 'all' as const,
-            type_filter: 'all' as const,
-            date_from: undefined,
-            date_to: undefined,
-        };
-        setLocalFilters(empty);
-        setLocalPerPage(100);
-        router.get(route('service_inwards.index'), {}, { preserveState: true, replace: true });
-    };
-
-    // ──────────────────────────────────────────────────────────────
-    // PAGINATION HANDLERS (passed to DataTable)
-    // ──────────────────────────────────────────────────────────────
-    const handlePageChange = useCallback(
-        (page: number) => navigate({ page }),
-        [navigate]
-    );
-
-    const handlePerPageChange = useCallback(
-        (perPage: number) => {
-            setLocalPerPage(perPage);
-            navigate({ per_page: perPage, page: 1 });
-        },
-        [navigate]
-    );
-
-    // ──────────────────────────────────────────────────────────────
-    // ACTIVE FILTER BADGES
-    // ──────────────────────────────────────────────────────────────
+    // Active filter badges
     const activeFilterBadges = useMemo(() => {
         const badges: JSX.Element[] = [];
 
         if (localFilters.search) {
             badges.push(
-                <Badge
-                    key="search"
-                    variant="secondary"
-                    className="text-xs flex items-center gap-1"
-                >
+                <Badge key="search" variant="secondary" className="text-xs flex items-center gap-1">
                     Search: "{localFilters.search}"
-                    <button
-                        onClick={() => clearFilter('search')}
-                        className="ml-1 hover:bg-muted rounded-sm p-0.5"
-                    >
+                    <button onClick={() => clearFilter('search')} className="ml-1 hover:bg-muted rounded-sm p-0.5">
                         <X className="h-3 w-3" />
                     </button>
                 </Badge>
@@ -282,17 +183,9 @@ export default function Index() {
 
         if (localFilters.job_filter !== 'all') {
             badges.push(
-                <Badge
-                    key="job"
-                    variant="secondary"
-                    className="text-xs flex items-center gap-1"
-                >
-                    Job:{' '}
-                    {localFilters.job_filter === 'yes' ? 'Created' : 'Not Created'}
-                    <button
-                        onClick={() => clearFilter('job_filter')}
-                        className="ml-1 hover:bg-muted rounded-sm p-0.5"
-                    >
+                <Badge key="job" variant="secondary" className="text-xs flex items-center gap-1">
+                    Job: {localFilters.job_filter === 'yes' ? 'Created' : 'Not Created'}
+                    <button onClick={() => clearFilter('job_filter')} className="ml-1 hover:bg-muted rounded-sm p-0.5">
                         <X className="h-3 w-3" />
                     </button>
                 </Badge>
@@ -301,18 +194,9 @@ export default function Index() {
 
         if (localFilters.type_filter !== 'all') {
             badges.push(
-                <Badge
-                    key="type"
-                    variant="secondary"
-                    className="text-xs flex items-center gap-1"
-                >
-                    Type:{' '}
-                    {localFilters.type_filter.charAt(0).toUpperCase() +
-                        localFilters.type_filter.slice(1)}
-                    <button
-                        onClick={() => clearFilter('type_filter')}
-                        className="ml-1 hover:bg-muted rounded-sm p-0.5"
-                    >
+                <Badge key="type" variant="secondary" className="text-xs flex items-center gap-1">
+                    Type: {localFilters.type_filter.charAt(0).toUpperCase() + localFilters.type_filter.slice(1)}
+                    <button onClick={() => clearFilter('type_filter')} className="ml-1 hover:bg-muted rounded-sm p-0.5">
                         <X className="h-3 w-3" />
                     </button>
                 </Badge>
@@ -321,22 +205,22 @@ export default function Index() {
 
         if (localFilters.date_from || localFilters.date_to) {
             badges.push(
-                <Badge
-                    key="date"
-                    variant="secondary"
-                    className="text-xs flex items-center gap-1"
-                >
-                    Date:{' '}
-                    {localFilters.date_from
-                        ? format(localFilters.date_from, 'dd MMM')
-                        : '...'} -{' '}
-                    {localFilters.date_to
-                        ? format(localFilters.date_to, 'dd MMM yyyy')
-                        : '...'}
-                    <button
-                        onClick={() => clearFilter('date_from')}
-                        className="ml-1 hover:bg-muted rounded-sm p-0.5"
-                    >
+                <Badge key="date" variant="secondary" className="text-xs flex items-center gap-1">
+                    Date: {localFilters.date_from ? format(localFilters.date_from, 'dd MMM') : '...'} -{' '}
+                    {localFilters.date_to ? format(localFilters.date_to, 'dd MMM yyyy') : '...'}
+                    <button onClick={() => clearFilter('date_from')} className="ml-1 hover:bg-muted rounded-sm p-0.5">
+                        <X className="h-3 w-3" />
+                    </button>
+                </Badge>
+            );
+        }
+
+        // Per Page Badge (only if not default)
+        if (localFilters.per_page !== '50') {
+            badges.push(
+                <Badge key="per_page" variant="secondary" className="text-xs flex items-center gap-1">
+                    Per Page: {localFilters.per_page}
+                    <button onClick={() => clearFilter('per_page')} className="ml-1 hover:bg-muted rounded-sm p-0.5">
                         <X className="h-3 w-3" />
                     </button>
                 </Badge>
@@ -345,78 +229,51 @@ export default function Index() {
 
         if (badges.length === 0) {
             badges.push(
-                <span
-                    key="no-filter"
-                    className="text-xs text-muted-foreground italic"
-                >
+                <span key="none" className="text-xs text-muted-foreground italic">
                     No active filters
                 </span>
             );
         }
 
         return badges;
-    }, [localFilters]);
+    }, [localFilters, clearFilter]);
 
-    const formatDateRange = () => {
-        const { date_from, date_to } = localFilters;
-        if (!date_from && !date_to) return 'Pick a date range';
-        if (date_from && date_to)
-            return `${format(date_from, 'dd MMM yyyy')} - ${format(
-                date_to,
-                'dd MMM yyyy'
-            )}`;
-        if (date_from) return `${format(date_from, 'dd MMM yyyy')} - ...`;
-        if (date_to) return `... - ${format(date_to, 'dd MMM yyyy')}`;
-        return 'Pick a date range';
+    // Handle per-page change from DataTable
+    const handlePerPageChange = (perPage: number) => {
+        setLocalFilters(prev => ({ ...prev, per_page: String(perPage) }));
+        navigate({ per_page: perPage, page: 1 });
     };
 
-    // ──────────────────────────────────────────────────────────────
-    // RENDER
-    // ──────────────────────────────────────────────────────────────
     return (
         <Layout>
             <Head title="Service Inwards" />
             <div className="py-12">
-                <div className="mx-auto sm:px-6 lg:px-8 space-y-6">
+                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
                     {/* Header */}
                     <div className="flex justify-between items-center">
                         <div>
-                            <h1 className="text-3xl font-bold tracking-tight">
-                                Service Inwards
-                            </h1>
-                            <p className="text-muted-foreground mt-1">
-                                Track received for service
-                            </p>
+                            <h1 className="text-3xl font-bold tracking-tight">Service Inwards</h1>
+                            <p className="text-muted-foreground mt-1">Track incoming devices</p>
                         </div>
-
                         <div className="flex gap-3">
                             {can.create && (
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <Button asChild>
-                                                <Link
-                                                    href={route(
-                                                        'service_inwards.nextRma'
-                                                    )}
-                                                >
+                                                <Link href={route('service_inwards.create')}>
                                                     <Plus className="mr-2 h-4 w-4" />
                                                     New Inward
                                                 </Link>
                                             </Button>
                                         </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Add a new service inward</p>
-                                        </TooltipContent>
+                                        <TooltipContent>Add a new service inward</TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
                             )}
-
                             {trashedCount > 0 && (
                                 <Button variant="outline" asChild>
-                                    <Link
-                                        href={route('service_inwards.trash')}
-                                    >
+                                    <Link href={route('service_inwards.trash')}>
                                         <Trash2 className="mr-2 h-4 w-4" />
                                         Trash ({trashedCount})
                                     </Link>
@@ -428,31 +285,24 @@ export default function Index() {
                     <Separator />
 
                     {/* FILTER BAR */}
-                    <div className="flex flex-wrap items-center gap-2">
-                        <div className="flex-1 min-w-[200px] max-w-md">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                                <Input
-                                    placeholder="Search by RMA, Serial, Contact, Mobile..."
-                                    className="pl-10 h-9"
-                                    value={localFilters.search}
-                                    onChange={(e) =>
-                                        handleSearchChange(e.target.value)
-                                    }
-                                    onKeyUp={(e) =>
-                                        e.key === 'Enter' && handleSearch()
-                                    }
-                                    disabled={isNavigating}
-                                />
-                            </div>
+                    <div className="flex flex-wrap gap-3 items-center">
+                        <div className="flex-1 min-w-[200px] relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search by RMA, Serial, Customer..."
+                                className="pl-10 h-9"
+                                value={localFilters.search}
+                                onChange={(e) => setLocalFilters(prev => ({ ...prev, search: e.target.value }))}
+                                onKeyUp={(e) => e.key === 'Enter' && navigate()}
+                                disabled={isNavigating}
+                            />
                         </div>
 
-                        <Select
-                            value={localFilters.job_filter}
-                            onValueChange={handleJobFilterChange}
-                            disabled={isNavigating}
-                        >
-                            <SelectTrigger className="w-[130px] h-9">
+                        <Select value={localFilters.job_filter} onValueChange={(v: 'all' | 'yes' | 'no') => {
+                            setLocalFilters(prev => ({ ...prev, job_filter: v }));
+                            navigate({ job_filter: v });
+                        }} disabled={isNavigating}>
+                            <SelectTrigger className="w-48 h-9">
                                 <SelectValue placeholder="All Jobs" />
                             </SelectTrigger>
                             <SelectContent>
@@ -462,12 +312,11 @@ export default function Index() {
                             </SelectContent>
                         </Select>
 
-                        <Select
-                            value={localFilters.type_filter}
-                            onValueChange={handleTypeFilterChange}
-                            disabled={isNavigating}
-                        >
-                            <SelectTrigger className="w-[130px] h-9">
+                        <Select value={localFilters.type_filter} onValueChange={(v: 'all' | 'laptop' | 'desktop' | 'printer') => {
+                            setLocalFilters(prev => ({ ...prev, type_filter: v }));
+                            navigate({ type_filter: v });
+                        }} disabled={isNavigating}>
+                            <SelectTrigger className="w-40 h-9">
                                 <SelectValue placeholder="All Types" />
                             </SelectTrigger>
                             <SelectContent>
@@ -480,25 +329,31 @@ export default function Index() {
 
                         <Popover>
                             <PopoverTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    className="h-9 px-3 text-left font-normal"
-                                    disabled={isNavigating}
-                                >
+                                <Button variant="outline" className="h-9 px-3 text-left font-normal" disabled={isNavigating}>
                                     <CalendarIcon className="mr-2 h-4 w-4" />
                                     <span className="truncate max-w-[140px]">
-                                        {formatDateRange()}
+                                        {localFilters.date_from || localFilters.date_to
+                                            ? `${localFilters.date_from ? format(localFilters.date_from, 'dd MMM') : '...'} - ${localFilters.date_to ? format(localFilters.date_to, 'dd MMM yyyy') : '...'}`
+                                            : 'Pick a date range'}
                                     </span>
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0" align="start">
                                 <Calendar
                                     mode="range"
-                                    selected={{
-                                        from: localFilters.date_from,
-                                        to: localFilters.date_to,
+                                    selected={{ from: localFilters.date_from, to: localFilters.date_to }}
+                                    onSelect={(range: { from?: Date; to?: Date } | undefined) => {
+                                        const newRange = range || { from: undefined, to: undefined };
+                                        setLocalFilters(prev => ({
+                                            ...prev,
+                                            date_from: newRange.from,
+                                            date_to: newRange.to,
+                                        }));
+                                        navigate({
+                                            date_from: newRange.from ? format(newRange.from, 'yyyy-MM-dd') : undefined,
+                                            date_to: newRange.to ? format(newRange.to, 'yyyy-MM-dd') : undefined,
+                                        });
                                     }}
-                                    onSelect={handleDateRangeChange}
                                     numberOfMonths={2}
                                     disabled={isNavigating}
                                 />
@@ -506,176 +361,81 @@ export default function Index() {
                         </Popover>
 
                         <div className="flex gap-1">
-                            <Button
-                                size="sm"
-                                className="h-9"
-                                onClick={handleSearch}
-                                disabled={isNavigating}
-                            >
+                            <Button size="sm" className="h-9" onClick={() => navigate()} disabled={isNavigating}>
                                 <Search className="h-4 w-4" />
                             </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-9"
-                                onClick={handleResetFilters}
-                                disabled={isNavigating}
-                            >
+                            <Button variant="outline" size="sm" className="h-9" onClick={handleReset} disabled={isNavigating}>
                                 <RotateCcw className="h-4 w-4" />
                             </Button>
                         </div>
                     </div>
 
                     {/* ACTIVE FILTERS */}
-                    <div className="flex flex-wrap gap-2 text-sm mt-2 p-3 bg-muted/30 rounded-md border">
-                        <span className="font-medium text-foreground">
-                            Active Filters:
-                        </span>
-                        <div className="flex flex-wrap gap-2">
-                            {activeFilterBadges}
-                        </div>
+                    <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-md border">
+                        <span className="font-medium text-foreground">Active Filters:</span>
+                        <div className="flex flex-wrap gap-2">{activeFilterBadges}</div>
                     </div>
 
                     {/* DATA TABLE */}
                     <DataTable
                         data={inwards.data}
                         pagination={inwards}
-                        perPage={localPerPage}
+                        perPage={parseInt(localFilters.per_page)}
                         onPerPageChange={handlePerPageChange}
-                        onPageChange={handlePageChange}
-                        emptyMessage="No service inwards found."
+                        onPageChange={(page) => navigate({ page })}
+                        emptyMessage="No inwards found."
                         isLoading={isNavigating}
                     >
                         <TableHeader>
-                            <TableRow className="bg-muted font-semibold text-foreground">
+                            <TableRow className="bg-muted font-semibold text- anivers">
                                 <TableHead>RMA</TableHead>
-                                <TableHead>Contact</TableHead>
-                                <TableHead>Mobile</TableHead>
+                                <TableHead>Customer</TableHead>
                                 <TableHead>Type</TableHead>
                                 <TableHead>Brand / Model</TableHead>
                                 <TableHead>Serial No</TableHead>
                                 <TableHead>Received</TableHead>
-                                <TableHead>Received By</TableHead>
-                                <TableHead className="text-center">
-                                    Job?
-                                </TableHead>
-                                <TableHead className="text-right">
-                                    Actions
-                                </TableHead>
+                                <TableHead>Receiver</TableHead>
+                                <TableHead className="text-center">Job</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {inwards.data.map((inward) => (
-                                <TableRow
-                                    key={inward.id}
-                                    className={
-                                        inward.deleted_at ? 'opacity-60' : ''
-                                    }
-                                >
+                                <TableRow key={inward.id} className={inward.deleted_at ? 'opacity-60' : ''}>
                                     <TableCell className="font-medium">
                                         {inward.deleted_at ? (
-                                            <span className="text-muted-foreground">
-                                                {inward.rma}
-                                            </span>
+                                            <span className="text-muted-foreground">{inward.rma}</span>
                                         ) : (
-                                            <Link
-                                                href={route(
-                                                    'service_inwards.show',
-                                                    inward.id
-                                                )}
-                                                className="hover:text-primary"
-                                            >
+                                            <Link href={route('service_inwards.show', inward.id)} className="hover:text-primary">
                                                 {inward.rma}
                                             </Link>
                                         )}
                                     </TableCell>
                                     <TableCell>
                                         <div>
-                                            <div className="font-medium">
-                                                {inward.contact.name}
-                                            </div>
+                                            <div className="font-medium">{inward.contact.name}</div>
                                             {inward.contact.company && (
-                                                <div className="text-sm text-muted-foreground">
-                                                    {inward.contact.company}
-                                                </div>
+                                                <div className="text-sm text-muted-foreground">{inward.contact.company}</div>
                                             )}
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        {inward.contact.mobile ? (
-                                            <a
-                                                href={`tel:${inward.contact.mobile}`}
-                                                className="text-primary hover:underline"
-                                            >
-                                                {inward.contact.mobile}
-                                            </a>
-                                        ) : (
-                                            <span className="text-muted-foreground">
-                                                —
-                                            </span>
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
                                         <Badge variant="outline">
-                                            {inward.material_type
-                                                    .charAt(0)
-                                                    .toUpperCase() +
-                                                inward.material_type.slice(1)}
+                                            {inward.material_type.charAt(0).toUpperCase() + inward.material_type.slice(1)}
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
-                                        {inward.brand || inward.model ? (
-                                            <>
-                                                {inward.brand && (
-                                                    <span>{inward.brand}</span>
-                                                )}
-                                                {inward.model && (
-                                                    <span className="text-muted-foreground">
-                                                        {' '}
-                                                        / {inward.model}
-                                                    </span>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <span className="text-muted-foreground">
-                                                —
-                                            </span>
-                                        )}
+                                        {inward.brand || '—'} / {inward.model || '—'}
                                     </TableCell>
+                                    <TableCell>{inward.serial_no || '—'}</TableCell>
                                     <TableCell>
-                                        {inward.serial_no || (
-                                            <span className="text-muted-foreground">
-                                                —
-                                            </span>
-                                        )}
+                                        {inward.received_date ? format(new Date(inward.received_date), 'dd MMM yyyy') : '—'}
                                     </TableCell>
-                                    <TableCell>
-                                        {inward.received_date
-                                            ? format(
-                                                new Date(inward.received_date),
-                                                'dd MMM yyyy'
-                                            )
-                                            : '—'}
-                                    </TableCell>
-                                    <TableCell>
-                                        {inward.receiver?.name || (
-                                            <span className="text-muted-foreground">
-                                                —
-                                            </span>
-                                        )}
-                                    </TableCell>
+                                    <TableCell>{inward.receiver?.name || '—'}</TableCell>
                                     <TableCell className="text-center">
                                         <Badge
-                                            variant={
-                                                inward.job_created
-                                                    ? 'default'
-                                                    : 'destructive'
-                                            }
-                                            className={
-                                                inward.job_created
-                                                    ? 'bg-green-400 text-white'
-                                                    : 'bg-red-500 text-white'
-                                            }
+                                            variant={inward.job_created ? 'default' : 'destructive'}
+                                            className={inward.job_created ? 'bg-green-400 text-white' : 'bg-red-500 text-white'}
                                         >
                                             {inward.job_created ? 'Yes' : 'No'}
                                         </Badge>
@@ -683,28 +443,16 @@ export default function Index() {
                                     <TableCell className="text-right">
                                         <TableActions
                                             id={inward.id}
-                                            editRoute={route(
-                                                'service_inwards.edit',
-                                                inward.id
-                                            )}
-                                            deleteRoute={route(
-                                                'service_inwards.destroy',
-                                                inward.id
-                                            )}
+                                            editRoute={route('service_inwards.edit', inward.id)}
+                                            deleteRoute={route('service_inwards.destroy', inward.id)}
                                             restoreRoute={
                                                 inward.deleted_at
-                                                    ? route(
-                                                        'service_inwards.restore',
-                                                        inward.id
-                                                    )
+                                                    ? route('service_inwards.restore', inward.id)
                                                     : undefined
                                             }
                                             forceDeleteRoute={
                                                 inward.deleted_at
-                                                    ? route(
-                                                        'service_inwards.forceDelete',
-                                                        inward.id
-                                                    )
+                                                    ? route('service_inwards.forceDelete', inward.id)
                                                     : undefined
                                             }
                                             isDeleted={!!inward.deleted_at}

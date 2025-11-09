@@ -36,6 +36,7 @@ interface Assignment {
     user: { id: number; name: string };
     status: { id: number; name: string };
     assigned_at: string;
+    stage: string | null;
     started_at: string | null;
     completed_at: string | null;
     time_spent_minutes: number;
@@ -349,6 +350,7 @@ export default function Index() {
                                 <TableHead>Technician</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Assigned</TableHead>
+                                <TableHead>Stage</TableHead>
                                 <TableHead>Time Spent</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
@@ -375,6 +377,17 @@ export default function Index() {
                                     <TableCell>
                                         {format(new Date(a.assigned_at), 'dd MMM yyyy HH:mm')}
                                     </TableCell>
+
+                                    <TableCell>
+                                        {a.stage ? (
+                                            <Badge variant="outline" className="capitalize">
+                                                {a.stage}
+                                            </Badge>
+                                        ) : (
+                                            <span className="text-muted-foreground">—</span>
+                                        )}
+                                    </TableCell>
+
                                     <TableCell>
                                         {a.time_spent_minutes > 0
                                             ? `${a.time_spent_minutes} min`

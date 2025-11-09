@@ -76,6 +76,7 @@ class JobAssignmentController extends Controller
             'user_id' => 'required|exists:users,id',
             'service_status_id' => 'required|exists:service_statuses,id',
             'remarks' => 'nullable|string',
+            'stage' => 'nullable|in:New Case,Repeted,Free Service,From Out Service,Retaken,Swap Engineer',
         ]);
 
         $data['assigned_at'] = now();
@@ -110,6 +111,7 @@ class JobAssignmentController extends Controller
             'time_spent_minutes' => 'nullable|integer|min:0',
             'report' => 'nullable|string',
             'remarks' => 'nullable|string',
+            'stage' => 'nullable|in:New Case,Repeted,Free Service,From Out Service,Retaken,Swap Engineer',
         ]);
 
         $jobAssignment->update($data);
