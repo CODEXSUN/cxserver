@@ -1,5 +1,5 @@
 // resources/js/Pages/JobAssignments/Index.tsx
-import Layout from '@/layouts/app-layout';
+import AppLayout from '@/layouts/app-layout';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import { useRoute } from 'ziggy-js';
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -25,6 +25,9 @@ import {
     TableCell,
 } from '@/components/ui/table';
 import { format } from 'date-fns';
+import { index as job_assignments } from '@/routes/job_assignments/index';
+import type { BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
 
 interface Assignment {
     id: number;
@@ -64,6 +67,11 @@ interface Props {
     can: { create: boolean; delete: boolean };
     trashedCount: number;
 }
+
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Dashboard', href: dashboard().url },
+    { title: 'Job Assignment', href: job_assignments().url },
+];
 
 export default function Index() {
     const { assignments, filters, statuses, technicians, can, trashedCount } =
@@ -193,7 +201,7 @@ export default function Index() {
 
         if (badges.length === 0) {
             badges.push(
-                <span key="none" className="text-xs text-muted-foreground italic">
+                <span key="none" className="text-xs text-muted-foreground inline-flex items-center italic">
                     No active filters
                 </span>
             );
@@ -209,17 +217,18 @@ export default function Index() {
     };
 
     return (
-        <Layout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Job Assignments" />
-            <div className="py-12">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+
+            <div className="py-6">
+                <div className="mx-auto sm:px-6 lg:px-8 space-y-6">
                     {/* Header */}
                     <div className="flex justify-between items-center">
                         <div>
-                            <h1 className="text-3xl font-bold tracking-tight">
+                            <h1 className="text-2xl font-bold tracking-tight text-black/50">
                                 Job Assignments
                             </h1>
-                            <p className="text-muted-foreground mt-1">
+                            <p className="mt-1 text-sm text-black/30">
                                 Assign technicians to jobs
                             </p>
                         </div>
@@ -418,6 +427,6 @@ export default function Index() {
                     </DataTable>
                 </div>
             </div>
-        </Layout>
+        </AppLayout>
     );
 }

@@ -326,7 +326,7 @@ export default function Index() {
             badges.push(
                 <span
                     key="none"
-                    className="text-xs text-muted-foreground inline-flex items-center"
+                    className="text-xs text-muted-foreground inline-flex items-center italic"
                 >
                     No active filters
                 </span>,
