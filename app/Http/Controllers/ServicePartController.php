@@ -12,12 +12,14 @@ class ServicePartController extends Controller
 {
     use AuthorizesRequests;
 
+// app/Http/Controllers/ServicePartController.php
+
     public function index(Request $request)
     {
         $this->authorize('viewAny', ServicePart::class);
 
-        $perPage = $request->input('per_page', 50);
-        $perPage = in_array($perPage, [10, 25, 50, 100]) ? $perPage : 50;
+        $perPage = (int) $request->input('per_page', 50);
+        $perPage = in_array($perPage, [10, 25, 50, 100, 200]) ? $perPage : 50;
 
         $query = ServicePart::query()
             ->when($request->filled('search'), fn($q) => $q->where(function ($sq) use ($request) {
@@ -27,14 +29,22 @@ class ServicePartController extends Controller
                     ->orWhere('brand', 'like', "%{$search}%")
                     ->orWhere('model', 'like', "%{$search}%");
             }))
+            ->when($request->filled('stock_filter'), fn($q) => $q->where(function ($sq) use ($request) {
+                $filter = $request->stock_filter;
+                if ($filter === 'in_stock') {
+                    $sq->where('current_stock', '>', 0);
+                } elseif ($filter === 'out_of_stock') {
+                    $sq->where('current_stock', '=', 0);
+                }
+            }))
             ->latest();
 
         $parts = $query->paginate($perPage)->withQueryString();
 
         return Inertia::render('ServiceParts/Index', [
-            'parts'        => $parts,
-            'filters'      => $request->only(['search', 'per_page']),
-            'can'          => [
+            'parts' => $parts,
+            'filters' => $request->only(['search', 'stock_filter', 'per_page']),
+            'can' => [
                 'create' => Gate::allows('create', ServicePart::class),
                 'delete' => Gate::allows('delete', ServicePart::class),
             ],
