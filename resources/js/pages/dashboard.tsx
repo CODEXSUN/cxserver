@@ -69,8 +69,10 @@ export default function Dashboard({ stats, myJobs, mySpares }: DashboardProps) {
                         </>
                     ) : (
                         <>
-                            {myJobs && <MyJobsCard my={myJobs} />}
-                            {mySpares && <MySparesCard my={mySpares} />}
+                            <AdminJobsCard stats={stats} />
+                            <AdminSparesCard stats={stats} />
+                            {/*{myJobs && <MyJobsCard my={myJobs} />}*/}
+                            {/*{mySpares && <MySparesCard my={mySpares} />}*/}
                         </>
                     )}
                 </div>
