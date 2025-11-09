@@ -5,49 +5,36 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 
 class Role extends Model
 {
-    use HasFactory;
+    use HasFactory,SoftDeletes;
 
-    /** @var string */
     protected $table = 'roles';
 
-    /** @var array<int, string> */
     protected $fillable = [
         'name',
+        'label',
         'guard_name',
         'description',
     ];
 
-    /** @var array<string, string> */
     protected $casts = [
         'deleted_at' => 'datetime',
     ];
 
-    /**
-     * Users that belong to this role.
-     */
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'role_user');
     }
 
-    /**
-     * Permissions assigned to this role.
-     */
     public function permissions(): BelongsToMany
     {
         return $this->belongsToMany(Permission::class, 'permission_role');
     }
 
-    /**
-     * Assign one or more permissions to the role.
-     *
-     * @param  mixed  ...$permissions  Permission name(s) or model(s)
-     * @return static
-     */
     public function givePermissionTo(...$permissions): static
     {
         $permissions = $this->resolvePermissions($permissions);
@@ -59,12 +46,11 @@ class Role extends Model
         return $this;
     }
 
-    /**
-     * Sync permissions (replace all).
-     *
-     * @param  mixed  ...$permissions
-     * @return static
-     */
+    public function revokePermissionFrom($permissionIds): void
+    {
+        $this->permissions()->detach($permissionIds);
+    }
+
     public function syncPermissions(...$permissions): static
     {
         $ids = collect($permissions)->flatten()->map(function ($perm) {
@@ -75,12 +61,6 @@ class Role extends Model
         return $this;
     }
 
-    /**
-     * Resolve permission names/models to Eloquent models.
-     *
-     * @param  mixed  $permissions
-     * @return Collection<int, Permission>
-     */
     protected function resolvePermissions($permissions): Collection
     {
         return collect($permissions)->flatten()->map(function ($permission) {
@@ -100,9 +80,6 @@ class Role extends Model
         })->filter();
     }
 
-    /**
-     * Check if role has a permission (via pivot).
-     */
     public function hasPermissionTo(string $permission): bool
     {
         return $this->permissions()->where('name', $permission)->exists();

@@ -6,6 +6,8 @@ use App\Models\Blog;
 use App\Models\Contact;
 use App\Models\ContactType;
 use App\Models\JobSpareRequest;
+use App\Models\Permission;
+use App\Models\Role;
 use App\Models\ServiceInward;
 use App\Models\ServicePart;
 use App\Models\User;
@@ -13,6 +15,8 @@ use App\Policies\BlogPolicy;
 use App\Policies\ContactPolicy;
 use App\Policies\ContactTypePolicy;
 use App\Policies\JobSpareRequestPolicy;
+use App\Policies\PermissionPolicy;
+use App\Policies\RolePolicy;
 use App\Policies\ServiceInwardPolicy;
 use App\Policies\ServicePartPolicy;
 use App\Policies\UserPolicy;
@@ -25,6 +29,8 @@ class AuthServiceProvider extends ServiceProvider
 
     protected array $policies = [
         User::class => UserPolicy::class,
+        Role::class       => RolePolicy::class,
+        Permission::class => PermissionPolicy::class,
         Blog::class => BlogPolicy::class,
         Contact::class => ContactPolicy::class,
         ContactType::class => ContactTypePolicy::class,

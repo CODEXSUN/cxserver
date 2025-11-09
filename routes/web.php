@@ -7,6 +7,8 @@ use App\Http\Controllers\ContactTypeController;
 use App\Http\Controllers\JobAssignmentController;
 use App\Http\Controllers\JobCardController;
 use App\Http\Controllers\JobSpareRequestController;
+use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ServiceInwardController;
 use App\Http\Controllers\ServicePartController;
 use App\Http\Controllers\ServicePartImageController;
@@ -225,4 +227,71 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('service_parts/{servicePart}', [ServicePartController::class, 'show'])
         ->name('service_parts.show');
+});
+
+
+// ==================================================================
+// ROLES – Full Featured CRUD + Trash Management
+// ==================================================================
+Route::prefix('roles')->name('roles.')->group(function () {
+    // List + Search + Pagination
+    Route::get('/', [RoleController::class, 'index'])->name('index');
+
+    // Create
+    Route::get('/create', [RoleController::class, 'create'])->name('create');
+    Route::post('/', [RoleController::class, 'store'])->name('store');
+
+    // Show (View Details)
+    Route::get('/{role}', [RoleController::class, 'show'])->name('show');
+
+    // Edit
+    Route::get('/{role}/edit', [RoleController::class, 'edit'])->name('edit');
+    Route::patch('/{role}', [RoleController::class, 'update'])->name('update');
+    // OR: Route::put('/{role}', [RoleController::class, 'update'])->name('update');
+
+    // Soft Delete
+    Route::delete('/{role}', [RoleController::class, 'destroy'])->name('destroy');
+
+    // Trash List
+    Route::get('/trash', [RoleController::class, 'trash'])->name('trash');
+
+    // Restore (uses POST to avoid GET side effects)
+    Route::post('/{id}/restore', [RoleController::class, 'restore'])->name('restore');
+
+    // Force Delete (permanent)
+    Route::delete('/{id}/force-delete', [RoleController::class, 'forceDelete'])
+        ->name('forceDelete');
+});
+
+// ==================================================================
+// PERMISSIONS – Full Featured CRUD + Trash Management
+// ==================================================================
+Route::prefix('permissions')->name('permissions.')->group(function () {
+    // List + Search + Pagination
+    Route::get('/', [PermissionController::class, 'index'])->name('index');
+
+    // Create
+    Route::get('/create', [PermissionController::class, 'create'])->name('create');
+    Route::post('/', [PermissionController::class, 'store'])->name('store');
+
+    // Show (View Details)
+    Route::get('/{permission}', [PermissionController::class, 'show'])->name('show');
+
+    // Edit
+    Route::get('/{permission}/edit', [PermissionController::class, 'edit'])->name('edit');
+    Route::patch('/{permission}', [PermissionController::class, 'update'])->name('update');
+    // OR: Route::put('/{permission}', [PermissionController::class, 'update'])->name('update');
+
+    // Soft Delete
+    Route::delete('/{permission}', [PermissionController::class, 'destroy'])->name('destroy');
+
+    // Trash List
+    Route::get('/trash', [PermissionController::class, 'trash'])->name('trash');
+
+    // Restore
+    Route::post('/{id}/restore', [PermissionController::class, 'restore'])->name('restore');
+
+    // Force Delete
+    Route::delete('/{id}/force-delete', [PermissionController::class, 'forceDelete'])
+        ->name('forceDelete');
 });

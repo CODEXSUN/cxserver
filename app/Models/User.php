@@ -15,23 +15,12 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable, TwoFactorAuthenticatable,SoftDeletes;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
         'email',
         'password',
         'active',
     ];
-
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
         'two_factor_secret',
@@ -39,11 +28,6 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -54,19 +38,11 @@ class User extends Authenticatable
         ];
     }
 
-    /**
-     * Get the roles that belong to the user.
-     */
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'role_user');
     }
 
-    /**
-     * Get all permissions the user has via roles.
-     *
-     * @return \Illuminate\Support\Collection<int, string>
-     */
     public function permissions(): Collection
     {
         return $this->roles()
@@ -78,28 +54,24 @@ class User extends Authenticatable
             ->unique();
     }
 
-    /**
-     * Check if the user has a specific permission.
-     */
     public function hasPermissionTo(string $permission): bool
     {
         return $this->permissions()->contains($permission);
     }
 
-    /**
-     * Check if the user has a specific role.
-     */
-    public function hasRole(string $role): bool
+    public function hasRole($role): bool
     {
-        return $this->roles()->where('name', $role)->exists();
+        if (is_array($role)) {
+            return $this->roles->pluck('name')->intersect($role)->isNotEmpty();
+        }
+        return $this->roles->pluck('name')->contains($role);
     }
 
-    /**
-     * Assign one or more roles to the user.
-     *
-     * @param  mixed  ...$roles  Role name(s) or Role model(s)
-     * @return $this
-     */
+    public function hasPermission($permission): bool
+    {
+        return $this->permissions()->contains($permission);
+    }
+
     public function assignRole(...$roles): static
     {
         $roles = collect($roles)->flatten()->map(function ($role) {
@@ -118,9 +90,18 @@ class User extends Authenticatable
         return $this;
     }
 
-    /**
-     * Scope: active users only.
-     */
+    public function removeRole(...$roleNames): void
+    {
+        $roles = Role::whereIn('name', $roleNames)->pluck('id');
+        $this->roles()->detach($roles);
+    }
+
+    public function syncRoles($roleNames): void
+    {
+        $roles = Role::whereIn('name', $roleNames)->pluck('id');
+        $this->roles()->sync($roles);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('active', true);
