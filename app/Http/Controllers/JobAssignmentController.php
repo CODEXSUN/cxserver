@@ -29,15 +29,21 @@ class JobAssignmentController extends Controller
                     ->orWhereHas('jobCard.serviceInward', fn($i) => $i->where('rma', 'like', "%{$search}%"))
                     ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$search}%"));
             }))
-            ->when($request->status_filter && $request->status_filter !== 'all', fn($q) => $q->where('service_status_id', $request->status_filter))
+            ->when($request->status_filter && $request->status_filter !== 'all', fn($q) =>
+            $q->where('service_status_id', $request->status_filter)
+            )
+            ->when($request->technician_filter && $request->technician_filter !== 'all', fn($q) =>
+            $q->where('user_id', $request->technician_filter)
+            )
             ->latest('assigned_at');
 
         $assignments = $query->paginate($perPage)->withQueryString();
 
         return Inertia::render('JobAssignments/Index', [
             'assignments' => $assignments,
-            'filters' => $request->only(['search', 'status_filter', 'per_page']),
+            'filters' => $request->only(['search', 'status_filter', 'technician_filter', 'per_page']),
             'statuses' => ServiceStatus::orderBy('name')->get(['id', 'name']),
+            'technicians' => User::orderBy('name')->get(['id', 'name']), // ← ADD THIS
             'can' => [
                 'create' => Gate::allows('create', JobAssignment::class),
                 'delete' => Gate::allows('delete', JobAssignment::class),

@@ -89,11 +89,8 @@ export default function Index() {
         type_filter: serverFilters.type_filter || 'all',
         date_from: serverFilters.date_from ? parseISO(serverFilters.date_from) : undefined,
         date_to: serverFilters.date_to ? parseISO(serverFilters.date_to) : undefined,
+        per_page: serverFilters.per_page || '50',
     });
-
-    const [localPerPage, setLocalPerPage] = useState(
-        serverFilters.per_page ? parseInt(serverFilters.per_page) : 100
-    );
 
     const [isNavigating, setIsNavigating] = useState(false);
 
@@ -105,31 +102,30 @@ export default function Index() {
             type_filter: serverFilters.type_filter || 'all',
             date_from: serverFilters.date_from ? parseISO(serverFilters.date_from) : undefined,
             date_to: serverFilters.date_to ? parseISO(serverFilters.date_to) : undefined,
+            per_page: serverFilters.per_page || '50',
         });
-        setLocalPerPage(serverFilters.per_page ? parseInt(serverFilters.per_page) : 100);
     }, [serverFilters]);
 
     // Build payload
     const buildPayload = useCallback(
-        (extra: Record<string, any> = {}) => ({
+        () => ({
             search: localFilters.search || undefined,
             status_filter: localFilters.status_filter === 'all' ? undefined : localFilters.status_filter,
             type_filter: localFilters.type_filter === 'all' ? undefined : localFilters.type_filter,
             date_from: localFilters.date_from ? format(localFilters.date_from, 'yyyy-MM-dd') : undefined,
             date_to: localFilters.date_to ? format(localFilters.date_to, 'yyyy-MM-dd') : undefined,
-            per_page: localPerPage,
-            ...extra,
+            per_page: localFilters.per_page,
         }),
-        [localFilters, localPerPage]
+        [localFilters]
     );
 
     // Navigate
     const navigate = useCallback(
-        (extra: Record<string, any> = {}) => {
+        (extra = {}) => {
             setIsNavigating(true);
             router.get(
                 route('job_cards.index'),
-                { ...buildPayload(extra), page: extra.page ?? 1 },
+                { ...buildPayload(), ...extra },
                 {
                     preserveState: true,
                     replace: true,
@@ -140,37 +136,15 @@ export default function Index() {
         [route, buildPayload]
     );
 
-    // Handlers
-    const handleSearchChange = (value: string) => {
-        setLocalFilters(prev => ({ ...prev, search: value }));
+    // Reset filters
+    const handleReset = () => {
+        router.get(route('job_cards.index'), {}, { preserveState: true, replace: true });
     };
 
-    const handleSearch = () => navigate({ search: localFilters.search });
-
-    const handleStatusFilterChange = (value: string) => {
-        setLocalFilters(prev => ({ ...prev, status_filter: value }));
-        navigate({ status_filter: value });
-    };
-
-    const handleTypeFilterChange = (value: 'all' | 'laptop' | 'desktop' | 'printer') => {
-        setLocalFilters(prev => ({ ...prev, type_filter: value }));
-        navigate({ type_filter: value });
-    };
-
-    const handleDateRangeChange = (range: { from?: Date; to?: Date } | undefined) => {
-        const newRange = range || { from: undefined, to: undefined };
-        setLocalFilters(prev => ({
-            ...prev,
-            date_from: newRange.from,
-            date_to: newRange.to,
-        }));
-        navigate({
-            date_from: newRange.from ? format(newRange.from, 'yyyy-MM-dd') : undefined,
-            date_to: newRange.to ? format(newRange.to, 'yyyy-MM-dd') : undefined,
-        });
-    };
-
-    const clearFilter = (key: keyof typeof localFilters) => {
+    // Clear single filter
+    const clearFilter = useCallback((
+        key: 'search' | 'status_filter' | 'type_filter' | 'date_from' | 'date_to' | 'per_page'
+    ) => {
         const updates: Partial<typeof localFilters> = {};
         if (key === 'search') updates.search = '';
         if (key === 'status_filter') updates.status_filter = 'all';
@@ -179,31 +153,13 @@ export default function Index() {
             updates.date_from = undefined;
             updates.date_to = undefined;
         }
+        if (key === 'per_page') updates.per_page = '50';
 
         setLocalFilters(prev => ({ ...prev, ...updates }));
         navigate(updates);
-    };
-
-    const handleResetFilters = () => {
-        const empty = {
-            search: '',
-            status_filter: 'all',
-            type_filter: 'all',
-            date_from: undefined,
-            date_to: undefined,
-        };
-        setLocalFilters(empty);
-        setLocalPerPage(100);
-        router.get(route('job_cards.index'), {}, { preserveState: true, replace: true });
-    };
-
-    const handlePageChange = useCallback((page: number) => navigate({ page }), [navigate]);
-    const handlePerPageChange = useCallback((perPage: number) => {
-        setLocalPerPage(perPage);
-        navigate({ per_page: perPage, page: 1 });
     }, [navigate]);
 
-    // Active badges
+    // Active filter badges
     const activeFilterBadges = useMemo(() => {
         const badges: JSX.Element[] = [];
 
@@ -253,28 +209,40 @@ export default function Index() {
             );
         }
 
+        // NEW: Per Page Badge
+        if (localFilters.per_page !== '50') {
+            badges.push(
+                <Badge key="per_page" variant="secondary" className="text-xs flex items-center gap-1">
+                    Per Page: {localFilters.per_page}
+                    <button onClick={() => clearFilter('per_page')} className="ml-1 hover:bg-muted rounded-sm p-0.5">
+                        <X className="h-3 w-3" />
+                    </button>
+                </Badge>
+            );
+        }
+
         if (badges.length === 0) {
-            badges.push(<span key="no-filter" className="text-xs text-muted-foreground italic">No active filters</span>);
+            badges.push(
+                <span key="none" className="text-xs text-muted-foreground italic">
+                    No active filters
+                </span>
+            );
         }
 
         return badges;
-    }, [localFilters, statuses]);
+    }, [localFilters, statuses, clearFilter]);
 
-    const formatDateRange = () => {
-        const { date_from, date_to } = localFilters;
-        if (!date_from && !date_to) return 'Pick a date range';
-        if (date_from && date_to)
-            return `${format(date_from, 'dd MMM yyyy')} - ${format(date_to, 'dd MMM yyyy')}`;
-        if (date_from) return `${format(date_from, 'dd MMM yyyy')} - ...`;
-        if (date_to) return `... - ${format(date_to, 'dd MMM yyyy')}`;
-        return 'Pick a date range';
+    // Handle per-page change from DataTable
+    const handlePerPageChange = (perPage: number) => {
+        setLocalFilters(prev => ({ ...prev, per_page: String(perPage) }));
+        navigate({ per_page: perPage, page: 1 });
     };
 
     return (
         <Layout>
             <Head title="Job Cards" />
             <div className="py-12">
-                <div className="mx-auto sm:px-6 lg:px-8 space-y-6">
+                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
                     {/* Header */}
                     <div className="flex justify-between items-center">
                         <div>
@@ -312,19 +280,22 @@ export default function Index() {
 
                     {/* FILTER BAR */}
                     <div className="flex flex-wrap gap-3 items-center">
-                        <div className="flex-1 min-w-[200px] max-w-md relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                        <div className="flex-1 min-w-[200px] relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
                             <Input
                                 placeholder="Search by Job No, RMA, Customer..."
                                 className="pl-10 h-9"
                                 value={localFilters.search}
-                                onChange={(e) => handleSearchChange(e.target.value)}
-                                onKeyUp={(e) => e.key === 'Enter' && handleSearch()}
+                                onChange={(e) => setLocalFilters(prev => ({ ...prev, search: e.target.value }))}
+                                onKeyUp={(e) => e.key === 'Enter' && navigate()}
                                 disabled={isNavigating}
                             />
                         </div>
 
-                        <Select value={localFilters.status_filter} onValueChange={handleStatusFilterChange} disabled={isNavigating}>
+                        <Select value={localFilters.status_filter} onValueChange={(v) => {
+                            setLocalFilters(prev => ({ ...prev, status_filter: v }));
+                            navigate({ status_filter: v });
+                        }} disabled={isNavigating}>
                             <SelectTrigger className="w-[160px] h-9">
                                 <SelectValue placeholder="All Status" />
                             </SelectTrigger>
@@ -338,7 +309,10 @@ export default function Index() {
                             </SelectContent>
                         </Select>
 
-                        <Select value={localFilters.type_filter} onValueChange={handleTypeFilterChange} disabled={isNavigating}>
+                        <Select value={localFilters.type_filter} onValueChange={(v: 'all' | 'laptop' | 'desktop' | 'printer') => {
+                            setLocalFilters(prev => ({ ...prev, type_filter: v }));
+                            navigate({ type_filter: v });
+                        }} disabled={isNavigating}>
                             <SelectTrigger className="w-[130px] h-9">
                                 <SelectValue placeholder="All Types" />
                             </SelectTrigger>
@@ -354,14 +328,29 @@ export default function Index() {
                             <PopoverTrigger asChild>
                                 <Button variant="outline" className="h-9 px-3 text-left font-normal" disabled={isNavigating}>
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    <span className="truncate max-w-[140px]">{formatDateRange()}</span>
+                                    <span className="truncate max-w-[140px]">
+                                        {localFilters.date_from || localFilters.date_to
+                                            ? `${localFilters.date_from ? format(localFilters.date_from, 'dd MMM') : '...'} - ${localFilters.date_to ? format(localFilters.date_to, 'dd MMM yyyy') : '...'}`
+                                            : 'Pick a date range'}
+                                    </span>
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0" align="start">
                                 <Calendar
                                     mode="range"
                                     selected={{ from: localFilters.date_from, to: localFilters.date_to }}
-                                    onSelect={handleDateRangeChange}
+                                    onSelect={(range: { from?: Date; to?: Date } | undefined) => {
+                                        const newRange = range || { from: undefined, to: undefined };
+                                        setLocalFilters(prev => ({
+                                            ...prev,
+                                            date_from: newRange.from,
+                                            date_to: newRange.to,
+                                        }));
+                                        navigate({
+                                            date_from: newRange.from ? format(newRange.from, 'yyyy-MM-dd') : undefined,
+                                            date_to: newRange.to ? format(newRange.to, 'yyyy-MM-dd') : undefined,
+                                        });
+                                    }}
                                     numberOfMonths={2}
                                     disabled={isNavigating}
                                 />
@@ -369,17 +358,17 @@ export default function Index() {
                         </Popover>
 
                         <div className="flex gap-1">
-                            <Button size="sm" className="h-9" onClick={handleSearch} disabled={isNavigating}>
+                            <Button size="sm" className="h-9" onClick={() => navigate()} disabled={isNavigating}>
                                 <Search className="h-4 w-4" />
                             </Button>
-                            <Button variant="outline" size="sm" className="h-9" onClick={handleResetFilters} disabled={isNavigating}>
+                            <Button variant="outline" size="sm" className="h-9" onClick={handleReset} disabled={isNavigating}>
                                 <RotateCcw className="h-4 w-4" />
                             </Button>
                         </div>
                     </div>
 
                     {/* ACTIVE FILTERS */}
-                    <div className="flex flex-wrap gap-2 text-sm mt-2 p-3 bg-muted/30 rounded-md border">
+                    <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-md border">
                         <span className="font-medium text-foreground">Active Filters:</span>
                         <div className="flex flex-wrap gap-2">{activeFilterBadges}</div>
                     </div>
@@ -388,9 +377,9 @@ export default function Index() {
                     <DataTable
                         data={jobs.data}
                         pagination={jobs}
-                        perPage={localPerPage}
+                        perPage={parseInt(localFilters.per_page)}
                         onPerPageChange={handlePerPageChange}
-                        onPageChange={handlePageChange}
+                        onPageChange={(page) => navigate({ page })}
                         emptyMessage="No job cards found."
                         isLoading={isNavigating}
                     >
@@ -441,8 +430,8 @@ export default function Index() {
                                     </TableCell>
                                     <TableCell className="text-center">
                                         <Badge
-                                            variant={job.spares_applied && job.spares_applied !== 'No' ? 'default' : 'secondary'}
-                                            className={job.spares_applied && job.spares_applied !== 'No' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}
+                                            variant={job.spares_applied && job.spares_applied !== 'No' ? "default" : "secondary"}
+                                            className={job.spares_applied && job.spares_applied !== 'No' ? "bg-green-600 text-white" : "bg-red-600 text-white"}
                                         >
                                             {job.spares_applied || 'No'}
                                         </Badge>
@@ -451,10 +440,10 @@ export default function Index() {
                                         <Badge
                                             variant={
                                                 job.final_status === 'Completed' || job.final_status === 'Delivered'
-                                                    ? 'default'
+                                                    ? "default"
                                                     : job.final_status === 'Cancelled'
-                                                        ? 'destructive'
-                                                        : 'secondary'
+                                                        ? "destructive"
+                                                        : "secondary"
                                             }
                                         >
                                             {job.final_status || 'Pending'}

@@ -2,7 +2,7 @@
 import Layout from '@/layouts/app-layout';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import { useRoute } from 'ziggy-js';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -14,7 +14,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Plus, Trash2, Search, RotateCcw } from 'lucide-react';
+import { Plus, Trash2, Search, RotateCcw, X } from 'lucide-react';
 import DataTable from '@/components/table/DataTable';
 import TableActions from '@/components/table/TableActions';
 import {
@@ -109,7 +109,7 @@ export default function Index() {
             setIsNavigating(true);
             router.get(
                 route('job_assignments.index'),
-                { ...buildPayload(), ...extra, page: 1 },
+                { ...buildPayload(), ...extra },
                 {
                     preserveState: true,
                     replace: true,
@@ -123,6 +123,88 @@ export default function Index() {
     // Reset all filters
     const handleReset = () => {
         router.get(route('job_assignments.index'), {}, { preserveState: true, replace: true });
+    };
+
+    // Clear single filter
+    const clearFilter = useCallback((
+        key: 'search' | 'status_filter' | 'technician_filter' | 'per_page'
+    ) => {
+        const updates: Partial<typeof localFilters> = {};
+        if (key === 'search') updates.search = '';
+        if (key === 'status_filter') updates.status_filter = 'all';
+        if (key === 'technician_filter') updates.technician_filter = 'all';
+        if (key === 'per_page') updates.per_page = '50';
+
+        setLocalFilters(prev => ({ ...prev, ...updates }));
+        navigate(updates);
+    }, [navigate]);
+
+    // Active filter badges
+    const activeFilterBadges = useMemo(() => {
+        const badges: JSX.Element[] = [];
+
+        if (localFilters.search) {
+            badges.push(
+                <Badge key="search" variant="secondary" className="text-xs flex items-center gap-1">
+                    Search: "{localFilters.search}"
+                    <button onClick={() => clearFilter('search')} className="ml-1 hover:bg-muted rounded-sm p-0.5">
+                        <X className="h-3 w-3" />
+                    </button>
+                </Badge>
+            );
+        }
+
+        if (localFilters.status_filter !== 'all') {
+            const status = statuses.find(s => s.id === parseInt(localFilters.status_filter));
+            badges.push(
+                <Badge key="status" variant="secondary" className="text-xs flex items-center gap-1">
+                    Status: {status?.name || 'Unknown'}
+                    <button onClick={() => clearFilter('status_filter')} className="ml-1 hover:bg-muted rounded-sm p-0.5">
+                        <X className="h-3 w-3" />
+                    </button>
+                </Badge>
+            );
+        }
+
+        if (localFilters.technician_filter !== 'all') {
+            const tech = technicians.find(t => t.id === parseInt(localFilters.technician_filter));
+            badges.push(
+                <Badge key="tech" variant="secondary" className="text-xs flex items-center gap-1">
+                    Technician: {tech?.name || 'Unknown'}
+                    <button onClick={() => clearFilter('technician_filter')} className="ml-1 hover:bg-muted rounded-sm p-0.5">
+                        <X className="h-3 w-3" />
+                    </button>
+                </Badge>
+            );
+        }
+
+        // Per Page Badge (only if not default)
+        if (localFilters.per_page !== '50') {
+            badges.push(
+                <Badge key="per_page" variant="secondary" className="text-xs flex items-center gap-1">
+                    Per Page: {localFilters.per_page}
+                    <button onClick={() => clearFilter('per_page')} className="ml-1 hover:bg-muted rounded-sm p-0.5">
+                        <X className="h-3 w-3" />
+                    </button>
+                </Badge>
+            );
+        }
+
+        if (badges.length === 0) {
+            badges.push(
+                <span key="none" className="text-xs text-muted-foreground italic">
+                    No active filters
+                </span>
+            );
+        }
+
+        return badges;
+    }, [localFilters, statuses, technicians, clearFilter]);
+
+    // Handle per-page change from DataTable
+    const handlePerPageChange = (perPage: number) => {
+        setLocalFilters(prev => ({ ...prev, per_page: String(perPage) }));
+        navigate({ per_page: perPage, page: 1 });
     };
 
     return (
@@ -162,7 +244,7 @@ export default function Index() {
 
                     <Separator />
 
-                    {/* FILTER BAR */}
+                    {/* FILTER BAR – NO PER-PAGE SELECT */}
                     <div className="flex flex-wrap gap-3 items-center">
                         {/* Search */}
                         <div className="flex-1 min-w-[200px] relative">
@@ -245,12 +327,18 @@ export default function Index() {
                         </div>
                     </div>
 
+                    {/* ACTIVE FILTERS */}
+                    <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-md border">
+                        <span className="font-medium text-foreground">Active Filters:</span>
+                        <div className="flex flex-wrap gap-2">{activeFilterBadges}</div>
+                    </div>
+
                     {/* DATA TABLE */}
                     <DataTable
                         data={assignments.data}
                         pagination={assignments}
                         perPage={parseInt(localFilters.per_page)}
-                        onPerPageChange={(p) => navigate({ per_page: p, page: 1 })}
+                        onPerPageChange={handlePerPageChange}
                         onPageChange={(page) => navigate({ page })}
                         emptyMessage="No assignments found."
                         isLoading={isNavigating}
