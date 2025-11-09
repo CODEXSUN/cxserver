@@ -6,11 +6,13 @@ use App\Models\Blog;
 use App\Models\Contact;
 use App\Models\ContactType;
 use App\Models\ServiceInward;
+use App\Models\ServicePart;
 use App\Models\User;
 use App\Policies\BlogPolicy;
 use App\Policies\ContactPolicy;
 use App\Policies\ContactTypePolicy;
 use App\Policies\ServiceInwardPolicy;
+use App\Policies\ServicePartPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Gate;
@@ -25,6 +27,7 @@ class AuthServiceProvider extends ServiceProvider
         Contact::class => ContactPolicy::class,
         ContactType::class => ContactTypePolicy::class,
         ServiceInward::class => ServiceInwardPolicy::class,
+        ServicePart::class => ServicePartPolicy::class,
     ];
 
     public function register(): void

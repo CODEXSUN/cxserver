@@ -17,10 +17,12 @@ return new class extends Migration
             $table->string('name');
             $table->string('brand')->nullable();
             $table->string('model')->nullable();
-            $table->decimal('unit_price', 10, 2);
+            $table->decimal('unit_price', 13, 2);
             $table->integer('current_stock')->default(0);
-            $table->integer('min_stock')->default(5);
+            $table->string('remarks')->nullable();
+            $table->string('barcode')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index('part_code');
         });

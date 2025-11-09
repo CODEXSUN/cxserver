@@ -7,6 +7,7 @@ use App\Http\Controllers\ContactTypeController;
 use App\Http\Controllers\JobAssignmentController;
 use App\Http\Controllers\JobCardController;
 use App\Http\Controllers\ServiceInwardController;
+use App\Http\Controllers\ServicePartController;
 use App\Http\Controllers\ServiceStatusController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -171,4 +172,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('job_assignments/trash', [JobAssignmentController::class, 'trash'])
         ->name('job_assignments.trash');
 
+});
+
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::resource('service_parts', ServicePartController::class)
+        ->except(['show']);
+
+    Route::post('service_parts/{id}/restore', [ServicePartController::class, 'restore'])
+        ->name('service_parts.restore');
+
+    Route::delete('service_parts/{id}/forceDelete', [ServicePartController::class, 'forceDelete'])
+        ->name('service_parts.forceDelete');
+
+    Route::get('service_parts/trash', [ServicePartController::class, 'trash'])
+        ->name('service_parts.trash');
 });

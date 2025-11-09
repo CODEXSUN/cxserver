@@ -13,7 +13,7 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen,MonitorCog, Folder, LayoutGrid,Laptop,Contact,StickyNote,NotebookPen,UserRoundSearch } from 'lucide-react';
+import { BookOpen,MonitorCog, Folder, LayoutGrid,Laptop,Bolt,Contact,StickyNote,NotebookPen,UserRoundSearch } from 'lucide-react';
 
 
 import AppLogo from './app-logo';
@@ -24,6 +24,7 @@ import { index as service_inward } from '@/routes/service_inwards';
 import { index as job_cards } from '@/routes/job_cards';
 // import { index as users } from '@/routes/users';
 import { index as job_assignment } from '@/routes/job_assignments';
+import {index as service_parts } from '@/routes/service_parts';
 
 const mainNavItems: NavItem[] = [
     {
@@ -61,7 +62,11 @@ const mainNavItems: NavItem[] = [
         href: job_assignment(),
         icon: NotebookPen,
     },
-
+    {
+        title: 'Service Parts',
+        href: service_parts(),
+        icon: Bolt,
+    },
     //
     // {
     //     title: 'User',
