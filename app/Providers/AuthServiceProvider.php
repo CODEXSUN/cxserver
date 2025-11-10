@@ -6,6 +6,7 @@ use App\Models\Blog;
 use App\Models\Contact;
 use App\Models\ContactType;
 use App\Models\JobSpareRequest;
+use App\Models\OutServiceCenter;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\ServiceInward;
@@ -15,6 +16,7 @@ use App\Policies\BlogPolicy;
 use App\Policies\ContactPolicy;
 use App\Policies\ContactTypePolicy;
 use App\Policies\JobSpareRequestPolicy;
+use App\Policies\OutServiceCenterPolicy;
 use App\Policies\PermissionPolicy;
 use App\Policies\RolePolicy;
 use App\Policies\ServiceInwardPolicy;
@@ -37,6 +39,7 @@ class AuthServiceProvider extends ServiceProvider
         ServiceInward::class => ServiceInwardPolicy::class,
         ServicePart::class => ServicePartPolicy::class,
         JobSpareRequest::class => JobSpareRequestPolicy::class,
+        OutServiceCenter::class => OutServiceCenterPolicy::class,
     ];
 
     public function register(): void

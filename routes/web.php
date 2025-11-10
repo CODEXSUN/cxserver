@@ -6,7 +6,9 @@ use App\Http\Controllers\ContactSearchController;
 use App\Http\Controllers\ContactTypeController;
 use App\Http\Controllers\JobAssignmentController;
 use App\Http\Controllers\JobCardController;
+use App\Http\Controllers\JobCardSearchController;
 use App\Http\Controllers\JobSpareRequestController;
+use App\Http\Controllers\OutServiceCenterController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ServiceInwardController;
@@ -14,6 +16,7 @@ use App\Http\Controllers\ServicePartController;
 use App\Http\Controllers\ServicePartImageController;
 use App\Http\Controllers\ServiceStatusController;
 use App\Http\Controllers\SystemManagerController;
+use App\Http\Controllers\UserSearchController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -117,6 +120,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('job_cards', JobCardController::class)->names('job_cards');
 
+    Route::get('/jobcards/search', JobCardSearchController::class)->name('jobcards.search');
+
     Route::get('job_cards/trash', [JobCardController::class, 'trash'])
         ->name('job_cards.trash');
 
@@ -161,8 +166,8 @@ Route::middleware(['auth', 'verified'])
             ->name('restore');
         Route::delete('{id}/force', [App\Http\Controllers\UserController::class, 'forceDelete'])
             ->name('forceDelete');
-    });
 
+    });
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('job_assignments', JobAssignmentController::class)
@@ -308,4 +313,21 @@ Route::middleware(['web', 'auth'])->group(function () {
 
     Route::post('/system-manager/command', [SystemManagerController::class, 'run'])
         ->name('system.manager.command');
+});
+
+
+Route::middleware(['auth', 'verified'])->group(function () {
+
+    // ── Out Service Center CRUD ─────────────────────────────
+    Route::resource('out_service_centers', OutServiceCenterController::class)->except(['show']);
+    Route::get('out_service_centers/{outServiceCenter}', [OutServiceCenterController::class, 'show'])
+        ->name('out_service_centers.show');
+
+    // Trash & restore
+    Route::get('out_service_centers/trash', [OutServiceCenterController::class, 'trash'])
+        ->name('out_service_centers.trash');
+    Route::post('out_service_centers/{id}/restore', [OutServiceCenterController::class, 'restore'])
+        ->name('out_service_centers.restore');
+    Route::delete('out_service_centers/{id}/forceDelete', [OutServiceCenterController::class, 'forceDelete'])
+        ->name('out_service_centers.forceDelete');
 });

@@ -43,6 +43,11 @@ class ServiceInward extends Model
         return $this->belongsTo(User::class, 'received_by');
     }
 
+    public function jobCard()
+    {
+        return $this->hasOne(JobCard::class);
+    }
+
     protected static function booted()
     {
         static::saving(function ($model) {
