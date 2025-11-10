@@ -6,20 +6,23 @@ import { useState, useEffect, useCallback, useMemo, JSX } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, RotateCcw, X } from 'lucide-react';
+import { Plus, Search, RotateCcw, X, Trash2 } from 'lucide-react';
 import DataTable from '@/components/table/DataTable';
 import TableActions from '@/components/table/TableActions';
 import { TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import type { BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
+import { index as job_spare_requests } from '@/routes/job_spare_requests';
 
 interface Center {
     id: number;
     service_name: string;
-    job_card: { rma_number: string };
+    job_display: string;        // ← "#JC123" + "RMA: RMA-456"
     sent_at: string;
     cost: number | null;
+    technician_name: string;    // ← from user.name
+    material_name: string;
     deleted_at: string | null;
-    delivered_by: number | null;
-    delivered_by_name?: string; // ← From accessor or transform
 }
 
 interface Props {
@@ -34,6 +37,11 @@ interface Props {
     can: { create: boolean; delete: boolean };
     trashedCount: number;
 }
+
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Dashboard', href: dashboard().url },
+    { title: 'Spare Requests', href: job_spare_requests().url },
+];
 
 export default function Index() {
     const { centers, filters, can, trashedCount } = usePage().props as unknown as Props;
@@ -76,6 +84,11 @@ export default function Index() {
         navigate(updates);
     };
 
+    const handlePerPage = (value: string) => {
+        setLocalFilters(prev => ({ ...prev, per_page: value }));
+        navigate({ per_page: value, page: 1 });
+    };
+
     const activeBadges = useMemo(() => {
         const badges: JSX.Element[] = [];
         if (localFilters.search) badges.push(
@@ -92,45 +105,68 @@ export default function Index() {
         );
         if (!badges.length) badges.push(<span key="none" className="text-xs italic text-muted-foreground">No active filters</span>);
         return badges;
-    }, [localFilters, clearFilter]);
-
-    const handlePerPage = (v: string) => {
-        setLocalFilters(p => ({ ...p, per_page: v }));
-        navigate({ per_page: v });
-    };
+    }, [localFilters]);
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Out Service Centers" />
-            <div className="py-12">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-                    <div className="flex items-center justify-between">
-                        <h1 className="text-3xl font-bold tracking-tight">Out Service Centers</h1>
-                        {can.create && (
-                            <Button asChild>
-                                <Link href={route('out_service_centers.create')}>
-                                    <Plus className="mr-2 h-4 w-4" />Add Center
-                                </Link>
-                            </Button>
-                        )}
+
+            <div className="py-6">
+                <div className="mx-auto sm:px-6 lg:px-8 space-y-6">
+
+
+                    {/* Header */}
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h1 className="text-2xl font-bold tracking-tight text-black/50">
+                                Out Service Center
+                            </h1>
+                            <p className="mt-1 text-sm text-black/30">
+                                Manage material send out
+                            </p>
+                        </div>
+                        <div className="flex gap-3">
+                            {can.create && (
+                                <Button asChild>
+                                    <Link href={route('out_service_centers.create')}>
+                                        <Plus className="mr-2 h-4 w-4" />Add New
+                                    </Link>
+                                </Button>
+                            )}
+                            {trashedCount > 0 && (
+                                <Button variant="outline" asChild>
+                                    <Link href={route('out_service_centers.trash')}>
+                                        <Trash2 className="mr-2 h-4 w-4" />Trash ({trashedCount})
+                                    </Link>
+                                </Button>
+                            )}
+                        </div>
                     </div>
 
-                    {/* FILTER BAR */}
-                    <div className="flex flex-wrap items-center gap-3">
-                        <Input
-                            placeholder="Search service name / RMA…"
-                            value={localFilters.search}
-                            onChange={e => setLocalFilters(p => ({ ...p, search: e.target.value }))}
-                            onKeyUp={e => e.key === 'Enter' && navigate()}
-                            className="w-64"
-                            disabled={isNavigating}
-                        />
-                        <Button size="sm" onClick={() => navigate()} disabled={isNavigating}><Search className="h-4 w-4" /></Button>
-                        <Button variant="outline" size="sm" onClick={handleReset} disabled={isNavigating}><RotateCcw className="h-4 w-4" /></Button>
+                    {/* SEARCH & FILTERS */}
+                    <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                        <div className="relative flex-1 max-w-sm">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search by service, job #, or RMA..."
+                                value={localFilters.search}
+                                onChange={e => {
+                                    const val = e.target.value;
+                                    setLocalFilters(prev => ({ ...prev, search: val }));
+                                    if (val === '' || val.length >= 2) {
+                                        navigate({ search: val || undefined, page: 1 });
+                                    }
+                                }}
+                                className="pl-10"
+                            />
+                        </div>
+                        <Button variant="outline" size="sm" onClick={handleReset} disabled={isNavigating}>
+                            <RotateCcw className="h-4 w-4" />
+                        </Button>
                     </div>
 
                     {/* ACTIVE FILTERS */}
-                    <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-md border">
+                    <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-md border mb-6">
                         <span className="font-medium">Active Filters:</span>
                         <div className="flex flex-wrap gap-2">{activeBadges}</div>
                     </div>
@@ -148,9 +184,10 @@ export default function Index() {
                         <TableHeader>
                             <TableRow className="bg-muted font-semibold text-foreground">
                                 <TableHead>Service Name</TableHead>
-                                <TableHead>RMA #</TableHead>
+                                <TableHead>Job Card</TableHead>
                                 <TableHead>Sent At</TableHead>
-                                <TableHead>Delivered By</TableHead> {/* ← NEW */}
+                                <TableHead>Technician</TableHead>
+                                <TableHead>Material</TableHead>
                                 <TableHead className="text-right">Cost</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
@@ -158,17 +195,39 @@ export default function Index() {
                         <TableBody>
                             {centers.data.map(c => (
                                 <TableRow key={c.id} className={c.deleted_at ? 'opacity-60' : ''}>
+                                    {/* SERVICE NAME */}
                                     <TableCell className="font-medium">
                                         <Link href={route('out_service_centers.show', c.id)} className="text-primary hover:underline">
                                             {c.service_name}
                                         </Link>
                                     </TableCell>
-                                    <TableCell>{c.job_card.rma_number}</TableCell>
+
+                                    {/* JOB CARD: Job # on top, RMA below muted */}
+                                    <TableCell>
+                                        <Link href={route('out_service_centers.show', c.id)} className="block hover:underline">
+                                            <div className="font-semibold text-foreground">
+                                                {c.job_display.split(' (RMA:')[0]}
+                                            </div>
+                                            {c.job_display.includes('RMA:') && (
+                                                <div className="text-sm text-muted-foreground">
+                                                    RMA: {c.job_display.split('RMA: ')[1].replace(')', '')}
+                                                </div>
+                                            )}
+                                        </Link>
+                                    </TableCell>
+
+                                    {/* SENT AT */}
                                     <TableCell>{new Date(c.sent_at).toLocaleDateString()}</TableCell>
-                                    <TableCell>{c.delivered_by_name ?? '—'}</TableCell> {/* ← NEW */}
+
+                                    {/* TECHNICIAN */}
+                                    <TableCell>{c.technician_name}</TableCell>
+                                    <TableCell>{c.material_name}</TableCell>
+                                    {/* COST */}
                                     <TableCell className="text-right">
                                         {c.cost ? `₹${Number(c.cost).toFixed(2)}` : '—'}
                                     </TableCell>
+
+                                    {/* ACTIONS */}
                                     <TableCell className="text-right">
                                         <TableActions
                                             id={c.id}

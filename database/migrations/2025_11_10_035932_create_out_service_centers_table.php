@@ -21,6 +21,7 @@ return new class extends Migration
             $table->dateTime('received_back_at')->nullable();
             $table->foreignId('service_status_id')->references('id')->on('service_statuses');
             $table->foreignId('user_id')->references('id')->on('users');
+            $table->text('material_name')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
             $table->softDeletes();

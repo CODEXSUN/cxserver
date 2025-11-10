@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/OutServiceCenterController.php
 
 namespace App\Http\Controllers;
 
@@ -21,15 +22,36 @@ class OutServiceCenterController extends Controller
         $perPage = in_array($perPage, [10, 25, 50, 100, 200]) ? $perPage : 50;
 
         $query = OutServiceCenter::query()
-            ->with(['jobCard', 'status', 'user']) // ← uses `user` relationship
-            ->when($request->filled('search'), fn($q) => $q->where(function ($sq) use ($request) {
+            ->with([
+                'jobCard:id,job_no,service_inward_id',
+                'jobCard.serviceInward:id,rma,material_type', // ← load material_type
+                'status:id,name',
+                'user:id,name'
+            ])
+            ->when($request->filled('search'), function ($q) use ($request) {
                 $search = $request->input('search');
-                $sq->where('service_name', 'like', "%{$search}%")
-                    ->orWhereHas('jobCard', fn($j) => $j->where('rma_number', 'like', "%{$search}%"));
-            }))
+                $q->where('service_name', 'like', "%{$search}%")
+                    ->orWhere('material_name', 'like', "%{$search}%")
+                    ->orWhereHas('jobCard.serviceInward', fn($j) => $j->where('rma', 'like', "%{$search}%"))
+                    ->orWhereHas('jobCard', fn($j) => $j->where('job_no', 'like', "%{$search}%"));
+            })
             ->latest();
 
         $centers = $query->paginate($perPage)->withQueryString();
+
+        $centers->getCollection()->transform(function ($center) {
+            $jobCard = $center->jobCard;
+            $rma = $jobCard?->serviceInward?->rma ?? null;
+            $material = $center->material_name ?? $jobCard?->serviceInward?->material_type ?? '—';
+
+            $center->job_display = $jobCard
+                ? "#{$jobCard->job_no}" . ($rma ? " (RMA: {$rma})" : '')
+                : '—';
+
+            $center->material_display = $material;
+            $center->technician_name = $center->user?->name ?? '—';
+            return $center;
+        });
 
         return Inertia::render('OutServiceCenters/Index', [
             'centers'      => $centers,
@@ -42,9 +64,6 @@ class OutServiceCenterController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for creating a new out-service center.
-     */
     public function create()
     {
         $this->authorize('create', OutServiceCenter::class);
@@ -54,59 +73,53 @@ class OutServiceCenterController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created out-service center.
-     */
     public function store(Request $request)
     {
         $this->authorize('create', OutServiceCenter::class);
 
-        // DEBUG POINT 1: Log incoming request
-        Log::info('OutServiceCenter@store - Request data', $request->all());
+        Log::info('OutServiceCenter@store - Raw Request', $request->all());
 
         $validated = $request->validate([
             'job_card_id'       => 'required|exists:job_cards,id',
             'service_name'      => 'required|string|max:255',
             'sent_at'           => 'required|date',
-            'user_id'           => 'required|exists:users,id',           // ← REQUIRED
+            'user_id'           => 'required|exists:users,id',
             'expected_back'     => 'nullable|date|after:sent_at',
             'cost'              => 'nullable|numeric|min:0',
             'service_status_id' => 'required|exists:service_statuses,id',
+            'material_name'     => 'nullable|string', // ← REMOVED max:1000 (text field!)
             'notes'             => 'nullable|string',
         ]);
 
-        // DEBUG POINT 2: Log validated data
-        Log::info('OutServiceCenter@store - Validated data', $validated);
+        Log::info('OutServiceCenter@store - Validated', $validated);
 
         try {
             $center = OutServiceCenter::create($validated);
-
-            // DEBUG POINT 3: Success
-            Log::info('OutServiceCenter@store - Created', ['id' => $center->id]);
+            Log::info('OutServiceCenter@store - SUCCESS', ['id' => $center->id]);
 
             return redirect()
                 ->route('out_service_centers.index')
                 ->with('success', 'Out-service center created successfully.');
         } catch (\Throwable $e) {
-            // DEBUG POINT 4: Failure
-            Log::error('OutServiceCenter@store - Creation failed', [
-                'error'     => $e->getMessage(),
-                'trace'     => $e->getTraceAsString(),
-                'request'   => $request->all(),
+            Log::error('OutServiceCenter@store - FAILED', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
-            return back()->withErrors(['general' => 'Failed to create record. Check logs for details.']);
+            return back()->withErrors(['general' => 'Failed to save. Check logs.']);
         }
     }
 
-    /**
-     * Display the specified out-service center.
-     */
     public function show(OutServiceCenter $outServiceCenter)
     {
         $this->authorize('view', $outServiceCenter);
 
-        $outServiceCenter->load('jobCard', 'status', 'user');
+        $outServiceCenter->load([
+            'jobCard:id,job_no,service_inward_id',
+            'jobCard.serviceInward:id,rma',
+            'status:id,name',
+            'user:id,name'
+        ]);
 
         return Inertia::render('OutServiceCenters/Show', [
             'center' => $outServiceCenter,
@@ -117,14 +130,16 @@ class OutServiceCenterController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing the specified out-service center.
-     */
     public function edit(OutServiceCenter $outServiceCenter)
     {
         $this->authorize('update', $outServiceCenter);
 
-        $outServiceCenter->load('user');
+        $outServiceCenter->load([
+            'jobCard:id,job_no,service_inward_id,contact_id,delivered_at',
+            'jobCard.serviceInward:id,rma,brand,model',
+            'jobCard.contact:id,name',
+            'user:id,name'
+        ]);
 
         return Inertia::render('OutServiceCenters/Edit', [
             'center' => $outServiceCenter,
@@ -132,9 +147,6 @@ class OutServiceCenterController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified out-service center.
-     */
     public function update(Request $request, OutServiceCenter $outServiceCenter)
     {
         $this->authorize('update', $outServiceCenter);
@@ -147,10 +159,9 @@ class OutServiceCenterController extends Controller
             'expected_back'     => 'nullable|date|after:sent_at',
             'cost'              => 'nullable|numeric|min:0',
             'service_status_id' => 'required|exists:service_statuses,id',
+            'material_name'     => 'nullable|string', // ← FIX: no max on text
             'notes'             => 'nullable|string',
         ]);
-
-        Log::info('OutServiceCenter@update - Updating ID ' . $outServiceCenter->id, $validated);
 
         $outServiceCenter->update($validated);
 
@@ -159,13 +170,9 @@ class OutServiceCenterController extends Controller
             ->with('success', 'Out-service center updated successfully.');
     }
 
-    /**
-     * Remove the specified out-service center (soft delete).
-     */
     public function destroy(OutServiceCenter $outServiceCenter)
     {
         $this->authorize('delete', $outServiceCenter);
-
         $outServiceCenter->delete();
 
         return redirect()
@@ -173,27 +180,19 @@ class OutServiceCenterController extends Controller
             ->with('success', 'Out-service center moved to trash.');
     }
 
-    /**
-     * Restore a soft-deleted out-service center.
-     */
     public function restore($id)
     {
         $center = OutServiceCenter::withTrashed()->findOrFail($id);
         $this->authorize('restore', $center);
-
         $center->restore();
 
         return back()->with('success', 'Out-service center restored.');
     }
 
-    /**
-     * Permanently delete a trashed out-service center.
-     */
     public function forceDelete($id)
     {
         $center = OutServiceCenter::withTrashed()->findOrFail($id);
         $this->authorize('delete', $center);
-
         $center->forceDelete();
 
         return redirect()
@@ -201,19 +200,19 @@ class OutServiceCenterController extends Controller
             ->with('success', 'Out-service center permanently deleted.');
     }
 
-    /**
-     * Display trashed out-service centers.
-     */
     public function trash()
     {
         $this->authorize('viewAny', OutServiceCenter::class);
 
         $centers = OutServiceCenter::onlyTrashed()
-            ->with(['jobCard', 'status', 'user'])
+            ->with([
+                'jobCard:id,job_no,service_inward_id',
+                'jobCard.serviceInward:id,rma',
+                'status:id,name',
+                'user:id,name'
+            ])
             ->paginate(50);
 
-        return Inertia::render('OutServiceCenters/Trash', [
-            'centers' => $centers,
-        ]);
+        return Inertia::render('OutServiceCenters/Trash', ['centers' => $centers]);
     }
 }

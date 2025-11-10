@@ -16,7 +16,7 @@ interface JobCard {
     job_no: string;
     rma: string;
     contact: { id: number; name: string };
-    material_type: string;
+    material_name: string;
     delivered_at: string | null;
     service_inward: { brand: string | null; model: string | null };
 }
@@ -39,6 +39,7 @@ interface OutServiceCenter {
     notes: string | null;
     user_id: number;
     user: User;
+    material_name: string | null;
 }
 
 export default function Edit() {
@@ -48,11 +49,12 @@ export default function Edit() {
     const { data, setData, put, processing, errors } = useForm({
         job_card_id: String(center.job_card_id),
         service_name: center.service_name,
-        sent_at: center.sent_at.slice(0, 16), // datetime-local format
+        sent_at: center.sent_at.slice(0, 16),
         user_id: String(center.user_id),
         expected_back: center.expected_back ?? '',
         cost: center.cost ?? '',
         service_status_id: String(center.service_status_id),
+        material_name: center.material_name ?? '',
         notes: center.notes ?? '',
     });
 
@@ -79,8 +81,8 @@ export default function Edit() {
         <Layout>
             <Head title={`Edit – ${center.service_name}`} />
             <div className="py-12">
-                <div className="max-w-5xl mx-auto sm:px-6 lg:px-8">
-                    <div className="flex items-center gap-4 mb-6">
+                <div className="mx-auto max-w-5xl sm:px-6 lg:px-8">
+                    <div className="mb-6 flex items-center gap-4">
                         <Button variant="ghost" size="icon" asChild>
                             <Link href={route('out_service_centers.index')}>
                                 <ArrowLeft className="h-5 w-5" />
@@ -89,10 +91,13 @@ export default function Edit() {
                         <h1 className="text-2xl font-bold">Edit Out Service Center</h1>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-8 bg-white p-6 rounded-lg shadow">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <form
+                        onSubmit={handleSubmit}
+                        className="space-y-8 rounded-lg bg-white p-6 shadow"
+                    >
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
 
-                            {/* JOB CARD AUTOCOMPLETE */}
+                            {/* JOB CARD AUTOCOMPLETE – PRE-FILLED */}
                             <div className="md:col-span-2">
                                 <Label>Job Card *</Label>
                                 <JobCardAutocomplete
@@ -182,6 +187,19 @@ export default function Edit() {
                                     </SelectContent>
                                 </Select>
                                 {errors.user_id && <p className="text-sm text-red-600 mt-1">{errors.user_id}</p>}
+                            </div>
+
+                            {/* MATERIAL NAME */}
+                            <div>
+                                <Label htmlFor="material_name">Material Name</Label>
+                                <Textarea
+                                    id="material_name"
+                                    rows={2}
+                                    value={data.material_name}
+                                    onChange={e => setData('material_name', e.target.value)}
+                                    placeholder="e.g., Dell Laptop, HP Printer..."
+                                />
+                                {errors.material_name && <p className="mt-1 text-sm text-red-600">{errors.material_name}</p>}
                             </div>
 
                             {/* NOTES */}

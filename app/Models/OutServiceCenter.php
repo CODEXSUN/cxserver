@@ -20,6 +20,7 @@ class OutServiceCenter extends Model
         'received_back_at',
         'service_status_id',
         'user_id',
+        'material_name',
         'notes',
     ];
 
