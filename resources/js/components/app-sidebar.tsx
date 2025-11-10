@@ -25,6 +25,7 @@ import {
     NotebookPen,
     UserRoundSearch,
     Drill,
+    ServerCrash,
 } from 'lucide-react';
 
 
@@ -89,9 +90,8 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Out Service Center',
         href: out_service_centers(),
-        icon: Drill,
+        icon: ServerCrash,
     },
-
     //
     // {
     //     title: 'User',
