@@ -111,7 +111,7 @@ export default function Edit() {
                             {/* Assigned Technician */}
                             <div>
                                 <Label htmlFor="user_id">
-                                    Assigned Technician <span className="text-red-500">*</span>
+                                    First Diagnosis by <span className="text-red-500">*</span>
                                 </Label>
                                 <Select value={data.user_id} onValueChange={(v) => setData('user_id', v)}>
                                     <SelectTrigger>
