@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft } from 'lucide-react';
-import ServiceInwardAutocomplete from '@/components/blocks/ServiceInwardAutocomplete'; // Fixed path
+import ServiceInwardAutocomplete from '@/components/blocks/ServiceInwardAutocomplete';
 import React from 'react';
 import { ServiceInward } from '@/types';
 
@@ -17,23 +17,30 @@ interface StatusOption {
     name: string;
 }
 
+interface UserOption {
+    id: number;
+    name: string;
+}
+
 interface Props {
-    inwards: any[]; // Not used anymore
+    inwards: never[];
     statuses: StatusOption[];
+    users: UserOption[];  // Added
 }
 
 export default function Create() {
     const route = useRoute();
-    const { statuses } = usePage().props as unknown as Props;
+    const { users } = usePage().props as unknown as Props;
     const [selectedInward, setSelectedInward] = React.useState<ServiceInward | null>(null);
 
     const { data, setData, post, processing, errors } = useForm({
         service_inward_id: '',
-        service_status_id: '',
+        user_id: '',           // Assigned technician
+        service_status_id: '1',
         diagnosis: '',
-        estimated_cost: '',
-        advance_paid: '',
-        final_status: '',
+        estimated_cost: '0',
+        advance_paid: '0',
+        remarks: '',
         spares_applied: '',
     });
 
@@ -51,7 +58,7 @@ export default function Create() {
         <Layout>
             <Head title="Create Job Card" />
             <div className="py-12">
-                <div className="max-w-3xl mx-auto sm:px-6 lg:px-8">
+                <div className="max-w-5xl mx-auto sm:px-6 lg:px-8">
                     <div className="flex items-center gap-4 mb-6">
                         <Button variant="ghost" size="icon" asChild>
                             <Link href={route('job_cards.index')}>
@@ -66,6 +73,8 @@ export default function Create() {
 
                     <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                            {/* Service Inward */}
                             <div>
                                 <Label htmlFor="service_inward_id">
                                     Service Inward <span className="text-red-500">*</span>
@@ -73,45 +82,48 @@ export default function Create() {
                                 <ServiceInwardAutocomplete
                                     value={selectedInward}
                                     onSelect={handleInwardSelect}
-                                    placeholder="Search by RMA, Serial, Customer, Mobile..."
+                                    placeholder="Search by RMA, Serial, Customer..."
                                 />
                                 {errors.service_inward_id && (
                                     <p className="text-sm text-red-600 mt-1">{errors.service_inward_id}</p>
                                 )}
                             </div>
 
+                            {/* Assigned Technician */}
                             <div>
-                                <Label htmlFor="service_status_id">
-                                    Status <span className="text-red-500">*</span>
+                                <Label htmlFor="user_id">
+                                    Assigned Technician <span className="text-red-500">*</span>
                                 </Label>
-                                <Select value={data.service_status_id} onValueChange={(v) => setData('service_status_id', v)}>
+                                <Select value={data.user_id} onValueChange={(v) => setData('user_id', v)}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select status" />
+                                        <SelectValue placeholder="Select technician..." />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {statuses.map((s) => (
-                                            <SelectItem key={s.id} value={String(s.id)}>
-                                                {s.name}
+                                        {users.map((u) => (
+                                            <SelectItem key={u.id} value={String(u.id)}>
+                                                {u.name}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                {errors.service_status_id && (
-                                    <p className="text-sm text-red-600 mt-1">{errors.service_status_id}</p>
+                                {errors.user_id && (
+                                    <p className="text-sm text-red-600 mt-1">{errors.user_id}</p>
                                 )}
                             </div>
 
+                            {/* Diagnosis */}
                             <div className="md:col-span-2">
                                 <Label htmlFor="diagnosis">Diagnosis</Label>
-                                <Textarea
-                                    id="diagnosis"
-                                    value={data.diagnosis}
-                                    onChange={(e) => setData('diagnosis', e.target.value)}
-                                    placeholder="Describe the issue..."
-                                    rows={3}
+                                <Textarea className="h-32"
+                                          id="diagnosis"
+                                          value={data.diagnosis}
+                                          onChange={(e) => setData('diagnosis', e.target.value)}
+                                          placeholder="Describe the issue..."
+                                          rows={3}
                                 />
                             </div>
 
+                            {/* Cost Fields */}
                             <div>
                                 <Label htmlFor="estimated_cost">Estimated Cost</Label>
                                 <Input
@@ -136,13 +148,14 @@ export default function Create() {
                                 />
                             </div>
 
+                            {/* Remarks & Spares */}
                             <div>
-                                <Label htmlFor="final_status">Final Status</Label>
+                                <Label htmlFor="remarks">Remarks</Label>
                                 <Input
-                                    id="final_status"
-                                    value={data.final_status}
-                                    onChange={(e) => setData('final_status', e.target.value)}
-                                    placeholder="Completed, Cancelled, etc."
+                                    id="remarks"
+                                    value={data.remarks}
+                                    onChange={(e) => setData('remarks', e.target.value)}
+                                    placeholder="e.g. Customer approved, parts pending..."
                                 />
                             </div>
 

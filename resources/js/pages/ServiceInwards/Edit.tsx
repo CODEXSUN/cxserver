@@ -106,7 +106,7 @@ export default function Edit() {
         <Layout>
             <Head title="Edit Service Inward" />
             <div className="py-12">
-                <div className="mx-auto max-w-3xl sm:px-6 lg:px-8">
+                <div className="mx-auto max-w-5xl sm:px-6 lg:px-8">
                     <div className="mb-6 flex items-center gap-4">
                         <Button variant="ghost" size="icon" asChild>
                             <Link href={route('service_inwards.index')}>

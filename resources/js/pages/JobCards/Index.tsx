@@ -403,6 +403,7 @@ export default function Index() {
                                 <TableHead className="text-center">Spares?</TableHead>
                                 <TableHead>Final Status</TableHead>
                                 <TableHead>Received</TableHead>
+                                <TableHead>Assigned To</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -470,6 +471,7 @@ export default function Index() {
                                     <TableCell>
                                         {format(new Date(job.received_at), 'dd MMM yyyy')}
                                     </TableCell>
+                                    <TableCell>{job.user?.name || '—'}</TableCell>
                                     <TableCell className="text-right">
                                         <TableActions
                                             id={job.id}

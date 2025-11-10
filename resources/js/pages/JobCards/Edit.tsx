@@ -15,42 +15,44 @@ import { ServiceInward } from '@/types';
 interface JobCard {
     id: number;
     service_inward_id: number;
+    user_id: number;
     service_status_id: number;
     diagnosis: string | null;
     estimated_cost: string | null;
     advance_paid: string | null;
-    final_status: string | null;
+    remarks: string | null;
     spares_applied: string | null;
     service_inward: ServiceInward;
     status: { id: number; name: string };
+    user: { id: number; name: string };
+    entryBy?: { id: number; name: string } | null;  // Optional
 }
 
-interface StatusOption {
+interface UserOption {
     id: number;
     name: string;
 }
 
 interface Props {
     job: JobCard;
-    statuses: StatusOption[];
+    users: UserOption[];
 }
 
 export default function Edit() {
     const route = useRoute();
-    const { job, statuses } = usePage().props as unknown as Props;
+    const { job, users } = usePage().props as unknown as Props;
     const [selectedInward, setSelectedInward] = React.useState<ServiceInward | null>(null);
 
     const { data, setData, put, processing, errors } = useForm({
         service_inward_id: String(job.service_inward_id),
-        service_status_id: String(job.service_status_id),
+        user_id: String(job.user_id),
         diagnosis: job.diagnosis || '',
         estimated_cost: job.estimated_cost || '',
         advance_paid: job.advance_paid || '',
-        final_status: job.final_status || '',
+        remarks: job.remarks || '',
         spares_applied: job.spares_applied || '',
     });
 
-    // Sync initial inward
     useEffect(() => {
         setSelectedInward(job.service_inward);
         setData('service_inward_id', String(job.service_inward_id));
@@ -70,7 +72,7 @@ export default function Edit() {
         <Layout>
             <Head title="Edit Job Card" />
             <div className="py-12">
-                <div className="max-w-3xl mx-auto sm:px-6 lg:px-8">
+                <div className="max-w-5xl mx-auto sm:px-6 lg:px-8">
                     <div className="flex items-center gap-4 mb-6">
                         <Button variant="ghost" size="icon" asChild>
                             <Link href={route('job_cards.index')}>
@@ -79,12 +81,19 @@ export default function Edit() {
                         </Button>
                         <div>
                             <h1 className="text-2xl font-bold">Edit Job Card</h1>
-                            <p className="text-muted-foreground">Update job details</p>
+                            <p className="text-muted-foreground">
+                                Job No: <strong>JOB-{String(job.id).padStart(6, '0')}</strong>
+                                {job.entryBy && (
+                                    <> | Entered by: <strong>{job.entryBy.name}</strong></>
+                                )}
+                            </p>
                         </div>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                            {/* Service Inward */}
                             <div>
                                 <Label htmlFor="service_inward_id">
                                     Service Inward <span className="text-red-500">*</span>
@@ -92,44 +101,48 @@ export default function Edit() {
                                 <ServiceInwardAutocomplete
                                     value={selectedInward}
                                     onSelect={handleInwardSelect}
-                                    placeholder="Search by RMA, Serial, Customer, Mobile..."
+                                    placeholder="Search by RMA, Serial, Customer..."
                                 />
                                 {errors.service_inward_id && (
                                     <p className="text-sm text-red-600 mt-1">{errors.service_inward_id}</p>
                                 )}
                             </div>
 
+                            {/* Assigned Technician */}
                             <div>
-                                <Label htmlFor="service_status_id">
-                                    Status <span className="text-red-500">*</span>
+                                <Label htmlFor="user_id">
+                                    Assigned Technician <span className="text-red-500">*</span>
                                 </Label>
-                                <Select value={data.service_status_id} onValueChange={(v) => setData('service_status_id', v)}>
+                                <Select value={data.user_id} onValueChange={(v) => setData('user_id', v)}>
                                     <SelectTrigger>
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {statuses.map((s) => (
-                                            <SelectItem key={s.id} value={String(s.id)}>
-                                                {s.name}
+                                        {users.map((u) => (
+                                            <SelectItem key={u.id} value={String(u.id)}>
+                                                {u.name}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                {errors.service_status_id && (
-                                    <p className="text-sm text-red-600 mt-1">{errors.service_status_id}</p>
+                                {errors.user_id && (
+                                    <p className="text-sm text-red-600 mt-1">{errors.user_id}</p>
                                 )}
                             </div>
 
+                            {/* Diagnosis */}
                             <div className="md:col-span-2">
                                 <Label htmlFor="diagnosis">Diagnosis</Label>
                                 <Textarea
                                     id="diagnosis"
                                     value={data.diagnosis}
                                     onChange={(e) => setData('diagnosis', e.target.value)}
-                                    rows={3}
+                                    placeholder="Describe the issue..."
+                                    rows={4}
                                 />
                             </div>
 
+                            {/* Cost Fields */}
                             <div>
                                 <Label htmlFor="estimated_cost">Estimated Cost</Label>
                                 <Input
@@ -138,6 +151,7 @@ export default function Edit() {
                                     step="0.01"
                                     value={data.estimated_cost}
                                     onChange={(e) => setData('estimated_cost', e.target.value)}
+                                    placeholder="0.00"
                                 />
                             </div>
 
@@ -149,15 +163,18 @@ export default function Edit() {
                                     step="0.01"
                                     value={data.advance_paid}
                                     onChange={(e) => setData('advance_paid', e.target.value)}
+                                    placeholder="0.00"
                                 />
                             </div>
 
+                            {/* Remarks & Spares */}
                             <div>
-                                <Label htmlFor="final_status">Final Status</Label>
+                                <Label htmlFor="remarks">Remarks</Label>
                                 <Input
-                                    id="final_status"
-                                    value={data.final_status}
-                                    onChange={(e) => setData('final_status', e.target.value)}
+                                    id="remarks"
+                                    value={data.remarks}
+                                    onChange={(e) => setData('remarks', e.target.value)}
+                                    placeholder="e.g. Customer approved, parts pending..."
                                 />
                             </div>
 
@@ -167,6 +184,7 @@ export default function Edit() {
                                     id="spares_applied"
                                     value={data.spares_applied}
                                     onChange={(e) => setData('spares_applied', e.target.value)}
+                                    placeholder="Yes, No, HDD+RAM"
                                 />
                             </div>
                         </div>

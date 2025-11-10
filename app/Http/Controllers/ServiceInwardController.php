@@ -143,17 +143,32 @@ class ServiceInwardController extends Controller
     /** --------------------------------------------------------------
      *  SHOW – detail page
      *  -------------------------------------------------------------- */
-    public function show(ServiceInward $serviceInward)
+// In ServiceInwardController.php
+
+    public function show(ServiceInward $serviceInward, Request $request)
     {
         $this->authorize('view', $serviceInward);
 
+        // Eager load contact, receiver, and notes with user + replies
         $serviceInward->load(['contact', 'receiver']);
+
+        $notes = $serviceInward->notes()
+            ->with(['user:id,name'])
+            ->whereNull('parent_id')
+            ->orderBy('created_at')
+            ->get()
+            ->map(function ($note) {
+                // Ensure replies is always a collection (never null)
+                $note->setRelation('replies', $note->replies ?? collect());
+                return $note;
+            });
 
         return Inertia::render('ServiceInwards/Show', [
             'inward' => $serviceInward,
+            'notes' => $notes, // Always loaded
             'can' => [
-                'edit' => auth()->user()->can('update', $serviceInward),
-                'delete' => auth()->user()->can('delete', $serviceInward),
+                'edit' => Gate::allows('update', $serviceInward),
+                'delete' => Gate::allows('delete', $serviceInward),
             ],
         ]);
     }

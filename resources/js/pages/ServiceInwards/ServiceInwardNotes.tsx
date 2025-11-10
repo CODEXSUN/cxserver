@@ -1,103 +1,83 @@
-// resources/js/Components/ServiceInwardNotes.tsx
-import { usePage, router } from '@inertiajs/react';
-import { useState, useEffect, useCallback } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
+'use client';
+
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { useForm } from '@inertiajs/react';
-import { format, parseISO } from 'date-fns';
-import { CalendarIcon, Send, Trash2, Reply, Edit2, X, RotateCcw, Search, MessageSquare } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { router, useForm, usePage } from '@inertiajs/react';
+import { format } from 'date-fns';
+import { Edit2, Reply, Send, Trash2 } from 'lucide-react';
+import { JSX, useEffect, useMemo, useRef, useState } from 'react';
 import { useRoute } from 'ziggy-js';
+
+// ---------------------------------------------------------------------
+// PAGE PROPS TYPE (from Show.tsx)
+// ---------------------------------------------------------------------
+interface PageProps {
+    notes?: Note[];
+    auth?: { user?: { id: number } };
+}
 
 interface Note {
     id: number;
     note: string;
-    user: { id: number; name: string };
+    user?: { id: number; name: string } | null;
     created_at: string;
-    replies: Note[];
+    replies?: Note[] | null;
     is_reply: boolean;
 }
 
 interface Props {
     inwardId: number;
-    inwardRma: string;
 }
 
-export default function ServiceInwardNotes({ inwardId, inwardRma }: Props) {
-    const { props } = usePage();
-    const notes = (props.notes || []) as Note[];
-    const serverFilters = (props.notes_filters || {}) as { notes_date_from?: string; notes_date_to?: string };
+// ---------------------------------------------------------------------
+// MAIN COMPONENT
+// ---------------------------------------------------------------------
+export default function ServiceInwardNotes({ inwardId }: Props) {
+    const { props } = usePage<PageProps>();
+    const currentUserId = props.auth?.user?.id ?? 0;
     const route = useRoute();
 
-    const [open, setOpen] = useState(false);
+    // Memoize notes to prevent useEffect re-run
+    const notes = useMemo(() => (props.notes || []) as Note[], [props.notes]);
+
     const [replyingTo, setReplyingTo] = useState<number | null>(null);
     const [editing, setEditing] = useState<number | null>(null);
     const [editText, setEditText] = useState('');
-    const [localFilters, setLocalFilters] = useState({
-        notes_date_from: serverFilters.notes_date_from ? parseISO(serverFilters.notes_date_from) : undefined,
-        notes_date_to: serverFilters.notes_date_to ? parseISO(serverFilters.notes_date_to) : undefined,
-    });
-    const [isNavigating, setIsNavigating] = useState(false);
+    const scrollRef = useRef<HTMLDivElement>(null);
 
     const { data, setData, post, put, processing, reset } = useForm({
         note: '',
         parent_id: null as number | null,
     });
 
-    // Sync server filters to local
+    // Auto-scroll to bottom
     useEffect(() => {
-        setLocalFilters({
-            notes_date_from: serverFilters.notes_date_from ? parseISO(serverFilters.notes_date_from) : undefined,
-            notes_date_to: serverFilters.notes_date_to ? parseISO(serverFilters.notes_date_to) : undefined,
-        });
-    }, [serverFilters]);
-
-    // Load notes on open if not loaded
-    useEffect(() => {
-        if (open && notes.length === 0) {
-            handleReload();
+        if (scrollRef.current) {
+            const viewport = scrollRef.current.querySelector(
+                '[data-radix-scroll-area-viewport]',
+            );
+            if (viewport) viewport.scrollTop = viewport.scrollHeight;
         }
-    }, [open]);
-
-    const buildPayload = useCallback(() => ({
-        notes_date_from: localFilters.notes_date_from ? format(localFilters.notes_date_from, 'yyyy-MM-dd') : undefined,
-        notes_date_to: localFilters.notes_date_to ? format(localFilters.notes_date_to, 'yyyy-MM-dd') : undefined,
-    }), [localFilters]);
+    }, [notes]);
 
     const handleReload = () => {
-        setIsNavigating(true);
-        router.reload({
-            data: buildPayload(),
-            only: ['notes', 'notes_filters'],
-            onFinish: () => setIsNavigating(false),
-        });
-    };
-
-    const handleReset = () => {
-        setLocalFilters({ notes_date_from: undefined, notes_date_to: undefined });
-        router.reload({
-            data: { notes_date_from: undefined, notes_date_to: undefined },
-            only: ['notes', 'notes_filters'],
-        });
-    };
-
-    const clearDateFilter = () => {
-        setLocalFilters({ notes_date_from: undefined, notes_date_to: undefined });
-        handleReload();
+        router.reload({ only: ['notes'], preserveScroll: true });
     };
 
     const submitNote = (e: React.FormEvent) => {
         e.preventDefault();
         if (!data.note.trim()) return;
 
-        const action = data.parent_id ? 'Reply' : 'Note';
         post(route('service_inwards.notes.store', inwardId), {
+            preserveScroll: true,
             onSuccess: () => {
                 reset();
                 setReplyingTo(null);
@@ -114,6 +94,7 @@ export default function ServiceInwardNotes({ inwardId, inwardRma }: Props) {
 
     const saveEdit = (noteId: number) => {
         put(route('service_inwards.notes.update', [inwardId, noteId]), {
+            preserveScroll: true,
             onSuccess: () => {
                 setEditing(null);
                 handleReload();
@@ -123,177 +104,268 @@ export default function ServiceInwardNotes({ inwardId, inwardRma }: Props) {
 
     const deleteNote = (noteId: number) => {
         if (!confirm('Delete this note?')) return;
-        router.delete(route('service_inwards.notes.destroy', [inwardId, noteId]), {
-            onSuccess: () => handleReload(),
-        });
+        router.delete(
+            route('service_inwards.notes.destroy', [inwardId, noteId]),
+            {
+                preserveScroll: true,
+                onSuccess: () => handleReload(),
+            },
+        );
     };
 
-    const renderNote = (note: Note, depth = 0) => (
-        <div key={note.id} className={`${depth > 0 ? 'ml-8 mt-3' : 'mt-4'} border-l-4 border-gray-200 pl-4`}>
-            <div className="flex items-start justify-between">
-                <div className="flex items-start gap-3 flex-1">
-                    <Avatar className="h-8 w-8">
-                        <AvatarFallback>{note.user.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                        <p className="font-medium text-sm">{note.user.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                            {format(new Date(note.created_at), 'dd MMM yyyy, hh:mm a')}
-                        </p>
+    const renderNote = (note: Note, depth = 0): JSX.Element => {
+        const user = note.user ?? { id: 0, name: 'Unknown' };
+        const isOwn = user.id === currentUserId;
+
+        // Main message: left for others, right for own
+        const align = isOwn ? 'justify-start' : 'justify-end';
+        const bubbleBg = isOwn
+            ? 'bg-primary text-primary-foreground'
+            : 'bg-muted';
+        const textColor = isOwn ? 'text-primary-foreground' : 'text-foreground';
+
+        // Reply (when replying to a message): right for own reply, left otherwise
+        const replyAlign = isOwn ? 'justify-start' : 'justify-end';
+
+        const safeReplies: Note[] = Array.isArray(note.replies)
+            ? note.replies
+            : [];
+
+        return (
+            <div
+                key={note.id}
+                className={`flex w-full ${align} mb-4 ${depth > 0 ? 'ml-10' : ''}`}
+            >
+                <div
+                    className={`flex max-w-[70%] ${isOwn ? 'flex-row-reverse' : 'flex-row'} gap-2`}
+                >
+                    {/* Avatar (only left, top-level) */}
+                    {!isOwn && depth === 0 && (
+                        <Avatar className="h-8 w-8 shrink-0">
+                            <AvatarFallback className="text-sm">
+                                {user.name.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                        </Avatar>
+                    )}
+
+                    {/* Message Bubble */}
+                    <div
+                        className={`rounded-2xl px-4 py-2 ${bubbleBg} w-full shadow-sm`}
+                    >
+                        {/* User Name (Always shown, except in edit mode) */}
+                        {editing !== note.id && (
+                            <p
+                                className={`mb-1 text-xs font-semibold ${isOwn ? 'text-primary-foreground/80' : 'opacity-80'}`}
+                            >
+                                {user.name}
+                                {depth > 0 && (
+                                    <span className="ml-1 text-xs font-normal opacity-60">
+                                        replied
+                                    </span>
+                                )}
+                            </p>
+                        )}
+
+                        {/* Edit Mode */}
                         {editing === note.id ? (
-                            <div className="mt-2">
+                            <div>
                                 <Textarea
                                     value={editText}
                                     onChange={(e) => {
                                         setEditText(e.target.value);
                                         setData('note', e.target.value);
                                     }}
-                                    className="text-sm"
+                                    className="min-h-0 rounded-md border bg-background text-sm"
+                                    autoFocus
                                 />
-                                <div className="flex gap-2 mt-2">
-                                    <Button size="sm" onClick={() => saveEdit(note.id)} disabled={processing}>Save</Button>
-                                    <Button size="sm" variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
-                                </div>
-                            </div>
-                        ) : (
-                            <p className="mt-1 text-sm whitespace-pre-wrap">{note.note}</p>
-                        )}
-                        <div className="flex gap-3 mt-2 text-xs">
-                            <button
-                                onClick={() => {
-                                    setReplyingTo(note.id);
-                                    setData('parent_id', note.id);
-                                }}
-                                className="text-blue-600 hover:underline flex items-center gap-1"
-                            >
-                                <Reply className="h-3 w-3" /> Reply
-                            </button>
-                            <button
-                                onClick={() => startEdit(note)}
-                                className="text-amber-600 hover:underline flex items-center gap-1"
-                            >
-                                <Edit2 className="h-3 w-3" /> Edit
-                            </button>
-                            <button
-                                onClick={() => deleteNote(note.id)}
-                                className="text-red-600 hover:underline flex items-center gap-1"
-                            >
-                                <Trash2 className="h-3 w-3" /> Delete
-                            </button>
-                        </div>
-                        {replyingTo === note.id && (
-                            <form onSubmit={submitNote} className="mt-3">
-                                <Textarea
-                                    placeholder="Write a reply..."
-                                    value={data.note}
-                                    onChange={(e) => setData('note', e.target.value)}
-                                    className="text-sm"
-                                />
-                                <div className="flex gap-2 mt-2">
-                                    <Button size="sm" type="submit" disabled={processing || !data.note.trim()}>
-                                        <Send className="h-3 w-3 mr-1" /> Send
+                                <div className="mt-2 flex gap-1">
+                                    <Button
+                                        size="sm"
+                                        onClick={() => saveEdit(note.id)}
+                                        disabled={processing}
+                                    >
+                                        Save
                                     </Button>
-                                    <Button size="sm" variant="outline" onClick={() => { setReplyingTo(null); reset(); }}>
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => setEditing(null)}
+                                    >
                                         Cancel
                                     </Button>
                                 </div>
-                            </form>
+                            </div>
+                        ) : (
+                            <>
+                                <p
+                                    className={`text-sm ${textColor} break-words whitespace-pre-wrap`}
+                                >
+                                    {note.note}
+                                </p>
+                                <p
+                                    className={`mt-1 text-xs ${isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}
+                                >
+                                    {format(
+                                        new Date(note.created_at),
+                                        'h:mm a',
+                                    )}
+                                </p>
+                            </>
                         )}
                     </div>
                 </div>
-            </div>
-            {note.replies.map((reply) => renderNote(reply, depth + 1))}
-        </div>
-    );
 
-    const activeDateBadge = (localFilters.notes_date_from || localFilters.notes_date_to) ? (
-        <Badge variant="secondary" className="flex items-center gap-1 text-xs">
-            Date: {localFilters.notes_date_from ? format(localFilters.notes_date_from, 'dd MMM') : '...'} - {localFilters.notes_date_to ? format(localFilters.notes_date_to, 'dd MMM yyyy') : '...'}
-            <button onClick={clearDateFilter} className="ml-1 rounded-sm p-0.5 hover:bg-muted">
-                <X className="h-3 w-3" />
-            </button>
-        </Badge>
-    ) : null;
+                {/* Actions: Always below the message */}
+                {editing !== note.id && (
+                    <div
+                        className={`mt-2 flex gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'} items-center`}
+                    >
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button
+                                        onClick={() => {
+                                            setReplyingTo(note.id);
+                                            setData('parent_id', note.id);
+                                        }}
+                                        className="text-muted-foreground hover:text-foreground"
+                                    >
+                                        <Reply className="h-4 w-4" />
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent>Reply</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
 
-    return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5" />
-                    Communication Notes ({notes.length})
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
-                <DialogHeader>
-                    <DialogTitle>Communication Notes – {inwardRma}</DialogTitle>
-                </DialogHeader>
+                        {isOwn && (
+                            <>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <button
+                                                onClick={() => startEdit(note)}
+                                                className="text-amber-600 hover:text-amber-700"
+                                            >
+                                                <Edit2 className="h-4 w-4" />
+                                            </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>Edit</TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
 
-                {/* Filters (Modeled after Index.tsx) */}
-                <div className="flex items-center gap-4 mb-4">
-                    <Label>Date Range:</Label>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button variant="outline" className="w-[280px] justify-start text-left font-normal">
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {localFilters.notes_date_from ? format(localFilters.notes_date_from, 'PPP') : <span>From</span>} - {localFilters.notes_date_to ? format(localFilters.notes_date_to, 'PPP') : <span>To</span>}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                            <Calendar
-                                initialFocus
-                                mode="range"
-                                selected={{ from: localFilters.notes_date_from, to: localFilters.notes_date_to }}
-                                onSelect={(range) => {
-                                    setLocalFilters({
-                                        notes_date_from: range?.from,
-                                        notes_date_to: range?.to,
-                                    });
-                                    handleReload();
-                                }}
-                                numberOfMonths={2}
-                                disabled={isNavigating}
-                            />
-                        </PopoverContent>
-                    </Popover>
-                    <Button size="sm" onClick={handleReload} disabled={isNavigating}>
-                        <Search className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={handleReset} disabled={isNavigating}>
-                        <RotateCcw className="h-4 w-4" />
-                    </Button>
-                </div>
-
-                {/* Active Filters */}
-                {activeDateBadge && (
-                    <div className="flex flex-wrap gap-2 mb-4">
-                        {activeDateBadge}
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <button
+                                                onClick={() =>
+                                                    deleteNote(note.id)
+                                                }
+                                                className="text-red-600 hover:text-red-700"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>Delete</TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </>
+                        )}
                     </div>
                 )}
 
-                <ScrollArea className="flex-1 pr-4">
-                    <div className="space-y-2">
-                        {notes.length === 0 ? (
-                            <p className="text-center text-muted-foreground py-8">No notes yet.</p>
-                        ) : (
-                            notes.map((note) => renderNote(note))
+                {/* Reply Form: Aligned to right for own replies, left for others */}
+                {replyingTo === note.id && (
+                    <div className={`mt-3 flex w-full ${replyAlign}`}>
+                        <div
+                            className={`flex max-w-[70%] ${isOwn ? 'flex-row-reverse' : 'flex-row'} w-full gap-2`}
+                        >
+                            <div className="flex-1">
+                                <Textarea
+                                    placeholder="Write a reply..."
+                                    value={data.note}
+                                    onChange={(e) =>
+                                        setData('note', e.target.value)
+                                    }
+                                    className="min-h-0 resize-none text-sm"
+                                    rows={2}
+                                />
+                                <div className="mt-2 flex gap-1">
+                                    <Button
+                                        size="sm"
+                                        onClick={submitNote}
+                                        disabled={
+                                            processing || !data.note.trim()
+                                        }
+                                    >
+                                        <Send className="mr-1 h-3 w-3" /> Send
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => {
+                                            setReplyingTo(null);
+                                            reset();
+                                        }}
+                                    >
+                                        Cancel
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Render Replies (indented further) */}
+                {safeReplies.length > 0 && (
+                    <div className="mt-3">
+                        {safeReplies.map((reply) =>
+                            renderNote(reply, depth + 1),
                         )}
                     </div>
-                </ScrollArea>
+                )}
+            </div>
+        );
+    };
 
-                {/* Add New Note (Modeled after Create.tsx) */}
-                <form onSubmit={submitNote} className="flex gap-2 mt-4">
+    return (
+        <div className="mt-6 flex flex-col rounded-xl border bg-card p-4 shadow-md">
+            <ScrollArea className="flex-1 pr-3" ref={scrollRef}>
+                {notes.length === 0 ? (
+                    <p className="py-12 text-center text-sm text-muted-foreground">
+                        No notes yet. Start the conversation!
+                    </p>
+                ) : (
+                    <div className="space-y-4">{notes.map(renderNote)}</div>
+                )}
+            </ScrollArea>
+
+            <form
+                onSubmit={submitNote}
+                className="mt-4 border-t bg-background pt-4"
+            >
+                <div className="flex gap-3">
                     <Textarea
-                        placeholder="Add a note..."
+                        placeholder="Type your message..."
                         value={data.note}
                         onChange={(e) => setData('note', e.target.value)}
-                        className="flex-1"
-                        rows={2}
+                        className="min-h-0 flex-1 resize-none text-sm"
+                        rows={1}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                submitNote(e);
+                            }
+                        }}
                     />
-                    <Button type="submit" disabled={processing || !data.note.trim()}>
-                        <Send className="h-4 w-4" />
+                    <Button
+                        type="submit"
+                        size="icon"
+                        disabled={processing || !data.note.trim()}
+                    >
+                        <Send className="h-5 w-5" />
                     </Button>
-                </form>
-            </DialogContent>
-        </Dialog>
+                </div>
+            </form>
+        </div>
     );
 }

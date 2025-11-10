@@ -68,4 +68,10 @@ class ServiceInward extends Model
     {
         return $this->hasMany(ServiceInwardNote::class)->orderBy('created_at');
     }
+
+    public function replies(): HasMany
+    {
+        return $this->hasMany(ServiceInwardNote::class, 'parent_id')
+            ->orderBy('created_at');
+    }
 }

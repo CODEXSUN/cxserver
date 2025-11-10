@@ -335,8 +335,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
 Route::prefix('service-inwards/{serviceInward}')->group(function () {
-    Route::get('/notes', [ServiceInwardNoteController::class, 'index'])
-        ->name('service_inwards.notes.index');
 
     Route::post('/notes', [ServiceInwardNoteController::class, 'store'])
         ->name('service_inwards.notes.store');

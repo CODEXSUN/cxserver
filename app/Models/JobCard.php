@@ -14,6 +14,8 @@ class JobCard extends Model
 
     protected $fillable = [
         'job_no',
+        'user_id',
+        'entry_by',
         'service_inward_id',
         'contact_id',
         'received_at',
@@ -23,7 +25,7 @@ class JobCard extends Model
         'advance_paid',
         'final_bill',
         'delivered_at',
-        'final_status',      // e.g. "Completed", "In Progress", "Cancelled"
+        'remarks',      // e.g. "Completed", "In Progress", "Cancelled"
         'spares_applied',    // e.g. "Yes", "No", "HDD+RAM"
     ];
 
@@ -33,6 +35,17 @@ class JobCard extends Model
     ];
 
     // Relationships
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function entryBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'entry_by');
+    }
+
     public function serviceInward(): BelongsTo
     {
         return $this->belongsTo(ServiceInward::class);

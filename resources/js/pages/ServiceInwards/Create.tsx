@@ -104,7 +104,7 @@ export default function Create() {
         <Layout>
             <Head title="Create Service Inward" />
             <div className="py-12">
-                <div className="max-w-3xl mx-auto sm:px-6 lg:px-8">
+                <div className="max-w-5xl mx-auto sm:px-6 lg:px-8">
                     <div className="flex items-center gap-4 mb-6">
                         <Button variant="ghost" size="icon" asChild>
                             <Link href={route('service_inwards.index')}>
@@ -121,7 +121,7 @@ export default function Create() {
 
                     <form
                         onSubmit={handleSubmit}
-                        className="space-y-6 bg-white p-6 rounded-lg shadow"
+                        className="space-y-6 bg-white p-6 rounded-lg border shadow"
                     >
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* ---------- RMA ---------- */}
