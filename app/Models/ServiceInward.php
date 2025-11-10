@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ServiceInward extends Model
@@ -61,5 +62,10 @@ class ServiceInward extends Model
                 $model->sub_item = 0;
             }
         });
+    }
+
+    public function notes(): HasMany
+    {
+        return $this->hasMany(ServiceInwardNote::class)->orderBy('created_at');
     }
 }

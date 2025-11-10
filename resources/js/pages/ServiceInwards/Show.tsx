@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, Edit, Image } from 'lucide-react';
 import { format } from 'date-fns';
+import ServiceInwardNotes from './ServiceInwardNotes';
 
 interface ServiceInward {
     id: number;
@@ -116,6 +117,17 @@ export default function Show() {
                             Received by: <span className="font-medium">{inward.receiver?.name || '—'}</span>
                         </div>
                     </div>
+
+                    <div className="text-sm text-muted-foreground">
+                        Received by: <span className="font-medium">{inward.receiver?.name || '—'}</span>
+                    </div>
+
+                    <Separator className="my-8" />
+
+                    <div className="flex justify-center">
+                        <ServiceInwardNotes inwardId={inward.id} inwardRma={inward.rma} />
+                    </div>
+
                 </div>
             </div>
         </Layout>

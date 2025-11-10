@@ -12,11 +12,12 @@ use App\Http\Controllers\OutServiceCenterController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ServiceInwardController;
+use App\Http\Controllers\ServiceInwardNoteController;
 use App\Http\Controllers\ServicePartController;
 use App\Http\Controllers\ServicePartImageController;
 use App\Http\Controllers\ServiceStatusController;
 use App\Http\Controllers\SystemManagerController;
-use App\Http\Controllers\UserSearchController;
+//use App\Http\Controllers\UserSearchController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -330,4 +331,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('out_service_centers.restore');
     Route::delete('out_service_centers/{id}/forceDelete', [OutServiceCenterController::class, 'forceDelete'])
         ->name('out_service_centers.forceDelete');
+});
+
+
+Route::prefix('service-inwards/{serviceInward}')->group(function () {
+    Route::get('/notes', [ServiceInwardNoteController::class, 'index'])
+        ->name('service_inwards.notes.index');
+
+    Route::post('/notes', [ServiceInwardNoteController::class, 'store'])
+        ->name('service_inwards.notes.store');
+
+    Route::put('/notes/{note}', [ServiceInwardNoteController::class, 'update'])
+        ->name('service_inwards.notes.update');
+
+    Route::delete('/notes/{note}', [ServiceInwardNoteController::class, 'destroy'])
+        ->name('service_inwards.notes.destroy');
 });
