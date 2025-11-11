@@ -10,6 +10,7 @@ use App\Http\Controllers\JobCardSearchController;
 use App\Http\Controllers\JobSpareRequestController;
 use App\Http\Controllers\OutServiceCenterController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\ReadyForDeliveryController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ServiceInwardController;
 use App\Http\Controllers\ServiceInwardNoteController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\ServicePartController;
 use App\Http\Controllers\ServicePartImageController;
 use App\Http\Controllers\ServiceStatusController;
 use App\Http\Controllers\SystemManagerController;
+
 //use App\Http\Controllers\UserSearchController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -344,4 +346,24 @@ Route::prefix('service-inwards/{serviceInward}')->group(function () {
 
     Route::delete('/notes/{note}', [ServiceInwardNoteController::class, 'destroy'])
         ->name('service_inwards.notes.destroy');
+});
+
+
+// -----------------------------------------------------------------
+// Ready For Delivery – full CRUD + trash management
+// -----------------------------------------------------------------
+
+Route::middleware(['auth', 'verified'])->group(function () {
+
+    Route::resource('ready_for_deliveries', ReadyForDeliveryController::class)
+        ->names('ready_for_deliveries');
+
+    Route::post('ready_for_deliveries/{id}/restore', [ReadyForDeliveryController::class, 'restore'])
+        ->name('ready_for_deliveries.restore');
+
+    Route::delete('ready_for_deliveries/{id}/force', [ReadyForDeliveryController::class, 'forceDelete'])
+        ->name('ready_for_deliveries.forceDelete');
+
+    Route::get('ready_for_deliveries/trash', [ReadyForDeliveryController::class, 'trash'])
+        ->name('ready_for_deliveries.trash');
 });

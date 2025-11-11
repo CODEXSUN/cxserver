@@ -76,4 +76,14 @@ class JobCard extends Model
     {
         return $this->spares()->exists();
     }
+
+    public function getRmaAttribute(): ?string
+    {
+        return $this->serviceInward?->rma;
+    }
+
+    public function getCustomerNameAttribute(): ?string
+    {
+        return $this->contact?->name;
+    }
 }

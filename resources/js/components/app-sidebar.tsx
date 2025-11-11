@@ -26,20 +26,24 @@ import {
     UserRoundSearch,
     Drill,
     ServerCrash,
+    PackageCheck,
 } from 'lucide-react';
 
 
 import AppLogo from './app-logo';
 import {index as blogs} from '@/routes/blogs';
-import { index as contactTypes } from '@/routes/contact-types';
-import { index as contacts } from '@/routes/contacts';
-import { index as service_inward } from '@/routes/service_inwards';
-import { index as job_cards } from '@/routes/job_cards';
+import { index as contactTypes } from '@/routes/contact-types/index';
+import { index as contacts } from '@/routes/contacts/index';
+import { index as service_inward } from '@/routes/service_inwards/index';
+import { index as job_cards } from '@/routes/job_cards/index';
 // import { index as users } from '@/routes/users';
-import { index as job_assignment } from '@/routes/job_assignments';
-import {index as service_parts } from '@/routes/service_parts';
+import { index as job_assignment } from '@/routes/job_assignments/index';
+import {index as service_parts } from '@/routes/service_parts/index';
 import {index as job_spare_requests } from '@/routes/job_spare_requests';
 import {index as out_service_centers } from '@/routes/out_service_centers';
+import {index as ready_for_deliveries } from '@/routes/ready_for_deliveries';
+import { NavService } from '@/components/nav-service';
+import { NavSpares } from '@/components/nav-spares';
 
 const mainNavItems: NavItem[] = [
     {
@@ -62,6 +66,8 @@ const mainNavItems: NavItem[] = [
         href: contacts(),
         icon: Contact,
     },
+];
+const ServiceNavItems: NavItem[] = [
     {
         title: 'Service Inward',
         href: service_inward(),
@@ -78,6 +84,13 @@ const mainNavItems: NavItem[] = [
         icon: NotebookPen,
     },
     {
+        title: 'Ready For Delivery',
+        href: ready_for_deliveries(),
+        icon: PackageCheck,
+    },
+];
+const SparesNavItems: NavItem[] = [
+    {
         title: 'Service Parts',
         href: service_parts(),
         icon: Bolt,
@@ -92,12 +105,6 @@ const mainNavItems: NavItem[] = [
         href: out_service_centers(),
         icon: ServerCrash,
     },
-    //
-    // {
-    //     title: 'User',
-    //     href: users(),
-    //     icon: MonitorCog,
-    // },
 ];
 
 // const footerNavItems: NavItem[] = [
@@ -130,6 +137,8 @@ export function AppSidebar() {
 
             <SidebarContent>
                 <NavMain items={mainNavItems} />
+                <NavService items={ServiceNavItems} />
+                <NavSpares items={SparesNavItems} />
             </SidebarContent>
 
             <SidebarFooter>

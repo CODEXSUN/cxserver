@@ -8,6 +8,7 @@ use App\Models\ContactType;
 use App\Models\JobSpareRequest;
 use App\Models\OutServiceCenter;
 use App\Models\Permission;
+use App\Models\ReadyForDelivery;
 use App\Models\Role;
 use App\Models\ServiceInward;
 use App\Models\ServiceInwardNote;
@@ -19,6 +20,7 @@ use App\Policies\ContactTypePolicy;
 use App\Policies\JobSpareRequestPolicy;
 use App\Policies\OutServiceCenterPolicy;
 use App\Policies\PermissionPolicy;
+use App\Policies\ReadyForDeliveryPolicy;
 use App\Policies\RolePolicy;
 use App\Policies\ServiceInwardNotePolicy;
 use App\Policies\ServiceInwardPolicy;
@@ -43,6 +45,7 @@ class AuthServiceProvider extends ServiceProvider
         JobSpareRequest::class => JobSpareRequestPolicy::class,
         OutServiceCenter::class => OutServiceCenterPolicy::class,
         ServiceInwardNote::class => ServiceInwardNotePolicy::class,
+        ReadyForDelivery::class => ReadyForDeliveryPolicy::class,
     ];
 
     public function register(): void
