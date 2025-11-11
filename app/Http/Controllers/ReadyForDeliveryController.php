@@ -73,7 +73,7 @@ class ReadyForDeliveryController extends Controller
         $this->authorize('create', ReadyForDelivery::class);
 
         $jobCards = JobCard::with(['serviceInward.contact', 'contact'])
-            ->whereDoesntHave('readyForDelivery')
+//            ->whereDoesntHave('readyForDelivery')
             ->orderBy('job_no')
             ->get(['id', 'job_no', 'contact_id', 'service_inward_id']);
 
