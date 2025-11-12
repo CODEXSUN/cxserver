@@ -134,7 +134,7 @@ class JobCardController extends Controller
     {
         $this->authorize('view', $jobCard);
 
-        $jobCard->load(['serviceInward.contact', 'status', 'contact', 'spares', 'user', 'entryBy']);
+        $jobCard->load(['serviceInward.contact', 'status', 'contact',  'user', 'entryBy']);
 
         return Inertia::render('JobCards/Show', [
             'job' => $jobCard,

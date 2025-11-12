@@ -602,16 +602,32 @@ export default function Index() {
                                         )}
                                     </TableCell>
                                     <TableCell>
+                                        <Link
+                                            href={route(
+                                                'contacts.index',
+                                                inward.contact.id,
+                                            )}
+                                            className="hover:text-primary hover:underline"
+                                        >
                                         <div>
                                             <div className="font-medium">
                                                 {inward.contact.name}
                                             </div>
+                                            {inward.contact
+                                                .mobile && (
+                                                <div className="text-xs text-muted-foreground">
+                                                    {
+                                                        inward.contact.mobile
+                                                    }
+                                                </div>
+                                            )}
                                             {inward.contact.company && (
                                                 <div className="text-sm text-muted-foreground">
                                                     {inward.contact.company}
                                                 </div>
                                             )}
                                         </div>
+                                        </Link>
                                     </TableCell>
                                     <TableCell>
                                         <Badge variant="outline">

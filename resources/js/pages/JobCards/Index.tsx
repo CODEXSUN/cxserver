@@ -52,6 +52,7 @@ import type { BreadcrumbItem } from '@/types';
 import { format, parseISO } from 'date-fns';
 
 interface JobCard {
+    user: string;
     id: number;
     job_no: string;
     final_status: string | null;
@@ -61,7 +62,7 @@ interface JobCard {
     service_inward: {
         rma: string;
         material_type: 'laptop' | 'desktop' | 'printer';
-        contact: { name: string; company?: string };
+        contact: { id: string; name: string; mobile?: string; company?: string };
     };
     status: { id: number; name: string };
 }
@@ -603,7 +604,7 @@ export default function Index() {
                                                     'job_cards.show',
                                                     job.id,
                                                 )}
-                                                className="hover:text-primary"
+                                                className="hover:text-primary  hover:underline"
                                             >
                                                 {job.job_no}
                                             </Link>
@@ -621,23 +622,42 @@ export default function Index() {
                                     </TableCell>
 
                                     <TableCell>
-                                        <div>
-                                            <div className="font-medium">
-                                                {
-                                                    job.service_inward.contact
-                                                        .name
-                                                }
-                                            </div>
-                                            {job.service_inward.contact
-                                                .company && (
-                                                <div className="text-sm text-muted-foreground">
+                                        <Link
+                                            href={route(
+                                                'contacts.index',
+                                                job.service_inward.contact.id,
+                                            )}
+                                            className="hover:text-primary hover:underline"
+                                        >
+                                            <div>
+                                                <div className="font-medium">
                                                     {
                                                         job.service_inward
-                                                            .contact.company
+                                                            .contact.name
                                                     }
                                                 </div>
-                                            )}
-                                        </div>
+
+                                                {job.service_inward.contact
+                                                    .mobile && (
+                                                    <div className="text-xs text-muted-foreground">
+                                                        {
+                                                            job.service_inward
+                                                                .contact.mobile
+                                                        }
+                                                    </div>
+                                                )}
+
+                                                {job.service_inward.contact
+                                                    .company && (
+                                                    <div className="text-xs text-muted-foreground">
+                                                        {
+                                                            job.service_inward
+                                                                .contact.company
+                                                        }
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </Link>
                                     </TableCell>
                                     <TableCell>
                                         <Badge variant="outline">

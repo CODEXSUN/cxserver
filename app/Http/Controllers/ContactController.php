@@ -14,26 +14,36 @@ class ContactController extends Controller
 {
     use AuthorizesRequests;
 
+// app/Http/Controllers/ContactController.php
+
     public function index(Request $request)
     {
         $this->authorize('viewAny', Contact::class);
 
+        // ──────────────────────────────────────────────────────────────
+        // FILTERS
+        // ──────────────────────────────────────────────────────────────
         $search = $request->input('search');
         $typeId = $request->input('contact_type_id');
+        $activeFilter = $request->input('active_filter', 'all'); // 'all', 'yes', 'no'
+        $perPage = (int) $request->input('per_page', 50);
+        $perPage = in_array($perPage, [10, 25, 50, 100, 200]) ? $perPage : 50;
 
         $query = Contact::with(['contactType', 'user'])
-            ->when($search, function ($q, $search) {
-                $q->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('mobile', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('company', 'like', "%{$search}%");
+            ->when($search, function ($q, $term) {
+                $q->where(function ($q) use ($term) {
+                    $q->where('name', 'like', "%{$term}%")
+                        ->orWhere('mobile', 'like', "%{$term}%")
+                        ->orWhere('email', 'like', "%{$term}%")
+                        ->orWhere('company', 'like', "%{$term}%");
                 });
             })
-            ->when($typeId, fn($q) => $q->where('contact_type_id', $typeId))
+            ->when($typeId && $typeId !== 'all', fn($q) => $q->where('contact_type_id', $typeId))
+            ->when($activeFilter === 'yes', fn($q) => $q->where('active', true))
+            ->when($activeFilter === 'no', fn($q) => $q->where('active', false))
             ->latest();
 
-        $contacts = $query->paginate(10)->withQueryString();
+        $contacts = $query->paginate($perPage)->withQueryString();
 
         $contactTypes = ContactType::orderBy('name')->get();
 
@@ -41,8 +51,10 @@ class ContactController extends Controller
             'contacts' => $contacts,
             'contactTypes' => $contactTypes,
             'filters' => [
-                'search' => $search,
-                'contact_type_id' => $typeId,
+                'search' => $search ?? '',
+                'contact_type_id' => $typeId ?? 'all',
+                'active_filter' => $activeFilter,
+                'per_page' => (string) $perPage,
             ],
             'can' => [
                 'create' => auth()->user()->hasPermissionTo('contact.create'),
