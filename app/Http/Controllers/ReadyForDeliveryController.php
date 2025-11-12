@@ -143,7 +143,9 @@ class ReadyForDeliveryController extends Controller
 
         $readyForDelivery->load([
             'jobCard.serviceInward.contact',
-            'jobCard.contact'
+            'jobCard.contact',
+            'user',           // ← MUST be loaded
+            'serviceStatus',
         ]);
 
         $users    = User::orderBy('name')->get(['id', 'name']);
