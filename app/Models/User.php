@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Illuminate\Support\Collection;
 
@@ -19,6 +20,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'profile_photo_path',
         'active',
     ];
     protected $hidden = [
@@ -106,4 +108,31 @@ class User extends Authenticatable
     {
         return $query->where('active', true);
     }
+
+    // Accessor for profile photo URL
+    protected $appends = ['profile_photo_url', 'default_profile_photo_url'];
+
+    public function getProfilePhotoUrlAttribute(): string
+    {
+        return $this->profile_photo_path
+            ? asset('storage/' . $this->profile_photo_path)
+            : $this->default_profile_photo_url;
+    }
+
+    public function getDefaultProfilePhotoUrlAttribute(): string
+    {
+        $initials = trim(collect(explode(' ', $this->name))
+            ->map(fn ($part) => mb_substr($part, 0, 1))
+            ->join(' ')
+        );
+        return 'https://ui-avatars.com/api/?name=' . urlencode($initials) . '&color=7F9CF5&background=EBF4FF';
+    }
+    // Optional: Delete old photo on update
+    public function deleteProfilePhoto()
+    {
+        if ($this->profile_photo_path && Storage::disk('public')->exists($this->profile_photo_path)) {
+            Storage::disk('public')->delete($this->profile_photo_path);
+        }
+    }
+
 }
