@@ -10,7 +10,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';               // <-- ADDED
 import {
     Popover,
@@ -44,7 +43,6 @@ import type { BreadcrumbItem } from '@/types';
 import { format, parseISO } from 'date-fns';
 import {
     Calendar as CalendarIcon,
-    GripVertical,
     Plus,
     RotateCcw,
     Search,
@@ -318,157 +316,193 @@ export default function Index() {
         return badges;
     }, [localFilters, users, clearFilter]);
 
-
-    const handlePerPageChange = (perPage: number) => {
-        setLocalFilters((prev) => ({ ...prev, per_page: String(perPage) }));
-        navigate({ per_page: perPage, page: 1 });
-    };
-
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout>
             <Head title="Todos" />
+            <div className="py-12">
+                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
 
-            <div className="py-6">
-                <div className="mx-auto space-y-6 sm:px-6 lg:px-8">
-
-                    {/* Header */}
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold tracking-tight text-black/50">
-                                Todos
-                            </h1>
-                            <p className="mt-1 text-sm font-semibold text-black/30">
-                                Track your todos
-                            </p>
+                    {/* ── BREADCRUMBS ── */}
+                    <div className="mb-6">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            {breadcrumbs.map((item, i) => (
+                                <div key={i} className="flex items-center gap-2">
+                                    {i > 0 && <span>/</span>}
+                                    {item.href ? (
+                                        <Link href={item.href} className="hover:text-foreground">
+                                            {item.title}
+                                        </Link>
+                                    ) : (
+                                        <span className="text-foreground">{item.title}</span>
+                                    )}
+                                </div>
+                            ))}
                         </div>
-                        <div className="flex gap-3">
+                    </div>
+
+                    {/* ── HEADER ── */}
+                    <div className="mb-6 flex items-center justify-between">
+                        <h1 className="text-2xl font-bold">Todos</h1>
+                        <div className="flex items-center gap-4">
                             {can.create && (
+                                <Button size="sm" asChild>
+                                    <Link href={route('todos.create')}>
+                                        <Plus className="mr-2 h-4 w-4" /> New Todo
+                                    </Link>
+                                </Button>
+                            )}
+                            {trashedCount > 0 && (
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <Button asChild>
-                                                <Link
-                                                    href={route(
-                                                        'todos.create',
-                                                    )}
-                                                >
-                                                    <Plus className="mr-2 h-4 w-4" />
-                                                    New Inward
+                                            <Button variant="ghost" size="icon" asChild>
+                                                <Link href={route('todos.trash')}>
+                                                    <Trash2 className="h-5 w-5 text-muted-foreground hover:text-destructive" />
+                                                    <Badge
+                                                        variant="destructive"
+                                                        className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs"
+                                                    >
+                                                        {trashedCount}
+                                                    </Badge>
                                                 </Link>
                                             </Button>
                                         </TooltipTrigger>
-                                        <TooltipContent>
-                                            Add a new service inward
-                                        </TooltipContent>
+                                        <TooltipContent>View Trashed</TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
-                            )}
-                            {trashedCount > 0 && (
-                                <Button variant="outline" asChild>
-                                    <Link href={route('todos.trash')}>
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        Trash ({trashedCount})
-                                    </Link>
-                                </Button>
                             )}
                         </div>
                     </div>
 
-                    <Separator />
-
-                    {/* FILTER BAR */}
-                    <div className="flex flex-wrap items-center gap-3">
-                        <div className="relative min-w-[200px] flex-1">
-                            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input
-                                placeholder="Search Todos..."
-                                className="h-9 pl-10"
-                                value={localFilters.search}
-                                onChange={(e) =>
-                                    setLocalFilters((prev) => ({
-                                        ...prev,
-                                        search: e.target.value,
-                                    }))
-                                }
-                                onKeyUp={(e) => e.key === 'Enter' && navigate()}
-                                disabled={isNavigating}
-                            />
+                    {/* ── FILTER BAR ── */}
+                    <div className="space-y-4 rounded-lg border bg-card p-6 shadow-sm">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-lg font-semibold">Filters</h2>
+                            <Button variant="ghost" size="sm" onClick={handleReset} className="gap-1">
+                                <RotateCcw className="h-4 w-4" /> Reset
+                            </Button>
                         </div>
+                        <Separator />
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
 
-                        <Select
-                            value={localFilters.visibility}
-                            onValueChange={(v: 'all' | 'Public' | 'private') => {
-                                setLocalFilters((prev) => ({
-                                    ...prev,
-                                    visibility: v,
-                                }));
-                                navigate({ visibility: v });
-                            }}
-                            disabled={isNavigating}
-                        >
-                            <SelectTrigger className="h-9 w-48">
-                                <SelectValue placeholder="All Jobs" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Visibility</SelectItem>
-                                <SelectItem value="public">Public</SelectItem>
-                                <SelectItem value="private">Private</SelectItem>
-                            </SelectContent>
-                        </Select>
+                            {/* Search */}
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    placeholder="Search todos..."
+                                    value={localFilters.search}
+                                    onChange={(e) =>
+                                        setLocalFilters((p) => ({ ...p, search: e.target.value }))
+                                    }
+                                    onKeyDown={(e) => e.key === 'Enter' && navigate()}
+                                    className="pl-9"
+                                />
+                            </div>
 
-                        <Select
-                            value={localFilters.priority}
-                            onValueChange={(
-                                v: 'all' | 'low' | 'medium' | 'high',
-                            ) => {
-                                setLocalFilters((prev) => ({
-                                    ...prev,
-                                    priority: v,
-                                }));
-                                navigate({ priority: v });
-                            }}
-                            disabled={isNavigating}
-                        >
-                            <SelectTrigger className="h-9 w-40">
-                                <SelectValue placeholder="All Types" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Priority</SelectItem>
-                                <SelectItem value="low">Low</SelectItem>
-                                <SelectItem value="medium">Medium</SelectItem>
-                                <SelectItem value="high">High</SelectItem>
-                            </SelectContent>
-                        </Select>
+                            {/* Visibility */}
+                            <div>
+                                <Label>Visibility</Label>
+                                <Select
+                                    value={localFilters.visibility}
+                                    onValueChange={(v) => {
+                                        setLocalFilters((p) => ({ ...p, visibility: v }));
+                                        navigate({ visibility: v === 'all' ? undefined : v });
+                                    }}
+                                >
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All</SelectItem>
+                                        <SelectItem value="public">Public</SelectItem>
+                                        <SelectItem value="private">Private</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                        <Select
-                            value={localFilters.completed}
-                            onValueChange={(
-                                v: 'all' | 'yes' | 'no',
-                            ) => {
-                                setLocalFilters((prev) => ({
-                                    ...prev,
-                                    completed: v,
-                                }));
-                                navigate({ completed: v });
-                            }}
-                            disabled={isNavigating}
-                        >
-                            <SelectTrigger className="h-9 w-40">
-                                <SelectValue placeholder="All Types" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Status</SelectItem>
-                                <SelectItem value="yes">Completed</SelectItem>
-                                <SelectItem value="no">Pending</SelectItem>
-                            </SelectContent>
-                        </Select>
+                            {/* Priority */}
+                            <div>
+                                <Label>Priority</Label>
+                                <Select
+                                    value={localFilters.priority}
+                                    onValueChange={(v) => {
+                                        setLocalFilters((p) => ({ ...p, priority: v }));
+                                        navigate({ priority: v === 'all' ? undefined : v });
+                                    }}
+                                >
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All</SelectItem>
+                                        <SelectItem value="low">Low</SelectItem>
+                                        <SelectItem value="medium">Medium</SelectItem>
+                                        <SelectItem value="high">High</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {/* Assignee */}
+                            <div>
+                                <Label>Assignee</Label>
+                                <Select
+                                    value={localFilters.assignee_id}
+                                    onValueChange={(v) => {
+                                        setLocalFilters((p) => ({ ...p, assignee_id: v }));
+                                        navigate({ assignee_id: v === 'all' ? undefined : v });
+                                    }}
+                                >
+                                    <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All</SelectItem>
+                                        {users.map((u) => (
+                                            <SelectItem key={u.id} value={String(u.id)}>
+                                                {u.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {/* My Tasks */}
+                            <div className="flex items-end">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <Input
+                                        type="checkbox"
+                                        checked={localFilters.my_tasks}
+                                        onChange={(e) => {
+                                            const checked = e.target.checked;
+                                            setLocalFilters((p) => ({ ...p, my_tasks: checked }));
+                                            navigate({ my_tasks: checked ? '1' : undefined });
+                                        }}
+                                    />
+                                    <span className="text-sm">My Tasks Only</span>
+                                </label>
+                            </div>
+
+                            {/* Status */}
+                            <div>
+                                <Label>Status</Label>
+                                <Select
+                                    value={localFilters.completed}
+                                    onValueChange={(v) => {
+                                        setLocalFilters((p) => ({ ...p, completed: v }));
+                                        navigate({ completed: v === 'all' ? undefined : v });
+                                    }}
+                                >
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All</SelectItem>
+                                        <SelectItem value="yes">Completed</SelectItem>
+                                        <SelectItem value="no">Pending</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
                             {/* Date Range */}
+                            <div>
+                                <Label>Date Range</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
                                             variant="outline"
-                                            className="text-left font-normal"
+                                            className="w-full justify-start text-left font-normal"
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
                                             {localFilters.date_from ? (
@@ -509,54 +543,47 @@ export default function Index() {
                                         />
                                     </PopoverContent>
                                 </Popover>
+                            </div>
 
-                        <div className="flex gap-1">
-                            <Button
-                                size="sm"
-                                className="h-9"
-                                onClick={() => navigate()}
-                                disabled={isNavigating}
-                            >
-                                <Search className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-9"
-                                onClick={handleReset}
-                                disabled={isNavigating}
-                            >
-                                <RotateCcw className="h-4 w-4" />
-                            </Button>
+                            {/* Per Page */}
+                            <div>
+                                <Label>Per Page</Label>
+                                <Select
+                                    value={localFilters.per_page}
+                                    onValueChange={(v) => {
+                                        setLocalFilters((p) => ({ ...p, per_page: v }));
+                                        navigate({ per_page: v });
+                                    }}
+                                >
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="10">10</SelectItem>
+                                        <SelectItem value="25">25</SelectItem>
+                                        <SelectItem value="50">50</SelectItem>
+                                        <SelectItem value="100">100</SelectItem>
+                                        <SelectItem value="200">200</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
-                    </div>
 
-
-                    {/* ACTIVE FILTERS */}
-                    <div className="flex flex-wrap gap-2 rounded-md border bg-muted/30 p-3">
-                        <span className="font-medium text-foreground">
-                            Active Filters:
-                        </span>
-                        <div className="flex flex-wrap gap-2">
-                            {activeFilterBadges}
-                        </div>
+                        {/* Active Badges */}
+                        {activeFilterBadges.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-3">{activeFilterBadges}</div>
+                        )}
                     </div>
 
                     {/* ── TABLE ── */}
                     <DataTable
                         data={todosPaginated.data}
                         pagination={todosPaginated}
-                        perPage={parseInt(localFilters.per_page)}
-                        onPerPageChange={handlePerPageChange}
                         onPageChange={(page) => navigate({ page })}
                         emptyMessage="No todos found."
                         isLoading={isNavigating}
                     >
                         <TableHeader>
-                            <TableRow className="text- anivers bg-muted font-semibold">
-                                <TableHead className="w-fit">Title</TableHead>
-                                <TableHead className="w-fit">Title</TableHead>
-                                <TableHead className="w-fit">Title</TableHead>
+                            <TableRow>
+                                <TableHead>Title</TableHead>
                                 <TableHead>Priority</TableHead>
                                 <TableHead>Assignee</TableHead>
                                 <TableHead>Due</TableHead>
@@ -570,21 +597,6 @@ export default function Index() {
                                     key={todo.id}
                                     // className={todo.deleted_at ?. 'opacity-60' : ''}
                                 >
-
-                                    <TableCell>
-                                        <GripVertical className="w-5 h-5 text-gray-400 mr-2" />
-                                    </TableCell>
-                                        <TableCell>
-                                            <span className="w-8 text-gray-500 font-medium">{todo.id}.</span>
-                                        </TableCell>
-                                    <TableCell>
-                                        <Checkbox
-                                            checked={todo.completed}
-                                            disabled
-                                            className="mr-3"
-                                        />
-                                    </TableCell>
-
                                     <TableCell className="font-medium">
                                         <Link
                                             href={route('todos.show', todo.id)}
