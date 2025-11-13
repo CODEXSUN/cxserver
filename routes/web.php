@@ -20,6 +20,7 @@ use App\Http\Controllers\ServiceStatusController;
 use App\Http\Controllers\SystemManagerController;
 
 //use App\Http\Controllers\UserSearchController;
+use App\Http\Controllers\TodoController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -366,4 +367,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('ready_for_deliveries/trash', [ReadyForDeliveryController::class, 'trash'])
         ->name('ready_for_deliveries.trash');
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
+Route::resource('todos', TodoController::class)->except(['show']);
+Route::get('todos/trash', [TodoController::class, 'trash'])->name('todos.trash');
+Route::post('todos/{todo}/restore', [TodoController::class, 'restore'])->name('todos.restore');
+Route::delete('todos/{todo}/force', [TodoController::class, 'forceDelete'])->name('todos.forceDelete');
+Route::get('todos/{todo}', [TodoController::class, 'show'])->name('todos.show');
 });
