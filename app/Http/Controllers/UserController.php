@@ -157,16 +157,33 @@ class UserController extends Controller
      * ---------------------------------------------------------------- */
     public function update(Request $request, User $user)
     {
+//        dd($request);
+
         $this->authorize('update', $user);
 
         $data = $request->validate([
-            'name'     => 'sometimes|string|max:255',
-            'email'    => ['sometimes', 'email', Rule::unique('users')->ignore($user->id)],
-            'password' => 'nullable|string|min:8|confirmed',
-            'active'   => 'sometimes|boolean',
-            'roles'    => 'sometimes|array',
-            'roles.*'  => 'exists:roles,name',
+            'name' => 'sometimes|string|max:255',
+            'email' => ['sometimes', 'email', Rule::unique('users')->ignore($user->id)],
+            'password' => 'nullable|string|min:8',
+            'password_confirmation' => 'nullable|same:password',
+            'active' => 'sometimes|boolean',
+            'roles' => 'sometimes|array',
+            'roles.*' => 'exists:roles,name',
+            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'delete_photo' => 'nullable|boolean',
         ]);
+
+        $data = array_filter($data, fn($v) => !is_null($v));
+
+        if ($request->boolean('delete_photo')) {
+            $user->deleteProfilePhoto();
+            $data['profile_photo_path'] = null;
+        }
+
+        if ($request->hasFile('profile_photo')) {
+            $user->deleteProfilePhoto();
+            $data['profile_photo_path'] = $this->resizeAndStore($request->file('profile_photo'));
+        }
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($data['password']);
@@ -176,13 +193,18 @@ class UserController extends Controller
 
         $user->update($data);
 
-        if ($request->has('roles')) {
-            $roleIds = Role::whereIn('name', $request->roles)->pluck('id');
-            $user->roles()->sync($roleIds);
+        if ($request->has('roles') || $request->filled('roles')) {
+            $roles = $request->input('roles', []);
+            if (is_array($roles) && count($roles) > 0) {
+                $roleIds = Role::whereIn('name', $roles)->pluck('id');
+                $user->roles()->sync($roleIds);
+            } else {
+                // If no roles selected, detach all
+                $user->roles()->sync([]);
+            }
         }
 
-        return redirect()->route('users.index')
-            ->with('success', 'User updated successfully.');
+        return redirect()->route('users.index')->with('success', 'User updated.');
     }
 
     /* ----------------------------------------------------------------
