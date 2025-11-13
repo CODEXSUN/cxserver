@@ -6,11 +6,11 @@ import { useRoute } from 'ziggy-js';
 
 import DataTable from '@/components/table/DataTable';
 import TableActions from '@/components/table/TableActions';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';               // <-- ADDED
 import {
     Popover,
     PopoverContent,
@@ -50,6 +50,9 @@ import {
     X,
 } from 'lucide-react';
 
+/* ────────────────────────────────────────────────────────────── */
+/*  Types (mirrored from ServiceInward)                          */
+/* ────────────────────────────────────────────────────────────── */
 interface Todo {
     id: number;
     title: string;
@@ -88,6 +91,7 @@ interface TodosPageProps {
     trashedCount: number;
 }
 
+/* ────────────────────────────────────────────────────────────── */
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: dashboard().url },
     { title: 'Todos', href: todos().url },
@@ -100,12 +104,12 @@ export default function Index() {
         can,
         users,
         trashedCount,
-    } = usePage().props as unknown as TodosPageProps;
+    } = usePage<TodosPageProps>().props;
     const route = useRoute();
 
-    // ──────────────────────────────────────────────────────────────
-    // LOCAL STATE – filters + per-page
-    // ──────────────────────────────────────────────────────────────
+    /* ────────────────────────────────────────────────────────── */
+    /*  Local filter state + sync with server                     */
+    /* ────────────────────────────────────────────────────────── */
     const [localFilters, setLocalFilters] = useState({
         search: serverFilters.search || '',
         visibility: serverFilters.visibility || 'all',
@@ -124,7 +128,6 @@ export default function Index() {
 
     const [isNavigating, setIsNavigating] = useState(false);
 
-    // Sync server filters → local state
     useEffect(() => {
         setLocalFilters({
             search: serverFilters.search || '',
@@ -143,27 +146,21 @@ export default function Index() {
         });
     }, [serverFilters]);
 
-    // Build URL payload
+    /* ────────────────────────────────────────────────────────── */
+    /*  Payload builder                                            */
+    /* ────────────────────────────────────────────────────────── */
     const buildPayload = useCallback(
         () => ({
             search: localFilters.search || undefined,
             visibility:
-                localFilters.visibility === 'all'
-                    ? undefined
-                    : localFilters.visibility,
+                localFilters.visibility === 'all' ? undefined : localFilters.visibility,
             priority:
-                localFilters.priority === 'all'
-                    ? undefined
-                    : localFilters.priority,
+                localFilters.priority === 'all' ? undefined : localFilters.priority,
             assignee_id:
-                localFilters.assignee_id === 'all'
-                    ? undefined
-                    : localFilters.assignee_id,
+                localFilters.assignee_id === 'all' ? undefined : localFilters.assignee_id,
             my_tasks: localFilters.my_tasks ? '1' : undefined,
             completed:
-                localFilters.completed === 'all'
-                    ? undefined
-                    : localFilters.completed,
+                localFilters.completed === 'all' ? undefined : localFilters.completed,
             date_from: localFilters.date_from
                 ? format(localFilters.date_from, 'yyyy-MM-dd')
                 : undefined,
@@ -175,7 +172,9 @@ export default function Index() {
         [localFilters],
     );
 
-    // Navigate with filters
+    /* ────────────────────────────────────────────────────────── */
+    /*  Navigation helper                                          */
+    /* ────────────────────────────────────────────────────────── */
     const navigate = useCallback(
         (extra = {}) => {
             setIsNavigating(true);
@@ -192,16 +191,16 @@ export default function Index() {
         [route, buildPayload],
     );
 
-    // Reset all filters
+    /* ────────────────────────────────────────────────────────── */
+    /*  Reset all filters                                          */
+    /* ────────────────────────────────────────────────────────── */
     const handleReset = () => {
-        router.get(
-            route('todos.index'),
-            {},
-            { preserveState: true, replace: true },
-        );
+        router.get(route('todos.index'), {}, { preserveState: true, replace: true });
     };
 
-    // Clear single filter
+    /* ────────────────────────────────────────────────────────── */
+    /*  Clear a single filter                                      */
+    /* ────────────────────────────────────────────────────────── */
     const clearFilter = useCallback(
         (
             key:
@@ -234,17 +233,15 @@ export default function Index() {
         [navigate],
     );
 
-    // Active filter badges
+    /* ────────────────────────────────────────────────────────── */
+    /*  Active filter badges (exact same style as ServiceInward)   */
+    /* ────────────────────────────────────────────────────────── */
     const activeFilterBadges = useMemo(() => {
         const badges: JSX.Element[] = [];
 
         if (localFilters.search)
             badges.push(
-                <Badge
-                    key="search"
-                    variant="secondary"
-                    className="flex items-center gap-1"
-                >
+                <Badge key="search" variant="secondary" className="flex items-center gap-1">
                     Search: "{localFilters.search}"
                     <button onClick={() => clearFilter('search')}>
                         <X className="h-3 w-3" />
@@ -254,12 +251,8 @@ export default function Index() {
 
         if (localFilters.visibility !== 'all')
             badges.push(
-                <Badge
-                    key="visibility"
-                    variant="secondary"
-                    className="flex items-center gap-1"
-                >
-                    Visibility: {localFilters.visibility.charAt(0).toUpperCase() + localFilters.visibility.slice(1)}
+                <Badge key="visibility" variant="secondary" className="flex items-center gap-1">
+                    Visibility: {localFilters.visibility}
                     <button onClick={() => clearFilter('visibility')}>
                         <X className="h-3 w-3" />
                     </button>
@@ -268,12 +261,8 @@ export default function Index() {
 
         if (localFilters.priority !== 'all')
             badges.push(
-                <Badge
-                    key="priority"
-                    variant="secondary"
-                    className="flex items-center gap-1"
-                >
-                    Priority: {localFilters.priority.charAt(0).toUpperCase() + localFilters.priority.slice(1)}
+                <Badge key="priority" variant="secondary" className="flex items-center gap-1">
+                    Priority: {localFilters.priority}
                     <button onClick={() => clearFilter('priority')}>
                         <X className="h-3 w-3" />
                     </button>
@@ -283,12 +272,8 @@ export default function Index() {
         if (localFilters.assignee_id !== 'all') {
             const user = users.find((u) => u.id === Number(localFilters.assignee_id));
             badges.push(
-                <Badge
-                    key="assignee"
-                    variant="secondary"
-                    className="flex items-center gap-1"
-                >
-                    Assignee: {user?.name || 'Unknown'}
+                <Badge key="assignee" variant="secondary" className="flex items-center gap-1">
+                    Assignee: {user?.name ?? '—'}
                     <button onClick={() => clearFilter('assignee_id')}>
                         <X className="h-3 w-3" />
                     </button>
@@ -298,11 +283,7 @@ export default function Index() {
 
         if (localFilters.my_tasks)
             badges.push(
-                <Badge
-                    key="my_tasks"
-                    variant="secondary"
-                    className="flex items-center gap-1"
-                >
+                <Badge key="my_tasks" variant="secondary" className="flex items-center gap-1">
                     My Tasks Only
                     <button onClick={() => clearFilter('my_tasks')}>
                         <X className="h-3 w-3" />
@@ -312,11 +293,7 @@ export default function Index() {
 
         if (localFilters.completed !== 'all')
             badges.push(
-                <Badge
-                    key="completed"
-                    variant="secondary"
-                    className="flex items-center gap-1"
-                >
+                <Badge key="completed" variant="secondary" className="flex items-center gap-1">
                     Status: {localFilters.completed === 'yes' ? 'Completed' : 'Pending'}
                     <button onClick={() => clearFilter('completed')}>
                         <X className="h-3 w-3" />
@@ -326,19 +303,10 @@ export default function Index() {
 
         if (localFilters.date_from || localFilters.date_to)
             badges.push(
-                <Badge
-                    key="date_range"
-                    variant="secondary"
-                    className="flex items-center gap-1"
-                >
+                <Badge key="date_range" variant="secondary" className="flex items-center gap-1">
                     Date Range:{' '}
-                    {localFilters.date_from
-                        ? format(localFilters.date_from, 'dd MMM yyyy')
-                        : '—'}{' '}
-                    to{' '}
-                    {localFilters.date_to
-                        ? format(localFilters.date_to, 'dd MMM yyyy')
-                        : '—'}
+                    {localFilters.date_from ? format(localFilters.date_from, 'dd MMM yyyy') : '—'} to{' '}
+                    {localFilters.date_to ? format(localFilters.date_to, 'dd MMM yyyy') : '—'}
                     <button onClick={() => clearFilter('date_from')}>
                         <X className="h-3 w-3" />
                     </button>
@@ -348,14 +316,12 @@ export default function Index() {
         return badges;
     }, [localFilters, users, clearFilter]);
 
-    // ──────────────────────────────────────────────────────────────
-    // RENDER
-    // ──────────────────────────────────────────────────────────────
     return (
         <AppLayout>
             <Head title="Todos" />
             <div className="py-12">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+
                     {/* ── BREADCRUMBS ── */}
                     <div className="mb-6">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -363,16 +329,11 @@ export default function Index() {
                                 <div key={i} className="flex items-center gap-2">
                                     {i > 0 && <span>/</span>}
                                     {item.href ? (
-                                        <Link
-                                            href={item.href}
-                                            className="hover:text-foreground"
-                                        >
+                                        <Link href={item.href} className="hover:text-foreground">
                                             {item.title}
                                         </Link>
                                     ) : (
-                                        <span className="text-foreground">
-                                            {item.title}
-                                        </span>
+                                        <span className="text-foreground">{item.title}</span>
                                     )}
                                 </div>
                             ))}
@@ -394,16 +355,12 @@ export default function Index() {
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                asChild
-                                            >
+                                            <Button variant="ghost" size="icon" asChild>
                                                 <Link href={route('todos.trash')}>
                                                     <Trash2 className="h-5 w-5 text-muted-foreground hover:text-destructive" />
                                                     <Badge
                                                         variant="destructive"
-                                                        className="absolute top-0 right-0 -mr-1 -mt-1 h-4 w-4 p-0 text-xs"
+                                                        className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs"
                                                     >
                                                         {trashedCount}
                                                     </Badge>
@@ -417,48 +374,42 @@ export default function Index() {
                         </div>
                     </div>
 
-                    {/* ── FILTERS ── */}
+                    {/* ── FILTER BAR ── */}
                     <div className="space-y-4 rounded-lg border bg-card p-6 shadow-sm">
                         <div className="flex items-center justify-between">
                             <h2 className="text-lg font-semibold">Filters</h2>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={handleReset}
-                                className="gap-1"
-                            >
+                            <Button variant="ghost" size="sm" onClick={handleReset} className="gap-1">
                                 <RotateCcw className="h-4 w-4" /> Reset
                             </Button>
                         </div>
                         <Separator />
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-                            {/* ── SEARCH ── */}
+
+                            {/* Search */}
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input
                                     placeholder="Search todos..."
                                     value={localFilters.search}
-                                    onChange={(e) => setLocalFilters((prev) => ({ ...prev, search: e.target.value }))}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') navigate();
-                                    }}
+                                    onChange={(e) =>
+                                        setLocalFilters((p) => ({ ...p, search: e.target.value }))
+                                    }
+                                    onKeyDown={(e) => e.key === 'Enter' && navigate()}
                                     className="pl-9"
                                 />
                             </div>
 
-                            {/* ── VISIBILITY ── */}
+                            {/* Visibility */}
                             <div>
                                 <Label>Visibility</Label>
                                 <Select
                                     value={localFilters.visibility}
                                     onValueChange={(v) => {
-                                        setLocalFilters((prev) => ({ ...prev, visibility: v }));
+                                        setLocalFilters((p) => ({ ...p, visibility: v }));
                                         navigate({ visibility: v === 'all' ? undefined : v });
                                     }}
                                 >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">All</SelectItem>
                                         <SelectItem value="public">Public</SelectItem>
@@ -467,19 +418,17 @@ export default function Index() {
                                 </Select>
                             </div>
 
-                            {/* ── PRIORITY ── */}
+                            {/* Priority */}
                             <div>
                                 <Label>Priority</Label>
                                 <Select
                                     value={localFilters.priority}
                                     onValueChange={(v) => {
-                                        setLocalFilters((prev) => ({ ...prev, priority: v }));
+                                        setLocalFilters((p) => ({ ...p, priority: v }));
                                         navigate({ priority: v === 'all' ? undefined : v });
                                     }}
                                 >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">All</SelectItem>
                                         <SelectItem value="low">Low</SelectItem>
@@ -489,31 +438,29 @@ export default function Index() {
                                 </Select>
                             </div>
 
-                            {/* ── ASSIGNEE ── */}
+                            {/* Assignee */}
                             <div>
                                 <Label>Assignee</Label>
                                 <Select
                                     value={localFilters.assignee_id}
                                     onValueChange={(v) => {
-                                        setLocalFilters((prev) => ({ ...prev, assignee_id: v }));
+                                        setLocalFilters((p) => ({ ...p, assignee_id: v }));
                                         navigate({ assignee_id: v === 'all' ? undefined : v });
                                     }}
                                 >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="All" />
-                                    </SelectTrigger>
+                                    <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">All</SelectItem>
-                                        {users.map((user) => (
-                                            <SelectItem key={user.id} value={String(user.id)}>
-                                                {user.name}
+                                        {users.map((u) => (
+                                            <SelectItem key={u.id} value={String(u.id)}>
+                                                {u.name}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </div>
 
-                            {/* ── MY TASKS ── */}
+                            {/* My Tasks */}
                             <div className="flex items-end">
                                 <label className="flex items-center gap-2 cursor-pointer">
                                     <Input
@@ -521,7 +468,7 @@ export default function Index() {
                                         checked={localFilters.my_tasks}
                                         onChange={(e) => {
                                             const checked = e.target.checked;
-                                            setLocalFilters((prev) => ({ ...prev, my_tasks: checked }));
+                                            setLocalFilters((p) => ({ ...p, my_tasks: checked }));
                                             navigate({ my_tasks: checked ? '1' : undefined });
                                         }}
                                     />
@@ -529,19 +476,17 @@ export default function Index() {
                                 </label>
                             </div>
 
-                            {/* ── STATUS ── */}
+                            {/* Status */}
                             <div>
                                 <Label>Status</Label>
                                 <Select
                                     value={localFilters.completed}
                                     onValueChange={(v) => {
-                                        setLocalFilters((prev) => ({ ...prev, completed: v }));
+                                        setLocalFilters((p) => ({ ...p, completed: v }));
                                         navigate({ completed: v === 'all' ? undefined : v });
                                     }}
                                 >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">All</SelectItem>
                                         <SelectItem value="yes">Completed</SelectItem>
@@ -550,7 +495,7 @@ export default function Index() {
                                 </Select>
                             </div>
 
-                            {/* ── DATE RANGE ── */}
+                            {/* Date Range */}
                             <div>
                                 <Label>Date Range</Label>
                                 <Popover>
@@ -580,8 +525,8 @@ export default function Index() {
                                                 to: localFilters.date_to,
                                             }}
                                             onSelect={(range) => {
-                                                setLocalFilters((prev) => ({
-                                                    ...prev,
+                                                setLocalFilters((p) => ({
+                                                    ...p,
                                                     date_from: range?.from,
                                                     date_to: range?.to,
                                                 }));
@@ -600,19 +545,17 @@ export default function Index() {
                                 </Popover>
                             </div>
 
-                            {/* ── PER PAGE ── */}
+                            {/* Per Page */}
                             <div>
                                 <Label>Per Page</Label>
                                 <Select
                                     value={localFilters.per_page}
                                     onValueChange={(v) => {
-                                        setLocalFilters((prev) => ({ ...prev, per_page: v }));
+                                        setLocalFilters((p) => ({ ...p, per_page: v }));
                                         navigate({ per_page: v });
                                     }}
                                 >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="10">10</SelectItem>
                                         <SelectItem value="25">25</SelectItem>
@@ -623,10 +566,10 @@ export default function Index() {
                                 </Select>
                             </div>
                         </div>
+
+                        {/* Active Badges */}
                         {activeFilterBadges.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mt-3">
-                                {activeFilterBadges}
-                            </div>
+                            <div className="flex flex-wrap gap-2 mt-3">{activeFilterBadges}</div>
                         )}
                     </div>
 
@@ -652,7 +595,7 @@ export default function Index() {
                             {todosPaginated.data.map((todo) => (
                                 <TableRow
                                     key={todo.id}
-                                    className={todo.deleted_at ? 'opacity-60' : ''}
+                                    // className={todo.deleted_at ?. 'opacity-60' : ''}
                                 >
                                     <TableCell className="font-medium">
                                         <Link
