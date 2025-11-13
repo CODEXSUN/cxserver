@@ -75,7 +75,7 @@ class UserController extends Controller
      * ---------------------------------------------------------------- */
     public function store(Request $request)
     {
-        dd($request);
+//        dd($request);
 
         $this->authorize('create', User::class);
 
@@ -157,33 +157,16 @@ class UserController extends Controller
      * ---------------------------------------------------------------- */
     public function update(Request $request, User $user)
     {
-        dd($request);
-
         $this->authorize('update', $user);
 
         $data = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'email' => ['sometimes', 'email', Rule::unique('users')->ignore($user->id)],
-            'password' => 'nullable|string|min:8',
-            'password_confirmation' => 'nullable|same:password',
-            'active' => 'sometimes|boolean',
-            'roles' => 'sometimes|array',
-            'roles.*' => 'exists:roles,name',
-            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'delete_photo' => 'nullable|boolean',
+            'name'     => 'sometimes|string|max:255',
+            'email'    => ['sometimes', 'email', Rule::unique('users')->ignore($user->id)],
+            'password' => 'nullable|string|min:8|confirmed',
+            'active'   => 'sometimes|boolean',
+            'roles'    => 'sometimes|array',
+            'roles.*'  => 'exists:roles,name',
         ]);
-
-        $data = array_filter($data, fn($v) => !is_null($v));
-
-        if ($request->boolean('delete_photo')) {
-            $user->deleteProfilePhoto();
-            $data['profile_photo_path'] = null;
-        }
-
-        if ($request->hasFile('profile_photo')) {
-            $user->deleteProfilePhoto();
-            $data['profile_photo_path'] = $this->resizeAndStore($request->file('profile_photo'));
-        }
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($data['password']);
@@ -194,11 +177,12 @@ class UserController extends Controller
         $user->update($data);
 
         if ($request->has('roles')) {
-            $roleIds = Role::whereIn('name', $request->input('roles', []))->pluck('id');
+            $roleIds = Role::whereIn('name', $request->roles)->pluck('id');
             $user->roles()->sync($roleIds);
         }
 
-        return redirect()->route('users.index')->with('success', 'User updated.');
+        return redirect()->route('users.index')
+            ->with('success', 'User updated successfully.');
     }
 
     /* ----------------------------------------------------------------
