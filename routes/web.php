@@ -1,9 +1,12 @@
 <?php
 
 use App\Http\Controllers\BlogController;
+use App\Http\Controllers\CallLogController;
+use App\Http\Controllers\CallLogNoteController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ContactSearchController;
 use App\Http\Controllers\ContactTypeController;
+use App\Http\Controllers\EnquiryController;
 use App\Http\Controllers\JobAssignmentController;
 use App\Http\Controllers\JobCardController;
 use App\Http\Controllers\JobCardSearchController;
@@ -379,3 +382,46 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/todos/reorder', [TodoController::class, 'reorder'])->name('todos.reorder');
     Route::patch('/todos/{todo}/toggle-complete', [TodoController::class, 'toggleComplete'])->name('todos.toggle-complete');
 });
+
+
+Route::middleware(['auth', 'verified'])->group(function () {
+
+    // === Call Logs Resource (Standard) ===
+    Route::resource('calls', CallLogController::class)
+        ->parameters(['calls' => 'call_log']) // ← Renames {calls} → {call_log}
+        ->except(['show']); // show is optional if not used
+
+    // === OR: Manual (if you prefer full control) ===
+
+    Route::get('calls/{call_log}', [CallLogController::class, 'show'])
+        ->name('calls.show');
+
+    /*
+    Route::get('calls', [CallLogController::class, 'index'])->name('calls.index');
+    Route::get('calls/create', [CallLogController::class, 'create'])->name('calls.create');
+    Route::post('calls', [CallLogController::class, 'store'])->name('calls.store');
+    Route::get('calls/{call_log}', [CallLogController::class, 'show'])->name('calls.show');
+    Route::get('calls/{call_log}/edit', [CallLogController::class, 'edit'])->name('calls.edit');
+    Route::put('calls/{call_log}', [CallLogController::class, 'update'])->name('calls.update');
+    Route::delete('calls/{call_log}', [CallLogController::class, 'destroy'])->name('calls.destroy');
+    */
+
+    // === Custom Actions ===
+    Route::get('calls/trash', [CallLogController::class, 'trash'])->name('calls.trash');
+    Route::post('calls/{call_log}/restore', [CallLogController::class, 'restore'])->name('calls.restore');
+    Route::delete('calls/{call_log}/force-delete', [CallLogController::class, 'forceDelete'])->name('calls.forceDelete');
+    Route::get('calls/search', [CallLogController::class, 'search'])->name('calls.search');
+    Route::get('contacts/{contact}/history', [CallLogController::class, 'contactHistory'])->name('contacts.history');
+
+    // === Notes (Nested under call_log) ===
+    Route::prefix('calls/{call_log}')->name('calls.')->group(function () {
+        Route::post('notes', [CallLogNoteController::class, 'store'])->name('notes.store');
+        Route::put('notes/{note}', [CallLogNoteController::class, 'update'])->name('notes.update');
+        Route::delete('notes/{note}', [CallLogNoteController::class, 'destroy'])->name('notes.destroy');
+    });
+
+
+
+});
+
+Route::resource('enquiries', EnquiryController::class);
