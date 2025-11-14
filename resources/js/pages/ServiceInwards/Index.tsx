@@ -560,7 +560,7 @@ export default function Index() {
                         isLoading={isNavigating}
                     >
                         <TableHeader>
-                            <TableRow className="text- anivers bg-muted font-semibold">
+                            <TableRow className="text-anivers bg-muted font-semibold">
                                 <TableHead>RMA</TableHead>
                                 <TableHead>Customer</TableHead>
                                 <TableHead>Type</TableHead>

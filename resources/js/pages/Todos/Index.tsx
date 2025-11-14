@@ -24,14 +24,6 @@ import {
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import {
-    ColumnDef,
-    flexRender,
-    getCoreRowModel,
-    getPaginationRowModel,
-    Row,
-    useReactTable,
-} from '@tanstack/react-table';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -53,7 +45,6 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import {
-    Table,
     TableBody,
     TableCell,
     TableHead,
@@ -78,12 +69,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { dashboard } from '@/routes';
 import { index as todos } from '@/routes/todos/index';
 import type { BreadcrumbItem } from '@/types';
@@ -95,10 +80,10 @@ import {
     Search,
     Trash2,
     X,
-    ChevronLeft,
-    ChevronRight,
     Edit2,
 } from 'lucide-react';
+
+import DataTable from '@/components/table/DataTable';
 
 interface Todo {
     id: number;
@@ -188,33 +173,48 @@ function CompletionCheckbox({ todo }: { todo: Todo }) {
 }
 
 /* ── Draggable Row ── */
-function DraggableRow({ row }: { row: Row<Todo> }) {
-    const { transform, transition, setNodeRef, isDragging } = useSortable({ id: row.original.id });
-    const isCompleted = row.original.completed;
+function DraggableTodoRow({ todo }: { todo: Todo }) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: todo.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.8 : 1,
+        zIndex: isDragging ? 10 : 0,
+    };
 
     return (
         <TableRow
             ref={setNodeRef}
-            data-dragging={isDragging}
-            data-completed={isCompleted}
-            style={{
-                transform: CSS.Transform.toString(transform),
-                transition,
-                opacity: isDragging ? 0.8 : 1,
-                zIndex: isDragging ? 10 : 0,
-            }}
-            className={`
-                data-[completed=true]:text-green-600
-                data-[completed=true]:line-through
-                data-[completed=true]:opacity-70
-                data-[dragging=true]:shadow-lg
-            `}
+            style={style}
+            className={todo.completed ? 'text-green-600 line-through opacity-70' : ''}
         >
-            {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </TableCell>
-            ))}
+            <TableCell>
+                <DragHandleWithId id={todo.id} todo={todo} />
+            </TableCell>
+            <TableCell>
+                <CompletionCheckbox todo={todo} />
+            </TableCell>
+            <TableCell>{todo.title}</TableCell>
+            <TableCell>
+                <Badge variant={todo.priority === 'high' ? 'destructive' : todo.priority === 'low' ? 'secondary' : 'default'}>
+                    {todo.priority.charAt(0).toUpperCase() + todo.priority.slice(1)}
+                </Badge>
+            </TableCell>
+            <TableCell>{todo.assignee?.name || '—'}</TableCell>
+            <TableCell>
+                {todo.due_date ? format(new Date(todo.due_date), 'dd MMM yyyy') : '—'}
+            </TableCell>
+            <TableCell className="text-right">
+                <div className="flex items-center justify-end gap-1">
+                    <Button size="icon" variant="ghost" onClick={() => setEditTodo(todo)} className="h-7 w-7">
+                        <Edit2 className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button size="icon" variant="ghost" onClick={() => setDeleteTodo(todo)} className="h-7 w-7 text-destructive">
+                        <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                </div>
+            </TableCell>
         </TableRow>
     );
 }
@@ -423,7 +423,7 @@ function TodoFormDialog({
                         Cancel
                     </Button>
                     <Button onClick={handleSubmit} disabled={isSubmitting}>
-                        {isSubmitting ? 'Saving...' : (isEdit ? 'Save Changes' : 'Create Todo')}
+                        Save
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -431,16 +431,27 @@ function TodoFormDialog({
     );
 }
 
-/* ── Delete Confirmation ── */
-function DeleteConfirmDialog({ todo, open, onOpenChange }: { todo: Todo; open: boolean; onOpenChange: (open: boolean) => void }) {
+function DeleteConfirmDialog({
+                                 todo,
+                                 open,
+                                 onOpenChange,
+                             }: {
+    todo: Todo;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+}) {
     const route = useRoute();
+    const [isDeleting, setIsDeleting] = useState(false);
+
     const handleDelete = () => {
+        setIsDeleting(true);
         router.delete(route('todos.destroy', todo.id), {
             preserveState: true,
             onSuccess: () => {
                 router.reload({ only: ['todos'] });
                 onOpenChange(false);
             },
+            onFinish: () => setIsDeleting(false),
         });
     };
 
@@ -450,12 +461,12 @@ function DeleteConfirmDialog({ todo, open, onOpenChange }: { todo: Todo; open: b
                 <AlertDialogHeader>
                     <AlertDialogTitle>Delete Todo?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This will move "<strong>{todo.title}</strong>" to trash.
+                        This action cannot be undone. Are you sure you want to delete "{todo.title}"?
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+                    <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive text-destructive-foreground">
                         Delete
                     </AlertDialogAction>
                 </AlertDialogFooter>
@@ -464,22 +475,48 @@ function DeleteConfirmDialog({ todo, open, onOpenChange }: { todo: Todo; open: b
     );
 }
 
-/* ── Main Component ── */
 export default function Index() {
-    const { todos: todosPaginated, filters: serverFilters, can, trashedCount } = usePage<TodosPageProps>().props;
+    const {
+        todos: todosPaginated,
+        filters: serverFilters,
+        can,
+        users,
+        trashedCount,
+    } = usePage<TodosPageProps>().props;
+
     const route = useRoute();
 
-    const [localFilters, setLocalFilters] = useState({ ...serverFilters });
+    const [data, setData] = useState(todosPaginated.data);
+    const [localFilters, setLocalFilters] = useState({
+        search: serverFilters.search || '',
+        visibility: serverFilters.visibility || 'all',
+        priority: serverFilters.priority || 'all',
+        assignee_id: serverFilters.assignee_id || 'all',
+        my_tasks: serverFilters.my_tasks || '0',
+        completed: serverFilters.completed || 'all',
+        date_from: serverFilters.date_from || '',
+        date_to: serverFilters.date_to || '',
+        per_page: serverFilters.per_page || '50',
+    });
     const [isNavigating, setIsNavigating] = useState(false);
-    const [data, setData] = useState<Todo[]>(todosPaginated.data);
-    const [editTodo, setEditTodo] = useState<Todo | null>(null);
     const [showCreate, setShowCreate] = useState(false);
+    const [editTodo, setEditTodo] = useState<Todo | null>(null);
     const [deleteTodo, setDeleteTodo] = useState<Todo | null>(null);
 
     useEffect(() => {
-        setLocalFilters({ ...serverFilters });
         setData(todosPaginated.data);
-    }, [serverFilters, todosPaginated.data]);
+        setLocalFilters({
+            search: serverFilters.search || '',
+            visibility: serverFilters.visibility || 'all',
+            priority: serverFilters.priority || 'all',
+            assignee_id: serverFilters.assignee_id || 'all',
+            my_tasks: serverFilters.my_tasks || '0',
+            completed: serverFilters.completed || 'all',
+            date_from: serverFilters.date_from || '',
+            date_to: serverFilters.date_to || '',
+            per_page: serverFilters.per_page || '50',
+        });
+    }, [todosPaginated, serverFilters]);
 
     const buildPayload = useCallback(() => ({
         search: localFilters.search || undefined,
@@ -524,43 +561,6 @@ export default function Index() {
     );
 
     const dataIds = useMemo<UniqueIdentifier[]>(() => data.map(d => d.id), [data]);
-
-    const columns: ColumnDef<Todo>[] = [
-        { id: 'drag-id', header: '', cell: ({ row }) => <DragHandleWithId id={row.original.id} todo={row.original} />, size: 80 },
-        { id: 'completed', header: '', cell: ({ row }) => <CompletionCheckbox todo={row.original} />, size: 50 },
-        { accessorKey: 'title', header: 'Title', cell: ({ row }) => row.original.title },
-        { accessorKey: 'priority', header: 'Priority', cell: ({ row }) => (
-                <Badge variant={row.original.priority === 'high' ? 'destructive' : row.original.priority === 'low' ? 'secondary' : 'default'}>
-                    {row.original.priority.charAt(0).toUpperCase() + row.original.priority.slice(1)}
-                </Badge>
-            )},
-        { accessorKey: 'assignee', header: 'Assignee', cell: ({ row }) => row.original.assignee?.name || '—' },
-        { accessorKey: 'due_date', header: 'Due', cell: ({ row }) => row.original.due_date ? format(new Date(row.original.due_date), 'dd MMM yyyy') : '—' },
-        { id: 'actions', cell: ({ row }) => (
-                <div className="flex items-center justify-end gap-1">
-                    <Button size="icon" variant="ghost" onClick={() => setEditTodo(row.original)} className="h-7 w-7">
-                        <Edit2 className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button size="icon" variant="ghost" onClick={() => setDeleteTodo(row.original)} className="h-7 w-7 text-destructive">
-                        <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                </div>
-            ), size: 100 },
-    ];
-
-    const table = useReactTable({
-        data,
-        columns,
-        getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        state: { pagination: { pageIndex: todosPaginated.current_page - 1, pageSize: parseInt(localFilters.per_page) } },
-        manualPagination: true,
-        pageCount: todosPaginated.last_page,
-        onPaginationChange: (updater) => {
-            const newState = typeof updater === 'function' ? updater(table.getState().pagination) : updater;
-            navigate({ page: newState.pageIndex + 1 });
-        },
-    });
 
     const clearFilter = (key: keyof typeof localFilters) => {
         const updates: any = { [key]: key === 'per_page' ? '50' : 'all' };
@@ -657,56 +657,93 @@ export default function Index() {
                     <div className="flex flex-wrap gap-2 rounded-md border bg-muted/30 p-3">
                         <span className="font-medium text-foreground">Active Filters:</span>
                         <div className="flex flex-wrap gap-2">
-                            {localFilters.search && <Badge variant="secondary" className="flex items-center gap-1">Search: "{localFilters.search}" <button onClick={() => clearFilter('search')}><X className="h-3 w-3" /></button></Badge>}
-                            {localFilters.visibility && localFilters.visibility !== 'all' && <Badge variant="secondary" className="flex items-center gap-1">Visibility: {localFilters.visibility} <button onClick={() => clearFilter('visibility')}><X className="h-3 w-3" /></button></Badge>}
-                            {localFilters.priority && localFilters.priority !== 'all' && <Badge variant="secondary" className="flex items-center gap-1">Priority: {localFilters.priority} <button onClick={() => clearFilter('priority')}><X className="h-3 w-3" /></button></Badge>}
-                            {localFilters.completed && localFilters.completed !== 'all' && <Badge variant="secondary" className="flex items-center gap-1">Status: {localFilters.completed === 'yes' ? 'Completed' : 'Pending'} <button onClick={() => clearFilter('completed')}><X className="h-3 w-3" /></button></Badge>}
+                            {localFilters.search && (
+                                <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                                    Search: "{localFilters.search}"
+                                    <button onClick={() => clearFilter('search')} className="ml-1 rounded-sm p-0.5 hover:bg-muted">
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </Badge>
+                            )}
+                            {localFilters.visibility && localFilters.visibility !== 'all' && (
+                                <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                                    Visibility: {localFilters.visibility.charAt(0).toUpperCase() + localFilters.visibility.slice(1)}
+                                    <button onClick={() => clearFilter('visibility')} className="ml-1 rounded-sm p-0.5 hover:bg-muted">
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </Badge>
+                            )}
+                            {localFilters.priority && localFilters.priority !== 'all' && (
+                                <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                                    Priority: {localFilters.priority.charAt(0).toUpperCase() + localFilters.priority.slice(1)}
+                                    <button onClick={() => clearFilter('priority')} className="ml-1 rounded-sm p-0.5 hover:bg-muted">
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </Badge>
+                            )}
+                            {localFilters.completed && localFilters.completed !== 'all' && (
+                                <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                                    Status: {localFilters.completed === 'yes' ? 'Completed' : 'Pending'}
+                                    <button onClick={() => clearFilter('completed')} className="ml-1 rounded-sm p-0.5 hover:bg-muted">
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </Badge>
+                            )}
+                            {/* Per Page Badge – only if not default (50) */}
+                            {localFilters.per_page !== '50' && (
+                                <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                                    Per Page: {localFilters.per_page}
+                                    <button onClick={() => clearFilter('per_page')} className="ml-1 rounded-sm p-0.5 hover:bg-muted">
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </Badge>
+                            )}
+                            {/* No active filters fallback */}
+                            {!(
+                                localFilters.search ||
+                                (localFilters.visibility && localFilters.visibility !== 'all') ||
+                                (localFilters.priority && localFilters.priority !== 'all') ||
+                                (localFilters.completed && localFilters.completed !== 'all') ||
+                                localFilters.per_page !== '50'
+                            ) && (
+                                <span className="text-xs text-muted-foreground inline-flex items-center italic">
+                No active filters
+            </span>
+                            )}
                         </div>
                     </div>
 
                     {/* Table */}
-                    <div className="rounded-md border">
-                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]}>
-                            <Table>
-                                <TableHeader>
-                                    {table.getHeaderGroups().map(headerGroup => (
-                                        <TableRow key={headerGroup.id}>
-                                            {headerGroup.headers.map(header => (
-                                                <TableHead key={header.id} style={{ width: header.getSize() }}>
-                                                    {flexRender(header.column.columnDef.header, header.getContext())}
-                                                </TableHead>
-                                            ))}
-                                        </TableRow>
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]}>
+                        <DataTable
+                            data={data}
+                            pagination={todosPaginated}
+                            perPage={parseInt(localFilters.per_page)}
+                            onPerPageChange={handlePerPageChange}
+                            onPageChange={(page) => navigate({ page })}
+                            emptyMessage="No todos found."
+                            isLoading={isNavigating}
+                        >
+                            <TableHeader>
+                                <TableRow className="bg-muted font-semibold">
+                                    <TableHead style={{ width: 80 }}></TableHead>
+                                    <TableHead style={{ width: 50 }}></TableHead>
+                                    <TableHead>Title</TableHead>
+                                    <TableHead>Priority</TableHead>
+                                    <TableHead>Assignee</TableHead>
+                                    <TableHead>Due</TableHead>
+                                    <TableHead style={{ width: 100 }} className="text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <SortableContext items={dataIds} strategy={verticalListSortingStrategy}>
+                                    {data.map((todo) => (
+                                        <DraggableTodoRow key={todo.id} todo={todo} />
                                     ))}
-                                </TableHeader>
-                                <TableBody>
-                                    {table.getRowModel().rows?.length ? (
-                                        <SortableContext items={dataIds} strategy={verticalListSortingStrategy}>
-                                            {table.getRowModel().rows.map(row => <DraggableRow key={row.id} row={row} />)}
-                                        </SortableContext>
-                                    ) : (
-                                        <TableRow><TableCell colSpan={columns.length} className="h-24 text-center">No todos found.</TableCell></TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </DndContext>
-                    </div>
-
-                    {/* Pagination */}
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <Label>Rows per page</Label>
-                            <Select value={localFilters.per_page} onValueChange={(v) => handlePerPageChange(Number(v))}>
-                                <SelectTrigger className="w-20"><SelectValue /></SelectTrigger>
-                                <SelectContent>{[10, 25, 50, 100].map(s => <SelectItem key={s} value={String(s)}>{s}</SelectItem>)}</SelectContent>
-                            </Select>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground">Page {todosPaginated.current_page} of {todosPaginated.last_page}</span>
-                            <Button variant="outline" size="icon" onClick={() => navigate({ page: todosPaginated.current_page - 1 })} disabled={todosPaginated.current_page === 1}><ChevronLeft className="h-4 w-4" /></Button>
-                            <Button variant="outline" size="icon" onClick={() => navigate({ page: todosPaginated.current_page + 1 })} disabled={todosPaginated.current_page === todosPaginated.last_page}><ChevronRight className="h-4 w-4" /></Button>
-                        </div>
-                    </div>
+                                </SortableContext>
+                            </TableBody>
+                        </DataTable>
+                    </DndContext>
                 </div>
             </div>
 

@@ -27,6 +27,7 @@ import {
     Drill,
     ServerCrash,
     PackageCheck,
+    ListChecks,
 } from 'lucide-react';
 
 
@@ -44,6 +45,7 @@ import {index as out_service_centers } from '@/routes/out_service_centers';
 import {index as ready_for_deliveries } from '@/routes/ready_for_deliveries';
 import { NavService } from '@/components/nav-service';
 import { NavSpares } from '@/components/nav-spares';
+import { index as todos } from '@/routes/todos';
 
 const mainNavItems: NavItem[] = [
     {
@@ -65,6 +67,11 @@ const mainNavItems: NavItem[] = [
         title: 'Contact',
         href: contacts(),
         icon: Contact,
+    },
+    {
+        title: 'Todos',
+        href: todos(),
+        icon: ListChecks,
     },
 ];
 const ServiceNavItems: NavItem[] = [

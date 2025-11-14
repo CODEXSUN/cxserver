@@ -5,7 +5,7 @@ export default function Trash({}) {
     return (
         <Layout>
             <Head title="Trash"/>
-
+reas
         </Layout>
     )
 }
