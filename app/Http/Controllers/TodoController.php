@@ -28,8 +28,7 @@ class TodoController extends Controller
             ->select('todos.*')
             ->when($request->filled('search'), fn($q) => $q->where(function ($q) use ($request) {
                 $search = $request->search;
-                $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
+                $q->where('title', 'like', "%{$search}%");
             }))
             ->when($request->filled('my_tasks'), fn($q) => $q->where(function ($q) {
                 $q->where('user_id', auth()->id())
@@ -82,9 +81,7 @@ class TodoController extends Controller
         $this->authorize('create', Todo::class);
 
         $data = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'position' => 'nullable|integer|min:0',
+            'title' => 'required|string',
             'assignee_id' => 'nullable|exists:users,id',
             'visibility' => 'required|in:personal,work,public',
             'priority' => 'required|in:low,medium,high',
@@ -93,10 +90,25 @@ class TodoController extends Controller
 
         $data['user_id'] = auth()->id();
 
+        // Insert at top: position = 0, then shift others down
+        Todo::where('position', '>=', 0)->increment('position');
+        $data['position'] = 0;
+
         Todo::create($data);
 
-        return redirect()->route('todos.index')
-            ->with('success', 'Todo created.');
+        return redirect()->route('todos.index')->with('success', 'Todo created.');
+    }
+
+    public function reorder(Request $request)
+    {
+        $order = $request->input('order', []); // array of todo IDs in new order
+        foreach ($order as $index => $id) {
+            Todo::where('id', $id)->update(['position' => $index]);
+        }
+
+        return back();
+//        return response()->json(['message' => 'Order updated']);
+//        $this->index($request);
     }
 
     /** --------------------------------------------------------------
@@ -135,11 +147,11 @@ class TodoController extends Controller
      *  -------------------------------------------------------------- */
     public function update(Request $request, Todo $todo)
     {
+
         $this->authorize('update', $todo);
 
         $data = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'title' => 'required|string',
             'position' => 'nullable|integer|min:0',
             'assignee_id' => 'nullable|exists:users,id',
             'visibility' => 'required|in:personal,work,public',
@@ -150,8 +162,12 @@ class TodoController extends Controller
 
         $todo->update($data);
 
-        return redirect()->route('todos.index')
-            ->with('success', 'Todo updated.');
+//        return redirect()->route('todos.index')
+//            ->with('success', 'Todo updated.');
+
+        return back();
+
+//        return response()->json(['message' => 'Todo updated']);
     }
 
     /** --------------------------------------------------------------
@@ -230,8 +246,7 @@ class TodoController extends Controller
         $todos = Todo::with('assignee')
             ->where('completed', false)
             ->where(function ($query) use ($q) {
-                $query->where('title', 'like', "%{$q}%")
-                    ->orWhere('description', 'like', "%{$q}%");
+                $query->where('title', 'like', "%{$q}%");
             })
             ->limit(10)
             ->get(['id', 'title', 'priority', 'assignee_id']);
@@ -239,4 +254,10 @@ class TodoController extends Controller
         return response()->json(['todos' => $todos]);
     }
 
+
+    public function toggleComplete(Todo $todo, Request $request)
+    {
+        $todo->update(['completed' => ! $todo->completed]);
+        return back();
+    }
 }

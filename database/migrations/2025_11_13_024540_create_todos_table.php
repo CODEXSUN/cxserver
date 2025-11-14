@@ -13,8 +13,7 @@ return new class extends Migration
     {
         Schema::create('todos', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
-            $table->text('description')->nullable();
+            $table->text('title');
             $table->integer('position')->default(0); // Drag-to-reorder
             $table->foreignId('user_id')->constrained('users'); // Creator
             $table->foreignId('assignee_id')->nullable()->constrained('users'); // Assigned to
