@@ -289,7 +289,8 @@ function TodoFormDialog({
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
         if (!validate()) return;
 
         setIsSubmitting(true);
@@ -328,7 +329,7 @@ function TodoFormDialog({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="grid gap-4 py-4">
+                <form onSubmit={handleSubmit} className="grid gap-4 py-4">
                     <div className="grid gap-1">
                         <Label htmlFor="title">Title *</Label>
                         <Input
@@ -419,13 +420,13 @@ function TodoFormDialog({
                             <Label htmlFor="completed">Mark as completed</Label>
                         </div>
                     )}
-                </div>
+                </form>
 
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+                    <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
                         Cancel
                     </Button>
-                    <Button onClick={handleSubmit} disabled={isSubmitting}>
+                    <Button type="submit" disabled={isSubmitting} onClick={() => handleSubmit()}>
                         Save
                     </Button>
                 </DialogFooter>
@@ -732,10 +733,10 @@ export default function Index() {
                                     <TableHead style={{ width: 80 }}></TableHead>
                                     <TableHead style={{ width: 50 }}></TableHead>
                                     <TableHead>Title</TableHead>
-                                    <TableHead>Priority</TableHead>
-                                    <TableHead>Assignee</TableHead>
-                                    <TableHead>Due</TableHead>
-                                    <TableHead style={{ width: 100 }} className="text-right">Actions</TableHead>
+                                    <TableHead style={{ width: 120 }} >Priority</TableHead>
+                                    <TableHead style={{ width: 150 }} >Assignee</TableHead>
+                                    <TableHead style={{ width: 80 }} >Due</TableHead>
+                                    <TableHead style={{ width: 80 }} className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
