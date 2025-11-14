@@ -45,7 +45,6 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import {
-    Table,
     TableBody,
     TableCell,
     TableHead,
@@ -81,9 +80,7 @@ import {
     Search,
     Trash2,
     X,
-    ChevronLeft,
-    ChevronRight,
-    Edit2,
+    Pencil,
 } from 'lucide-react';
 
 import DataTable from '@/components/table/DataTable';
@@ -177,7 +174,7 @@ function CompletionCheckbox({ todo }: { todo: Todo }) {
 
 /* ── Draggable Row ── */
 function DraggableTodoRow({ todo, setEditTodo, setDeleteTodo }: { todo: Todo; setEditTodo: (todo: Todo) => void; setDeleteTodo: (todo: Todo) => void; }) {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: todo.id });
+    const { setNodeRef, transform, transition, isDragging } = useSortable({ id: todo.id });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -211,7 +208,7 @@ function DraggableTodoRow({ todo, setEditTodo, setDeleteTodo }: { todo: Todo; se
             <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-1">
                     <Button size="icon" variant="ghost" onClick={() => setEditTodo(todo)} className="h-7 w-7">
-                        <Edit2 className="h-3.5 w-3.5" />
+                        <Pencil className="h-3.5 w-3.5" />
                     </Button>
                     <Button size="icon" variant="ghost" onClick={() => setDeleteTodo(todo)} className="h-7 w-7 text-destructive">
                         <Trash2 className="h-3.5 w-3.5" />
@@ -311,7 +308,7 @@ function TodoFormDialog({
                 router.reload({ only: ['todos'] });
                 onOpenChange(false);
             },
-            onError: (err: any) => {
+            onError: (err: never) => {
                 setErrors(err);
                 console.error('Save failed', err);
             },
@@ -345,7 +342,7 @@ function TodoFormDialog({
                     <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-1">
                             <Label>Priority</Label>
-                            <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v as any })} disabled={isSubmitting}>
+                            <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v as never })} disabled={isSubmitting}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="low">Low</SelectItem>
@@ -357,7 +354,7 @@ function TodoFormDialog({
 
                         <div className="grid gap-1">
                             <Label>Visibility</Label>
-                            <Select value={form.visibility} onValueChange={(v) => setForm({ ...form, visibility: v as any })} disabled={isSubmitting}>
+                            <Select value={form.visibility} onValueChange={(v) => setForm({ ...form, visibility: v as never })} disabled={isSubmitting}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="personal">Personal</SelectItem>
@@ -484,7 +481,6 @@ export default function Index() {
         todos: todosPaginated,
         filters: serverFilters,
         can,
-        users,
         trashedCount,
     } = usePage<TodosPageProps>().props;
 
