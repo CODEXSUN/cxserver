@@ -45,6 +45,7 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import {
+    Table,
     TableBody,
     TableCell,
     TableHead,
@@ -80,6 +81,8 @@ import {
     Search,
     Trash2,
     X,
+    ChevronLeft,
+    ChevronRight,
     Edit2,
 } from 'lucide-react';
 
@@ -173,7 +176,7 @@ function CompletionCheckbox({ todo }: { todo: Todo }) {
 }
 
 /* ── Draggable Row ── */
-function DraggableTodoRow({ todo }: { todo: Todo }) {
+function DraggableTodoRow({ todo, setEditTodo, setDeleteTodo }: { todo: Todo; setEditTodo: (todo: Todo) => void; setDeleteTodo: (todo: Todo) => void; }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: todo.id });
 
     const style = {
@@ -738,7 +741,7 @@ export default function Index() {
                             <TableBody>
                                 <SortableContext items={dataIds} strategy={verticalListSortingStrategy}>
                                     {data.map((todo) => (
-                                        <DraggableTodoRow key={todo.id} todo={todo} />
+                                        <DraggableTodoRow key={todo.id} todo={todo} setEditTodo={setEditTodo} setDeleteTodo={setDeleteTodo} />
                                     ))}
                                 </SortableContext>
                             </TableBody>
