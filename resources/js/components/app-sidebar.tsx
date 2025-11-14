@@ -28,25 +28,27 @@ import {
     ServerCrash,
     PackageCheck,
     ListChecks,
+    PhoneCall,
 } from 'lucide-react';
 
 
 import AppLogo from './app-logo';
-import {index as blogs} from '@/routes/blogs';
+import {index as blogs} from '@/routes/blogs/index';
 import { index as contactTypes } from '@/routes/contact-types/index';
-import { index as contacts } from '@/routes/contacts/index';
+import { index as contacts } from '@/routes/contacts';
 import { index as service_inward } from '@/routes/service_inwards/index';
 import { index as job_cards } from '@/routes/job_cards/index';
 // import { index as users } from '@/routes/users';
 import { index as job_assignment } from '@/routes/job_assignments/index';
 import {index as service_parts } from '@/routes/service_parts/index';
 import {index as job_spare_requests } from '@/routes/job_spare_requests';
-import {index as out_service_centers } from '@/routes/out_service_centers';
-import {index as ready_for_deliveries } from '@/routes/ready_for_deliveries';
+import {index as out_service_centers } from '@/routes/out_service_centers/index';
+import {index as ready_for_deliveries } from '@/routes/ready_for_deliveries/index';
 import { NavService } from '@/components/nav-service';
 import { NavSpares } from '@/components/nav-spares';
 import { index as todos } from '@/routes/todos';
-
+import {index as enquiries } from '@/routes/enquiries/index';
+import { index as calls } from '@/routes/calls/index';
 const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
@@ -54,14 +56,14 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
-        title: 'Blog',
-        href: blogs(),
-        icon: StickyNote,
+        title: 'Enquiry',
+        href: enquiries(),
+        icon: UserRoundSearch,
     },
     {
-        title: 'Contact-type',
-        href: contactTypes(),
-        icon: UserRoundSearch,
+        title: 'Call logs',
+        href: calls(),
+        icon: PhoneCall,
     },
     {
         title: 'Contact',

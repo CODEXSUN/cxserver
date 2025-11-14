@@ -1,4 +1,3 @@
-// resources/js/Components/ContactAutocomplete.tsx
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -7,7 +6,6 @@ import { useRoute } from 'ziggy-js';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 
 interface Contact {
     id: number;
@@ -19,7 +17,7 @@ interface Contact {
     contact_type: { id: number; name: string };
 }
 
-interface ContactAutocompleteProps {
+interface ContactEnquiryProps {
     value?: Contact | null;
     onSelect: (contact: Contact | null) => void;
     placeholder?: string;
@@ -35,7 +33,7 @@ export default function ContactEnquiry({
                                                 className = '',
                                                 onCreateNew,
                                                 label
-                                            }: ContactAutocompleteProps) {
+                                            }: ContactEnquiryProps) {
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<Contact[]>([]);
     const [loading, setLoading] = useState(false);
@@ -235,11 +233,10 @@ export default function ContactEnquiry({
     const showCreateButton = query.length >= 2 && results.length === 0 && !loading && !selectedContact;
 
     return (
-        <div className={cn('w-full space-y-2', className)}>
-            {/*{label && <Label htmlFor="contact-autocomplete">{label}</Label>}*/}
+        <div className={cn('w-full flex space-y-2', className)}>
 
             {/* Fixed container with position context */}
-            <div ref={containerRef} className="relative w-full max-w-md">
+            <div ref={containerRef} className="relative h-12 w-full">
                 <Input
                     id="contact-autocomplete"
                     ref={inputRef}
@@ -266,7 +263,7 @@ export default function ContactEnquiry({
                         }
                     }}
                     placeholder={placeholder}
-                    className="pr-10 text-5xl transition-none w-full"
+                    className="flex transition-none h-12 text-2xl font-extrabold tracking-widest w-full"
                 />
 
                 {/* Icons */}

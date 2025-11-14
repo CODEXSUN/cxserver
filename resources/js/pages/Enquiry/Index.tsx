@@ -1,9 +1,10 @@
 // resources/js/Pages/Enquiry/Index.tsx
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import React, { useCallback, useEffect, useState } from 'react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRoute } from 'ziggy-js';
 
+import ContactEnquiry from '@/components/blocks/ContactEnquiry';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { dashboard } from '@/routes';
@@ -11,8 +12,6 @@ import { index as enquiry } from '@/routes/enquiries/index';
 import type { BreadcrumbItem } from '@/types';
 import { Contact } from '@/types/contact';
 import { Plus } from 'lucide-react';
-import { Label } from '@/components/ui/label';
-import ContactEnquiry from '@/components/blocks/ContactEnquiry';
 
 interface CallLog {
     id: number;
@@ -122,33 +121,32 @@ export default function Index() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Todos" />
+            <Head title="Enquiry" />
             <div className="py-6">
                 <div className="mx-auto space-y-6 sm:px-6 lg:px-8">
                     {/* Header */}
                     <div className="flex items-center justify-between">
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight text-black/50">
-                                Todos
+                                Enquiry
                             </h1>
                             <p className="mt-1 text-sm font-semibold text-black/30">
-                                Track your todos
+                                Track your enquiry
                             </p>
                         </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 justify-between">
+                        <div className="w-full">
+                            <ContactEnquiry
+                                value={selectedContact}
+                                onSelect={handleContactSelect}
+                                onCreateNew={handleContactCreate}
+                                placeholder="Search contacts by name, phone, email..."
+                            />
+                        </div>
+
                         <div className="flex gap-3">
-
-                            <div>
-                                <Label htmlFor="contact-autocomplete">
-                                    Contact <span className="text-red-500">*</span>
-                                </Label>
-                                <ContactEnquiry
-                                    value={selectedContact}
-                                    onSelect={handleContactSelect}
-                                    onCreateNew={handleContactCreate}
-                                    placeholder="Search contacts by name, phone, email..."
-                                />
-                            </div>
-
                             {can.create && (
                                 <Button onClick={() => setShowCreate(true)}>
                                     <Plus className="mr-2 h-4 w-4" /> New Todo
@@ -156,6 +154,8 @@ export default function Index() {
                             )}
                         </div>
                     </div>
+
+                    {/* Mega Search Bar */}
 
                     <Separator />
                 </div>
