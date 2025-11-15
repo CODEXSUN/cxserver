@@ -424,4 +424,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 });
 
-Route::resource('enquiry', EnquiryController::class);
+Route::resource('enquiries', EnquiryController::class);
